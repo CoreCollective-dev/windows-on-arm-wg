@@ -15,5 +15,6 @@ Find info here about our projects &amp; file issues here for the working group t
 ## Active Members
 * Arm
 * CIX
+* Linaro
 * Microsoft
 * Qualcomm 
