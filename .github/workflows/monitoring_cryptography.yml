@@ -1,0 +1,316 @@
+name: Monitor cryptography CI (windows-arm64)
+
+# Polls recent completed runs of pyca/cryptography's CI and wheel-builder
+# workflows. For each tracked arm64-specific job, fetches the job log and
+# verifies a workflow-specific success marker is present. If the job's
+# conclusion is `failure` AND the success marker is missing, opens an issue
+# in this repo assigned to @khmyznikov.
+
+on:
+  schedule:
+    # Daily at 09:00 America/Los_Angeles. GitHub cron is UTC and does not
+    # observe DST: 15:00 UTC = 09:00 PDT / 08:00 PST.
+    - cron: '0 15 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  monitor:
+    name: monitor (${{ matrix.id }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: ci
+            label: "cryptography CI (tests-nocoverage, arm64)"
+            workflow: ci.yml
+            scan_limit: '25'
+            # jq regex: match the windows-arm64 tests-nocoverage job, e.g.
+            #   "windows (arm64, arm64, windows-11-arm, 3.14, tests-nocoverage)"
+            arm_job_regex: '^windows \(arm64.*tests-nocoverage\)$'
+            # ERE: nox prints this only when the session passed with zero failures.
+            # Example: "nox > Session tests-nocoverage was successful in 38 seconds."
+            success_log_regex: 'nox > Session tests-nocoverage was successful'
+          - id: wheels
+            label: "cryptography wheel-builder (win_arm64)"
+            workflow: wheel-builder.yml
+            scan_limit: '25'
+            # jq regex: Windows arm64 wheel jobs only (e.g. "3.14 arm64", "3.14t arm64",
+            # "3.14 arm64 py311"). Excludes macOS jobs like "3.14 ABI py311 macOS -arch arm64".
+            arm_job_regex: '^[^ ]+ arm64( py[0-9]+)?$'
+            # ERE: "Successfully built wheelhouse\cryptography-49.0.0.dev1-cp314-cp314t-win_arm64.whl"
+            success_log_regex: 'Successfully built wheelhouse.*win_arm64\.whl'
+    env:
+      GH_TOKEN: ${{ github.token }}
+      UPSTREAM_REPO: pyca/cryptography
+      PARALLELISM: '5'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Scan ${{ matrix.label }}
+        env:
+          WORKFLOW: ${{ matrix.workflow }}
+          SCAN_LIMIT: ${{ matrix.scan_limit }}
+          ARM_JOB_REGEX: ${{ matrix.arm_job_regex }}
+          SUCCESS_LOG_REGEX: ${{ matrix.success_log_regex }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          workdir=$(mktemp -d)
+          echo "workdir=$workdir" >> "$GITHUB_ENV"
+          # Retry wrapper: handles transient 5xx / network failures with backoff.
+          gh_retry() {
+            local out="$1"; shift
+            local attempt=1 max=5 delay=5
+            while :; do
+              if timeout 90 gh "$@" >"$out" 2>"${out}.err"; then
+                return 0
+              fi
+              local err
+              err=$(cat "${out}.err" 2>/dev/null || true)
+              if [ "$attempt" -ge "$max" ]; then
+                echo "gh failed after $attempt attempts: $err" >&2
+                return 1
+              fi
+              echo "gh attempt $attempt failed (retrying in ${delay}s): $err" >&2
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay * 2))
+            done
+          }
+          export -f gh_retry
+          gh_retry "$workdir/runs.json" run list \
+            --repo "$UPSTREAM_REPO" \
+            --workflow "$WORKFLOW" \
+            --status success \
+            --limit "$SCAN_LIMIT" \
+            --json databaseId,headSha,url,event,headBranch,displayTitle,createdAt
+          count=$(jq 'length' "$workdir/runs.json")
+          echo "Scanning $count successful runs of $WORKFLOW (parallelism=$PARALLELISM)."
+          mkdir -p "$workdir/results" "$workdir/logs"
+          export workdir UPSTREAM_REPO ARM_JOB_REGEX SUCCESS_LOG_REGEX
+          process_run() {
+            local run_json="$1"
+            local run_id run_url head_sha event branch title created
+            run_id=$(echo   "$run_json" | jq -r '.databaseId')
+            run_url=$(echo  "$run_json" | jq -r '.url')
+            head_sha=$(echo "$run_json" | jq -r '.headSha')
+            event=$(echo    "$run_json" | jq -r '.event')
+            branch=$(echo   "$run_json" | jq -r '.headBranch')
+            title=$(echo    "$run_json" | jq -r '.displayTitle')
+            created=$(echo  "$run_json" | jq -r '.createdAt')
+            local log="$workdir/logs/${run_id}.log"
+            local result="$workdir/results/${run_id}.json"
+            {
+              echo "run $run_id ($event on $branch) — $title"
+              if ! gh_retry "$workdir/jobs-${run_id}.json" api --paginate \
+                  "repos/${UPSTREAM_REPO}/actions/runs/${run_id}/jobs" \
+                  -q '[.jobs[] | {id, name, conclusion, html_url}]'; then
+                echo "failed to fetch jobs"
+                jq -n --arg id "$run_id" --arg url "$run_url" --arg branch "$branch" \
+                      --arg event "$event" --arg title "$title" --arg created "$created" \
+                  '{run_id:$id, run_url:$url, branch:$branch, event:$event, title:$title,
+                    created_at:$created, status:"error", jobs:[]}' >"$result"
+                return 0
+              fi
+              local jobs_json
+              jobs_json=$(jq -s 'add // []' "$workdir/jobs-${run_id}.json")
+              local arm_jobs n_arm
+              arm_jobs=$(echo "$jobs_json" | jq -c --arg re "$ARM_JOB_REGEX" \
+                '[.[] | select(.name | test($re))]')
+              n_arm=$(echo "$arm_jobs" | jq 'length')
+              if [ "$n_arm" -eq 0 ]; then
+                echo "no matching arm64 jobs"
+                jq -n --arg id "$run_id" --arg url "$run_url" --arg branch "$branch" \
+                      --arg event "$event" --arg title "$title" --arg created "$created" \
+                  '{run_id:$id, run_url:$url, branch:$branch, event:$event, title:$title,
+                    created_at:$created, status:"no-arm", jobs:[]}' >"$result"
+                return 0
+              fi
+              local job_results="[]"
+              local any_broken=0 any_failure=0
+              local i=0
+              while [ "$i" -lt "$n_arm" ]; do
+                local job job_id job_name job_conc job_url
+                job=$(echo "$arm_jobs" | jq -c ".[$i]")
+                job_id=$(echo   "$job" | jq -r '.id')
+                job_name=$(echo "$job" | jq -r '.name')
+                job_conc=$(echo "$job" | jq -r '.conclusion // ""')
+                job_url=$(echo  "$job" | jq -r '.html_url')
+                local job_status="ok" detail="conclusion=$job_conc"
+                if [ "$job_conc" = "success" ]; then
+                  :
+                else
+                  any_failure=1
+                  local logf="$workdir/joblog-${job_id}.txt"
+                  if gh_retry "$logf" api "repos/${UPSTREAM_REPO}/actions/jobs/${job_id}/logs"; then
+                    if grep -Eq "$SUCCESS_LOG_REGEX" "$logf"; then
+                      job_status="flaky"
+                      detail="conclusion=$job_conc; success marker present"
+                    else
+                      job_status="broken"
+                      any_broken=1
+                      local snippet
+                      snippet=$(grep -Ei 'failed|error|FAIL' "$logf" | tail -n 5 | tr '\n' ' ' | cut -c1-500 || true)
+                      detail="conclusion=$job_conc; no success marker; tail: ${snippet}"
+                    fi
+                  else
+                    job_status="broken"
+                    any_broken=1
+                    detail="conclusion=$job_conc; log fetch failed"
+                  fi
+                  rm -f "$logf"
+                fi
+                echo "  job $job_id [$job_name] -> $job_status ($detail)"
+                job_results=$(echo "$job_results" | jq -c \
+                  --arg id "$job_id" --arg name "$job_name" --arg conc "$job_conc" \
+                  --arg url "$job_url" --arg status "$job_status" --arg detail "$detail" \
+                  '. + [{id:$id, name:$name, conclusion:$conc, html_url:$url, status:$status, detail:$detail}]')
+                i=$((i + 1))
+              done
+              local overall="clean"
+              if [ "$any_broken" = "1" ]; then
+                overall="broken"
+              elif [ "$any_failure" = "1" ]; then
+                overall="flaky"
+              fi
+              jq -n \
+                --arg id "$run_id" --arg url "$run_url" --arg sha "$head_sha" \
+                --arg event "$event" --arg branch "$branch" --arg title "$title" \
+                --arg created "$created" --arg status "$overall" \
+                --argjson jobs "$job_results" \
+                '{run_id:$id, run_url:$url, head_sha:$sha, event:$event, branch:$branch,
+                  title:$title, created_at:$created, status:$status, jobs:$jobs}' >"$result"
+            } >"$log" 2>&1
+          }
+          export -f process_run
+          # Fan out, bounded by $PARALLELISM. `-d '\n'` disables xargs's quote /
+          # backslash processing (which would otherwise mangle the JSON lines)
+          # and splits input strictly on newlines.
+          jq -c '.[]' "$workdir/runs.json" \
+            | xargs -d '\n' -I __RUN_JSON__ -P "$PARALLELISM" \
+                bash -c 'process_run "$@"' _ __RUN_JSON__
+          for f in "$workdir"/logs/*.log; do
+            run_id=$(basename "$f" .log)
+            echo "::group::run $run_id"
+            cat "$f"
+            echo "::endgroup::"
+          done
+          jq -s '.' "$workdir"/results/*.json >"$workdir/all.json"
+      - name: Open issues and write summary for ${{ matrix.label }}
+        env:
+          REPO: ${{ github.repository }}
+          LABEL: ${{ matrix.label }}
+          SCOPE_ID: ${{ matrix.id }}
+          WORKFLOW: ${{ matrix.workflow }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          all="$workdir/all.json"
+          if [ ! -s "$all" ] || [ "$(jq 'length' "$all")" = "0" ]; then
+            {
+              echo "## $LABEL"
+              echo ""
+              echo "No runs scanned."
+            } >>"$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          total=$(jq   'length' "$all")
+          broken=$(jq  '[.[] | select(.status=="broken")] | length' "$all")
+          flaky=$(jq   '[.[] | select(.status=="flaky")]  | length' "$all")
+          clean=$(jq   '[.[] | select(.status=="clean")]  | length' "$all")
+          no_arm=$(jq  '[.[] | select(.status=="no-arm")] | length' "$all")
+          errors=$(jq  '[.[] | select(.status=="error")]  | length' "$all")
+          {
+            echo "## $LABEL"
+            echo ""
+            echo "Scanned **$total** recent successful runs of \`${UPSTREAM_REPO}\` / \`${WORKFLOW}\`."
+            echo ""
+            echo "| Outcome | Count |"
+            echo "|---|---:|"
+            echo "| arm64 broken (failure, no success marker) | $broken |"
+            echo "| arm64 flaky (failure but success marker present) | $flaky |"
+            echo "| clean | $clean |"
+            echo "| no matching arm64 job | $no_arm |"
+            echo "| fetch errors | $errors |"
+          } >>"$GITHUB_STEP_SUMMARY"
+          if [ "$broken" -gt 0 ]; then
+            {
+              echo ""
+              echo "### Broken arm64 jobs"
+              echo ""
+              echo "| Run | Branch / event | Job | Conclusion | Issue |"
+              echo "|---|---|---|---|---|"
+            } >>"$GITHUB_STEP_SUMMARY"
+          fi
+          jq -c '.[] | select(.status=="broken")' "$all" | while read -r r; do
+            run_id=$(echo   "$r" | jq -r '.run_id')
+            run_url=$(echo  "$r" | jq -r '.run_url')
+            head_sha=$(echo "$r" | jq -r '.head_sha')
+            event=$(echo    "$r" | jq -r '.event')
+            branch=$(echo   "$r" | jq -r '.branch')
+            title=$(echo    "$r" | jq -r '.title')
+            echo "$r" | jq -c '.jobs[] | select(.status=="broken")' | while read -r j; do
+              job_id=$(echo     "$j" | jq -r '.id')
+              job_name=$(echo   "$j" | jq -r '.name')
+              job_conc=$(echo   "$j" | jq -r '.conclusion')
+              job_url=$(echo    "$j" | jq -r '.html_url')
+              job_detail=$(echo "$j" | jq -r '.detail')
+              search_key="run ${run_id} job ${job_id}"
+              existing=""
+              for attempt in 1 2 3; do
+                if existing=$(gh issue list --repo "$REPO" --state all \
+                    --search "in:title \"$search_key\"" \
+                    --json number -q '.[0].number // empty' 2>/dev/null); then
+                  break
+                fi
+                existing=""
+                sleep $((attempt * 5))
+              done
+              issue_cell=""
+              if [ -n "$existing" ]; then
+                echo "Issue #$existing already tracks $search_key; skipping."
+                issue_cell="#${existing} (existing)"
+              else
+                title_str="cryptography ${SCOPE_ID}: arm64 job broken (run ${run_id} job ${job_id})"
+                body=$(cat <<EOF
+          ${LABEL}: an arm64 job failed and its log does not contain the expected success marker.
+          - Job: \`${job_name}\`
+          - Conclusion: \`${job_conc}\`
+          - Job URL: ${job_url}
+          - CI run: ${run_url}
+          - Event: \`${event}\` on \`${branch}\`
+          - Commit: \`${head_sha}\`
+          - Title: ${title}
+          - Detail: ${job_detail}
+          Detected automatically by \`.github/workflows/monitor_cryptography_ci.yml\`.
+          EOF
+                )
+                created=""
+                for attempt in 1 2 3; do
+                  if gh issue create --repo "$REPO" \
+                      --title "$title_str" \
+                      --body "$body" \
+                      --assignee khmyznikov >/tmp/issue.out 2>&1; then
+                    created=1
+                    break
+                  fi
+                  echo "issue create attempt $attempt failed: $(cat /tmp/issue.out)" >&2
+                  sleep $((attempt * 5))
+                done
+                if [ -n "$created" ]; then
+                  issue_cell="created"
+                else
+                  issue_cell="**failed to create**"
+                fi
+              fi
+              echo "| [${run_id}](${run_url}) | \`${branch}\` / ${event} | [${job_name}](${job_url}) | ${job_conc} | ${issue_cell} |" >>"$GITHUB_STEP_SUMMARY"
+            done
+          done
