@@ -4,6 +4,7 @@ The CoreCollective Windows on Arm (WoA) Working Group supports a growing self-su
 In this repo, you can find info about our projects &amp; [file issues](https://github.com/CoreCollective-dev/windows-on-arm-wg/issues) for the working group to review and discuss.
 
 ## Mailing list
+* [Mailing list archive](https://groups.google.com/a/corecollective.dev/g/windows-on-arm)
 * Email windows-on-arm+subscribe at corecollective.dev from your company email domain
 * Note:
     * Subscriptions are restricted to company email domains of current members.
