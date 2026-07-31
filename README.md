@@ -23,6 +23,9 @@ In this repo, you can find info about our projects &amp; [file issues](https://g
           * [A VS Code extension with GitHub Copilot chat integration for porting x64 Windows applications to Arm64](https://github.com/qualcomm/extension-wos-porter/)
      * [Arm AppReady: developer resources, tooling guidance, and engineering support for building native applications for WoA](https://developer.arm.com/laptops-and-desktops/windows-app-ready)
 * [FFMPEG ARM64EC binaries are now publicly available](https://github.com/Multicorewareinc/FFmpeg/releases)
+
+## Package and App status (historic)
+If you are looking for status or build instructions for Windows on Arm on a specific project, [here is a list](https://linaro.atlassian.net/wiki/spaces/WOAR/pages/28682879341/Detailed+How-To+and+Status+sub+pages) of the historic status and work carried out up to end of 2025.
  
 ## WG Members
 * Arm
