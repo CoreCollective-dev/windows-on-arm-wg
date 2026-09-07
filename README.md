@@ -32,4 +32,5 @@ If you are looking for status or build instructions for Windows on Arm on a spec
 * CIX
 * Linaro
 * Microsoft
+* NVidia
 * Qualcomm 
