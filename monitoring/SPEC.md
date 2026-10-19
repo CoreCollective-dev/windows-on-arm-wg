@@ -4,6 +4,17 @@ Status: approved direction; daily read-only pilot rollout started on 2026-10-19.
 
 Date: 2026-10-19.
 
+### First implementation milestone
+
+The [daily read-only pilot](../.github/workflows/wheel-monitor.yml) is deployed on
+the tracker repository's main branch. It observes five verified package
+configurations, preserves report/state artifacts, and plans notification
+transitions without posting comments. The full 84-package audit is imported as
+an onboarding backlog. See the [pilot guide](README.md) for implemented behavior
+and remaining gates. Live issue reconciliation, participant notifications, and
+board synchronization are subsequent milestones, not enabled features of this
+first deployment.
+
 ## 1. Goal and agreed scope
 
 Maintain one long-lived tracking issue per Python package in
