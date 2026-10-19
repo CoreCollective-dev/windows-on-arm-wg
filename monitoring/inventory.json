@@ -1,0 +1,965 @@
+{
+  "schema": 1,
+  "source": "https://github.com/khmyznikov/PyEnv-WoA-State/issues/1",
+  "audit_date": "2026-10-07",
+  "packages": [
+    {
+      "package": "aiohttp",
+      "repositories": [
+        "https://github.com/aio-libs/aiohttp"
+      ],
+      "builder_evidence": [
+        "https://github.com/aio-libs/aiohttp/blob/master/.github/workflows/ci-cd.yml#L664",
+        "https://github.com/aio-libs/aiohttp/blob/master/.github/workflows/reusable-cibuildwheel.yml#L119"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Also builds a pure-Python variant; construction is separate from publication."
+    },
+    {
+      "package": "argon2-cffi-bindings",
+      "repositories": [
+        "https://github.com/hynek/argon2-cffi-bindings"
+      ],
+      "builder_evidence": [
+        "https://github.com/hynek/argon2-cffi-bindings/blob/main/.github/workflows/wheels.yml#L49"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds the bindings distribution itself, not just `argon2-cffi`; includes tag-gated publication."
+    },
+    {
+      "package": "bcrypt",
+      "repositories": [
+        "https://github.com/pyca/bcrypt"
+      ],
+      "builder_evidence": [
+        "https://github.com/pyca/bcrypt/blob/main/.github/workflows/wheel-builder.yml#L112"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Actual package construction, followed by applicable wheel repair; publisher is separate."
+    },
+    {
+      "package": "bitarray",
+      "repositories": [
+        "https://github.com/ilanschnell/bitarray"
+      ],
+      "builder_evidence": [
+        "https://github.com/ilanschnell/bitarray/blob/master/.github/workflows/build_wheels.yml#L24"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Push/PR builds and tag-gated PyPI publication."
+    },
+    {
+      "package": "bitsandbytes",
+      "repositories": [
+        "https://github.com/bitsandbytes-foundation/bitsandbytes"
+      ],
+      "builder_evidence": [
+        "https://github.com/bitsandbytes-foundation/bitsandbytes/blob/main/.github/workflows/python-package.yml#L216"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Native-backend compilation is followed by a distinct Python wheel build and `bitsandbytes-*.whl` artifacts."
+    },
+    {
+      "package": "cffi",
+      "repositories": [
+        "https://github.com/python-cffi/cffi"
+      ],
+      "builder_evidence": [
+        "https://github.com/python-cffi/cffi/blob/main/.github/workflows/ci.yaml#L214"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "CI build/test evidence; no PyPI release publisher found in the inspected Actions workflow."
+    },
+    {
+      "package": "clickhouse-connect",
+      "repositories": [
+        "https://github.com/ClickHouse/clickhouse-connect"
+      ],
+      "builder_evidence": [
+        "https://github.com/ClickHouse/clickhouse-connect/blob/main/.github/workflows/publish.yml#L29",
+        "https://github.com/ClickHouse/clickhouse-connect/blob/main/.github/workflows/binding_ci.yml#L129"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Verified driver wheels, not merely the separate `clickhouse-connect-core` Rust wheels."
+    },
+    {
+      "package": "contourpy",
+      "repositories": [
+        "https://github.com/contourpy/contourpy"
+      ],
+      "builder_evidence": [
+        "https://github.com/contourpy/contourpy/blob/main/.github/workflows/build_wheels.yml#L120"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Tag, scheduled and manual builds; artifacts/nightly upload do not by themselves establish PyPI publication."
+    },
+    {
+      "package": "coverage",
+      "repositories": [
+        "https://github.com/coveragepy/coveragepy"
+      ],
+      "builder_evidence": [
+        "https://github.com/coveragepy/coveragepy/blob/main/.github/workflows/kit.yml#L253",
+        "https://github.com/coveragepy/coveragepy/blob/main/.github/workflows/kit.yml#L294"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Package name differs from repository name; separate publisher consumes the built kit."
+    },
+    {
+      "package": "cramjam",
+      "repositories": [
+        "https://github.com/milesgranger/cramjam"
+      ],
+      "builder_evidence": [
+        "https://github.com/milesgranger/cramjam/blob/master/.github/workflows/CI.yml#L144",
+        "https://github.com/milesgranger/cramjam/blob/master/.github/workflows/CI.yml#L105"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "PyPI's `pyrus-cramjam` source URL redirects here. Separate pure-Rust and JavaScript/WASM outputs are not the basis for this finding."
+    },
+    {
+      "package": "cryptography",
+      "repositories": [
+        "https://github.com/pyca/cryptography"
+      ],
+      "builder_evidence": [
+        "https://github.com/pyca/cryptography/blob/main/.github/workflows/wheel-builder.yml#L158"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds the named distribution with prepared OpenSSL and a Rust backend, not merely its vectors package."
+    },
+    {
+      "package": "cymem",
+      "repositories": [
+        "https://github.com/explosion/cymem"
+      ],
+      "builder_evidence": [
+        "https://github.com/explosion/cymem/blob/master/.github/workflows/cibuildwheel.yml#L15",
+        "https://github.com/explosion/gha-cibuildwheel/blob/2c98f757f13d112cf73fcf4b627249f1fffb5aae/.github/workflows/cibuildwheel.yml#L209"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "External reusable implementation verified at the invoked commit; release/prerelease tags trigger builds."
+    },
+    {
+      "package": "ddtrace",
+      "repositories": [
+        "https://github.com/DataDog/dd-trace-py"
+      ],
+      "builder_evidence": [
+        "https://github.com/DataDog/dd-trace-py/blob/main/.github/workflows/build_deploy.yml#L31",
+        "https://github.com/DataDog/dd-trace-py/blob/main/.github/workflows/build_python_3.yml#L80"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Actual Python distribution build, not container-image construction or dependency installation."
+    },
+    {
+      "package": "duckdb",
+      "repositories": [
+        "https://github.com/duckdb/duckdb-python"
+      ],
+      "builder_evidence": [
+        "https://github.com/duckdb/duckdb-python/blob/v2.0-cyanoptera/.github/workflows/packaging_wheels.yml#L81",
+        "https://github.com/duckdb/duckdb-python/blob/v2.0-cyanoptera/.github/actions/build-wheel/action.yml#L125"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Dedicated Python repository, not only the native DuckDB repository; snapshot default branch is `v2.0-cyanoptera`."
+    },
+    {
+      "package": "faiss-cpu",
+      "repositories": [
+        "https://github.com/facebookresearch/faiss",
+        "https://github.com/faiss-wheels/faiss-wheels"
+      ],
+      "builder_evidence": [
+        "https://github.com/faiss-wheels/faiss-wheels/blob/main/.github/workflows/build.yml#L50",
+        "https://github.com/faiss-wheels/faiss-wheels/blob/main/pyproject.toml#L6"
+      ],
+      "onboarding": "paused-archived",
+      "audit_notes": "Issue-linked `kyamagu/faiss-wheels` redirects to archived `faiss-wheels/faiss-wheels`. Retained source is 1.13.2 versus PyPI metadata 1.15.1: newest-release provenance is not established."
+    },
+    {
+      "package": "fastavro",
+      "repositories": [
+        "https://github.com/fastavro/fastavro"
+      ],
+      "builder_evidence": [
+        "https://github.com/fastavro/fastavro/blob/master/.github/workflows/build_linux.yml#L81",
+        "https://github.com/fastavro/fastavro/blob/master/.github/workflows/build_mac.yml#L56"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Artifacts/GitHub release uploads verified; that is not necessarily direct PyPI publication."
+    },
+    {
+      "package": "frozenlist",
+      "repositories": [
+        "https://github.com/aio-libs/frozenlist"
+      ],
+      "builder_evidence": [
+        "https://github.com/aio-libs/frozenlist/blob/master/.github/workflows/ci-cd.yml#L156",
+        "https://github.com/aio-libs/frozenlist/blob/master/.github/workflows/reusable-cibuildwheel.yml#L111"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Also builds a pure-Python variant; builder is package-local, not the incidental organization `.github` repository."
+    },
+    {
+      "package": "gevent",
+      "repositories": [
+        "https://github.com/gevent/gevent"
+      ],
+      "builder_evidence": [
+        "https://github.com/gevent/gevent/blob/master/.github/workflows/ci.yml#L227",
+        "https://github.com/gevent/gevent/blob/master/.github/workflows/ci.yml#L453"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Direct commands establish wheel construction independently of the separate manylinux release script."
+    },
+    {
+      "package": "google-re2",
+      "repositories": [
+        "https://github.com/google/re2"
+      ],
+      "builder_evidence": [
+        "https://github.com/google/re2/blob/main/.github/workflows/python.yml#L58",
+        "https://github.com/google/re2/blob/main/python/setup.py#L131"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Verified Python bindings, not just C++ RE2 builds."
+    },
+    {
+      "package": "greenlet",
+      "repositories": [
+        "https://github.com/python-greenlet/greenlet"
+      ],
+      "builder_evidence": [
+        "https://github.com/python-greenlet/greenlet/blob/master/.github/workflows/tests.yml#L72",
+        "https://github.com/python-greenlet/greenlet/blob/master/.github/workflows/tests.yml#L91"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Explicit wheel artifacts and tag-conditioned release publication."
+    },
+    {
+      "package": "gymnasium",
+      "repositories": [
+        "https://github.com/Farama-Foundation/Gymnasium"
+      ],
+      "builder_evidence": [
+        "https://github.com/Farama-Foundation/Gymnasium/blob/main/.github/workflows/pypi-publish.yml#L35"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Alternative linked in the `gym` row; builds Python distributions before publishing them."
+    },
+    {
+      "package": "h3",
+      "repositories": [
+        "https://github.com/uber/h3-py"
+      ],
+      "builder_evidence": [
+        "https://github.com/uber/h3-py/blob/master/.github/workflows/wheels.yml#L161"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Python bindings repository, distinct from the native H3 library."
+    },
+    {
+      "package": "h5py",
+      "repositories": [
+        "https://github.com/h5py/h5py"
+      ],
+      "builder_evidence": [
+        "https://github.com/h5py/h5py/blob/master/.github/workflows/build_wheels.yml#L143"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "PR/nightly/tag paths; HDF5 preparation and bundling are distinct from the Python wheel step."
+    },
+    {
+      "package": "hiredis",
+      "repositories": [
+        "https://github.com/redis/hiredis-py"
+      ],
+      "builder_evidence": [
+        "https://github.com/redis/hiredis-py/blob/master/.github/workflows/pypi-publish.yaml#L14",
+        "https://github.com/redis/hiredis-py/blob/master/.github/workflows/REUSABLE-wheeler.yaml#L41"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Python distribution repository, not merely the standalone hiredis C library."
+    },
+    {
+      "package": "ijson",
+      "repositories": [
+        "https://github.com/ICRAR/ijson"
+      ],
+      "builder_evidence": [
+        "https://github.com/ICRAR/ijson/blob/master/.github/workflows/deploy-to-pypi.yml#L71"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builder is in the deployment workflow itself, not inferred from test installation."
+    },
+    {
+      "package": "jiter",
+      "repositories": [
+        "https://github.com/pydantic/jiter"
+      ],
+      "builder_evidence": [
+        "https://github.com/pydantic/jiter/blob/main/.github/workflows/ci.yml#L476",
+        "https://github.com/pydantic/jiter/blob/main/.github/workflows/ci.yml#L482"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds `crates/jiter-python`; Rust-only tests/benchmarks are not the evidence."
+    },
+    {
+      "package": "libcst",
+      "repositories": [
+        "https://github.com/Instagram/LibCST"
+      ],
+      "builder_evidence": [
+        "https://github.com/Instagram/LibCST/blob/main/.github/workflows/build.yml#L47",
+        "https://github.com/Instagram/LibCST/blob/main/.github/workflows/pypi_upload.yml#L20"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Actual reusable builder verified, not inferred from uploader naming."
+    },
+    {
+      "package": "llvmlite",
+      "repositories": [
+        "https://github.com/numba/llvmlite"
+      ],
+      "builder_evidence": [
+        "https://github.com/numba/llvmlite/blob/main/.github/workflows/llvmlite_win-64_wheel_builder.yml#L89"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Explicit llvmlite wheel construction; neighboring LLVM/conda builds do not establish this finding."
+    },
+    {
+      "package": "logbook",
+      "repositories": [
+        "https://github.com/getlogbook/logbook"
+      ],
+      "builder_evidence": [
+        "https://github.com/getlogbook/logbook/blob/main/.github/workflows/wheel-builder.yml#L74"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Tags, manual dispatch and selected PR changes; publication is separate."
+    },
+    {
+      "package": "lxml",
+      "repositories": [
+        "https://github.com/lxml/lxml"
+      ],
+      "builder_evidence": [
+        "https://github.com/lxml/lxml/blob/master/.github/workflows/wheels.yml#L175"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds wheels after prerequisite library preparation; release uploads are downstream."
+    },
+    {
+      "package": "marisa-trie",
+      "repositories": [
+        "https://github.com/pytries/marisa-trie"
+      ],
+      "builder_evidence": [
+        "https://github.com/pytries/marisa-trie/blob/master/.github/workflows/build-and-publish.yml#L36"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Manual dispatch selects the source branch/tag/SHA; selected PR changes also trigger builds."
+    },
+    {
+      "package": "markupsafe",
+      "repositories": [
+        "https://github.com/pallets/markupsafe"
+      ],
+      "builder_evidence": [
+        "https://github.com/pallets/markupsafe/blob/main/.github/workflows/publish.yaml#L72"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Release workflow constructs binary wheels, not just publishing externally built artifacts."
+    },
+    {
+      "package": "matplotlib",
+      "repositories": [
+        "https://github.com/matplotlib/matplotlib"
+      ],
+      "builder_evidence": [
+        "https://github.com/matplotlib/matplotlib/blob/main/.github/workflows/cibuildwheel.yml#L127",
+        "https://github.com/matplotlib/matplotlib/blob/main/.github/workflows/nightlies.yml#L62"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "CI/nightly construction verified; inspected builder does not establish PyPI release publication."
+    },
+    {
+      "package": "maxminddb",
+      "repositories": [
+        "https://github.com/maxmind/MaxMind-DB-Reader-python"
+      ],
+      "builder_evidence": [
+        "https://github.com/maxmind/MaxMind-DB-Reader-python/blob/main/.github/workflows/release.yml#L77"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds the Python reader extension, not only `libmaxminddb`."
+    },
+    {
+      "package": "ml-dtypes",
+      "repositories": [
+        "https://github.com/jax-ml/ml_dtypes"
+      ],
+      "builder_evidence": [
+        "https://github.com/jax-ml/ml_dtypes/blob/main/.github/workflows/wheels.yml#L46"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Main/selected PR and published-release builds; release path includes upload."
+    },
+    {
+      "package": "mmh3",
+      "repositories": [
+        "https://github.com/hajimes/mmh3"
+      ],
+      "builder_evidence": [
+        "https://github.com/hajimes/mmh3/blob/master/.github/workflows/wheels.yml#L89"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Version tags/manual dispatch; PyPI/TestPyPI publication is separately gated."
+    },
+    {
+      "package": "msgpack",
+      "repositories": [
+        "https://github.com/msgpack/msgpack-python"
+      ],
+      "builder_evidence": [
+        "https://github.com/msgpack/msgpack-python/blob/main/.github/workflows/wheel.yml#L49"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Python implementation repository; published-release support is present."
+    },
+    {
+      "package": "msgspec",
+      "repositories": [
+        "https://github.com/msgspec/msgspec"
+      ],
+      "builder_evidence": [
+        "https://github.com/msgspec/msgspec/blob/main/.github/workflows/ci.yml#L201",
+        "https://github.com/msgspec/msgspec/blob/main/.github/workflows/build-wheels.yml#L93"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds from the prepared package sdist, not simply downloading wheels for profiling."
+    },
+    {
+      "package": "multidict",
+      "repositories": [
+        "https://github.com/aio-libs/multidict"
+      ],
+      "builder_evidence": [
+        "https://github.com/aio-libs/multidict/blob/master/.github/workflows/ci-cd.yml#L117",
+        "https://github.com/aio-libs/multidict/blob/master/.github/workflows/reusable-cibuildwheel.yml#L110"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Actual builder is in the package repository, not the organization `.github` metadata candidate."
+    },
+    {
+      "package": "mypy",
+      "repositories": [
+        "https://github.com/python/mypy",
+        "https://github.com/mypyc/mypy_mypyc-wheels"
+      ],
+      "builder_evidence": [
+        "https://github.com/python/mypy/blob/master/.github/workflows/build_wheels.yml#L22",
+        "https://github.com/mypyc/mypy_mypyc-wheels/blob/master/.github/workflows/build.yml#L65"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Main repository is a trigger; delegated builder was verified to build `mypy`, not a different `mypyc` distribution."
+    },
+    {
+      "package": "nh3",
+      "repositories": [
+        "https://github.com/messense/nh3"
+      ],
+      "builder_evidence": [
+        "https://github.com/messense/nh3/blob/main/.github/workflows/CI.yml#L20"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Rust-backed Python package; main, PR and version-tag paths."
+    },
+    {
+      "package": "numba",
+      "repositories": [
+        "https://github.com/numba/numba"
+      ],
+      "builder_evidence": [
+        "https://github.com/numba/numba/blob/main/.github/workflows/numba_win-64_wheel_builder.yml#L123"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Source resolved from issue links because PyPI metadata supplied no GitHub candidate; conda builders are not counted."
+    },
+    {
+      "package": "numexpr",
+      "repositories": [
+        "https://github.com/pydata/numexpr"
+      ],
+      "builder_evidence": [
+        "https://github.com/pydata/numexpr/blob/master/.github/workflows/build.yml#L80"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "CI wheel artifacts verified; no release publisher found in inspected default-branch workflows."
+    },
+    {
+      "package": "numpy",
+      "repositories": [
+        "https://github.com/numpy/numpy"
+      ],
+      "builder_evidence": [
+        "https://github.com/numpy/numpy/blob/main/.github/workflows/wheels.yml#L114"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Verified CI builder; its header distinguishes this from the separate `numpy/numpy-release` infrastructure."
+    },
+    {
+      "package": "onnx",
+      "repositories": [
+        "https://github.com/onnx/onnx"
+      ],
+      "builder_evidence": [
+        "https://github.com/onnx/onnx/blob/main/.github/workflows/release_linux_cibw.yml#L99"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builder is independently dispatchable. Current [create_release.yml](https://github.com/onnx/onnx/blob/main/.github/workflows/create_release.yml#L70) has malformed `$/` reusable-workflow references; successful release orchestration is not established."
+    },
+    {
+      "package": "onnxruntime-qnn",
+      "repositories": [
+        "https://github.com/onnxruntime/onnxruntime-qnn"
+      ],
+      "builder_evidence": [
+        "https://github.com/onnxruntime/onnxruntime-qnn/blob/main/.github/workflows/qualcomm-internal-build-and-test-single-os.yml#L156",
+        "https://github.com/onnxruntime/onnxruntime-qnn/blob/main/qcom/scripts/linux/build.sh#L147"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Alternative linked in the `onnxruntime` row. Uses self-hosted Qualcomm runners/Artifactory; Microsoft's separate Azure packaging is not the Actions evidence."
+    },
+    {
+      "package": "orjson",
+      "repositories": [
+        "https://github.com/ijl/orjson"
+      ],
+      "builder_evidence": [
+        "https://github.com/ijl/orjson/blob/master/.github/workflows/artifact.yaml#L419"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Actual Rust/Python wheel compilation, in addition to artifact handling/publication."
+    },
+    {
+      "package": "pandas",
+      "repositories": [
+        "https://github.com/pandas-dev/pandas"
+      ],
+      "builder_evidence": [
+        "https://github.com/pandas-dev/pandas/blob/main/.github/workflows/wheels.yml#L114"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds from generated sdist; scheduled/manual/selected PR and release-tag paths."
+    },
+    {
+      "package": "preshed",
+      "repositories": [
+        "https://github.com/explosion/preshed"
+      ],
+      "builder_evidence": [
+        "https://github.com/explosion/preshed/blob/v3.0.x/.github/workflows/cibuildwheel.yml#L13",
+        "https://github.com/explosion/gha-cibuildwheel/blob/2c98f757f13d112cf73fcf4b627249f1fffb5aae/.github/workflows/cibuildwheel.yml#L208"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Snapshot default branch is `v3.0.x`; shared implementation builds the caller's package."
+    },
+    {
+      "package": "propcache",
+      "repositories": [
+        "https://github.com/aio-libs/propcache"
+      ],
+      "builder_evidence": [
+        "https://github.com/aio-libs/propcache/blob/master/.github/workflows/ci-cd.yml#L255",
+        "https://github.com/aio-libs/propcache/blob/master/.github/workflows/reusable-build-wheel.yml#L120"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Caller and actual builder are both package-local."
+    },
+    {
+      "package": "psutil",
+      "repositories": [
+        "https://github.com/giampaolo/psutil"
+      ],
+      "builder_evidence": [
+        "https://github.com/giampaolo/psutil/blob/master/.github/workflows/wheels.yml#L89"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "CI/manual construction and artifact checks verified; release publication not established."
+    },
+    {
+      "package": "pycares",
+      "repositories": [
+        "https://github.com/saghul/pycares"
+      ],
+      "builder_evidence": [
+        "https://github.com/saghul/pycares/blob/master/.github/workflows/release-wheels.yml#L12",
+        "https://github.com/saghul/pycares/blob/master/.github/workflows/run-cibuildwheel.yml#L67"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Ordinary and published-release callers use the same verified builder."
+    },
+    {
+      "package": "pycryptodome",
+      "repositories": [
+        "https://github.com/Legrandin/pycryptodome"
+      ],
+      "builder_evidence": [
+        "https://github.com/Legrandin/pycryptodome/blob/master/.github/workflows/wheels.yml#L47",
+        "https://github.com/Legrandin/pycryptodome/blob/master/pyproject.toml#L6"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds the `Crypto` namespace distribution; tag builder also gates on actor `Legrandin`. Artifacts do not establish PyPI publication."
+    },
+    {
+      "package": "pymongo",
+      "repositories": [
+        "https://github.com/mongodb/mongo-python-driver"
+      ],
+      "builder_evidence": [
+        "https://github.com/mongodb/mongo-python-driver/blob/main/.github/workflows/dist.yml#L78",
+        "https://github.com/mongodb/mongo-python-driver/blob/main/.github/workflows/release-python.yml#L56"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Release caller constructs distributions rather than merely fetching existing wheels."
+    },
+    {
+      "package": "pymupdf",
+      "repositories": [
+        "https://github.com/pymupdf/PyMuPDF"
+      ],
+      "builder_evidence": [
+        "https://github.com/pymupdf/PyMuPDF/blob/main/.github/workflows/build_wheels.yml#L130",
+        "https://github.com/pymupdf/PyMuPDF/blob/main/scripts/gh_release.py#L390"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Manual builder; verified PyMuPDF itself, not just MuPDF C code or the optional PyMuPDFb companion."
+    },
+    {
+      "package": "pynacl",
+      "repositories": [
+        "https://github.com/pyca/pynacl"
+      ],
+      "builder_evidence": [
+        "https://github.com/pyca/pynacl/blob/main/.github/workflows/wheel-builder.yml#L89"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Python wheel construction with libsodium, not only native-library compilation."
+    },
+    {
+      "package": "pyodbc",
+      "repositories": [
+        "https://github.com/mkleehammer/pyodbc"
+      ],
+      "builder_evidence": [
+        "https://github.com/mkleehammer/pyodbc/blob/master/.github/workflows/artifacts_build.yml#L38"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Manually dispatched release-artifact builder; PyPI publication is not established by this workflow."
+    },
+    {
+      "package": "pyproj",
+      "repositories": [
+        "https://github.com/pyproj4/pyproj"
+      ],
+      "builder_evidence": [
+        "https://github.com/pyproj4/pyproj/blob/main/.github/workflows/release.yaml#L141"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds wheels with bundled PROJ dependencies."
+    },
+    {
+      "package": "pyyaml",
+      "repositories": [
+        "https://github.com/yaml/pyyaml"
+      ],
+      "builder_evidence": [
+        "https://github.com/yaml/pyyaml/blob/main/.github/workflows/ci.yaml#L251"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds the workflow's extracted PyYAML sdist and uploads `dist/*.whl`."
+    },
+    {
+      "package": "regex",
+      "repositories": [
+        "https://github.com/mrabarnett/mrab-regex"
+      ],
+      "builder_evidence": [
+        "https://github.com/mrabarnett/mrab-regex/blob/hg/.github/workflows/main.yml#L89"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Push-triggered binary wheel jobs; snapshot default branch is `hg`."
+    },
+    {
+      "package": "rpds-py",
+      "repositories": [
+        "https://github.com/crate-py/rpds"
+      ],
+      "builder_evidence": [
+        "https://github.com/crate-py/rpds/blob/main/.github/workflows/CI.yml#L192"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Python bindings repository, not the underlying `orium/rpds` Rust library also linked in metadata."
+    },
+    {
+      "package": "safetensors",
+      "repositories": [
+        "https://github.com/safetensors/safetensors"
+      ],
+      "builder_evidence": [
+        "https://github.com/safetensors/safetensors/blob/main/.github/workflows/python-release.yml#L55"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds `bindings/python/Cargo.toml`; PyPI's `huggingface/safetensors` URL redirects here."
+    },
+    {
+      "package": "scikit-image",
+      "repositories": [
+        "https://github.com/scikit-image/scikit-image"
+      ],
+      "builder_evidence": [
+        "https://github.com/scikit-image/scikit-image/blob/main/.github/workflows/wheels-recipe.yaml#L60"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Reusable recipe called by release and nightly wheel workflows."
+    },
+    {
+      "package": "scikit-learn",
+      "repositories": [
+        "https://github.com/scikit-learn/scikit-learn"
+      ],
+      "builder_evidence": [
+        "https://github.com/scikit-learn/scikit-learn/blob/main/.github/workflows/wheels.yml#L177"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds/tests wheels and stores `wheelhouse/*.whl` artifacts."
+    },
+    {
+      "package": "scipy",
+      "repositories": [
+        "https://github.com/scipy/scipy"
+      ],
+      "builder_evidence": [
+        "https://github.com/scipy/scipy/blob/main/.github/workflows/wheels.yml#L135"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds/tests wheels and uploads `dist/*.whl`."
+    },
+    {
+      "package": "sentencepiece",
+      "repositories": [
+        "https://github.com/google/sentencepiece"
+      ],
+      "builder_evidence": [
+        "https://github.com/google/sentencepiece/blob/master/.github/workflows/wheel.yml#L84"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Build runs in `python/`; also verifies rebuilding from the sdist."
+    },
+    {
+      "package": "shap",
+      "repositories": [
+        "https://github.com/shap/shap"
+      ],
+      "builder_evidence": [
+        "https://github.com/shap/shap/blob/main/.github/workflows/build_wheels.yml#L131"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Named `shap` builder, not the separate `shap-gpu` workflow."
+    },
+    {
+      "package": "spacy",
+      "repositories": [
+        "https://github.com/explosion/spaCy"
+      ],
+      "builder_evidence": [
+        "https://github.com/explosion/spaCy/blob/master/.github/workflows/cibuildwheel.yml#L15",
+        "https://github.com/explosion/gha-cibuildwheel/blob/2c98f757f13d112cf73fcf4b627249f1fffb5aae/.github/workflows/cibuildwheel.yml#L209"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Release-tag caller selects `spacy-*.whl` and `pure-python: false`."
+    },
+    {
+      "package": "srsly",
+      "repositories": [
+        "https://github.com/explosion/srsly"
+      ],
+      "builder_evidence": [
+        "https://github.com/explosion/srsly/blob/master/.github/workflows/cibuildwheel.yml#L16",
+        "https://github.com/explosion/gha-cibuildwheel/blob/2c98f757f13d112cf73fcf4b627249f1fffb5aae/.github/workflows/cibuildwheel.yml#L163"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Current caller selects `pure-python: true`; shared implementation builds a universal wheel, not its cibuildwheel branch."
+    },
+    {
+      "package": "statsmodels",
+      "repositories": [
+        "https://github.com/statsmodels/statsmodels"
+      ],
+      "builder_evidence": [
+        "https://github.com/statsmodels/statsmodels/blob/main/.github/workflows/cron-test.yml#L39"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Verified CI/scheduled wheel construction; this evidence does not establish the PyPI release pipeline."
+    },
+    {
+      "package": "thinc",
+      "repositories": [
+        "https://github.com/explosion/thinc"
+      ],
+      "builder_evidence": [
+        "https://github.com/explosion/thinc/blob/v8.3.x/.github/workflows/cibuildwheel.yml#L19",
+        "https://github.com/explosion/gha-cibuildwheel/blob/d0d89c035a9cd4b9b847b179c88508d7cbee965f/.github/workflows/cibuildwheel.yml#L217"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Release-tag caller; snapshot default branch is `v8.3.x`."
+    },
+    {
+      "package": "thriftpy2",
+      "repositories": [
+        "https://github.com/Thriftpy/thriftpy2"
+      ],
+      "builder_evidence": [
+        "https://github.com/Thriftpy/thriftpy2/blob/master/.github/workflows/build.yaml#L27"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Tag/manual builds upload wheels before a separate PyPI publication job."
+    },
+    {
+      "package": "tokenizers",
+      "repositories": [
+        "https://github.com/huggingface/tokenizers"
+      ],
+      "builder_evidence": [
+        "https://github.com/huggingface/tokenizers/blob/main/.github/workflows/python-release.yml#L140"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Build runs in `bindings/python` and uploads the resulting Python wheels."
+    },
+    {
+      "package": "tornado",
+      "repositories": [
+        "https://github.com/tornadoweb/tornado"
+      ],
+      "builder_evidence": [
+        "https://github.com/tornadoweb/tornado/blob/master/.github/workflows/build.yml#L90"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Release builder uploads wheel artifacts; separate tests also build disposable wheels."
+    },
+    {
+      "package": "tree-sitter-language-pack",
+      "repositories": [
+        "https://github.com/xberg-io/tree-sitter-language-pack"
+      ],
+      "builder_evidence": [
+        "https://github.com/xberg-io/tree-sitter-language-pack/blob/main/.github/workflows/publish.yaml#L730"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Alternative linked in the `tree-sitter-languages` row; explicit Python wheel job builds `packages/python`."
+    },
+    {
+      "package": "triton-windows",
+      "repositories": [
+        "https://github.com/triton-lang/triton-windows"
+      ],
+      "builder_evidence": [
+        "https://github.com/triton-lang/triton-windows/blob/readme/.github/workflows/build-triton.yml#L149",
+        "https://github.com/triton-lang/triton-windows/blob/main-windows/setup.py#L675"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Manual Windows builder; workflows live on `readme` and check out the requested code ref, default `main-windows`."
+    },
+    {
+      "package": "ujson",
+      "repositories": [
+        "https://github.com/ultrajson/ultrajson"
+      ],
+      "builder_evidence": [
+        "https://github.com/ultrajson/ultrajson/blob/main/.github/workflows/deploy.yml#L70"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Build outputs `dist/` before downstream artifact download/publication."
+    },
+    {
+      "package": "winloop",
+      "repositories": [
+        "https://github.com/Vizonex/Winloop"
+      ],
+      "builder_evidence": [
+        "https://github.com/Vizonex/Winloop/blob/main/.github/workflows/run-cibuildwheel.yml#L73"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Reusable job called by `build-wheels.yml` and `release-wheels.yml`."
+    },
+    {
+      "package": "wrapt",
+      "repositories": [
+        "https://github.com/GrahamDumpleton/wrapt"
+      ],
+      "builder_evidence": [
+        "https://github.com/GrahamDumpleton/wrapt/blob/develop/.github/workflows/build-test-release.yml#L273",
+        "https://github.com/GrahamDumpleton/wrapt/blob/develop/.github/workflows/build-test-release.yml#L244"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Compiled wheels plus a separate pure-Python fallback wheel."
+    },
+    {
+      "package": "xgboost-cpu",
+      "repositories": [
+        "https://github.com/dmlc/xgboost"
+      ],
+      "builder_evidence": [
+        "https://github.com/dmlc/xgboost/blob/master/.github/workflows/python_wheels_winarm64.yml#L93"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Explicitly renames the distribution to `xgboost-cpu` before building; not merely an `xgboost` wheel."
+    },
+    {
+      "package": "yarl",
+      "repositories": [
+        "https://github.com/aio-libs/yarl"
+      ],
+      "builder_evidence": [
+        "https://github.com/aio-libs/yarl/blob/master/.github/workflows/reusable-cibuildwheel.yml#L111"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "`ci-cd.yml` calls the reusable builder on its own source tarball."
+    },
+    {
+      "package": "zope-interface",
+      "repositories": [
+        "https://github.com/zopefoundation/zope.interface"
+      ],
+      "builder_evidence": [
+        "https://github.com/zopefoundation/zope.interface/blob/master/.github/workflows/tests.yml#L211"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Build-package jobs generate artifacts consumed by the tag-gated publisher."
+    },
+    {
+      "package": "zopfli",
+      "repositories": [
+        "https://github.com/fonttools/py-zopfli"
+      ],
+      "builder_evidence": [
+        "https://github.com/fonttools/py-zopfli/blob/master/.github/workflows/ci.yml#L92"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Builds `wheelhouse/*.whl`, including separate architecture jobs."
+    },
+    {
+      "package": "zstandard",
+      "repositories": [
+        "https://github.com/indygreg/python-zstandard"
+      ],
+      "builder_evidence": [
+        "https://github.com/indygreg/python-zstandard/blob/main/.github/workflows/wheel.yml#L107"
+      ],
+      "onboarding": "needs-verification",
+      "audit_notes": "Linux, macOS and Windows wheel jobs upload generated artifacts."
+    }
+  ]
+}

@@ -14,6 +14,7 @@ In this repo, you can find info about our projects &amp; [file issues](https://g
 ## Projects
 * Supporting Python packages natively on Windows on Arm
      * [Status](https://github.com/khmyznikov/PyEnv-WoA-State)
+     * [Daily Windows Arm64 wheel monitoring pilot](monitoring/README.md) (read-only rollout)
 * LLVM
 * GCC
 * Software product enablement

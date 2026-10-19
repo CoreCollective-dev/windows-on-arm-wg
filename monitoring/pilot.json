@@ -1,0 +1,119 @@
+{
+  "schema": 1,
+  "tracker": "CoreCollective-dev/windows-on-arm-wg",
+  "project_url": "https://github.com/users/khmyznikov/projects/2",
+  "packages": [
+    {
+      "package": "cryptography",
+      "owner": "khmyznikov",
+      "channels": [
+        {
+          "id": "wheel-win-arm64",
+          "repository": "pyca/cryptography",
+          "workflow": "wheel-builder.yml",
+          "events": ["push", "workflow_dispatch"],
+          "scopes": [{"id": "release-50-0", "ref": "^50\\.0\\.[0-9]+$"}],
+          "targets": [
+            {"id": "cp314", "job": "^3\\.14 arm64(?: abi3-py311)?$"},
+            {"id": "cp314t", "job": "^3\\.14t arm64$"}
+          ],
+          "required_steps": [
+            {"stage": "build-test", "pattern": "^Run \\./\\.github/actions/windows-wheel$"}
+          ],
+          "baseline": "2026-10-19: https://github.com/pyca/cryptography/actions/runs/36713008517; source release/manual builder, no generic silence deadline."
+        },
+        {
+          "id": "tests-win-arm64",
+          "repository": "pyca/cryptography",
+          "workflow": "ci.yml",
+          "events": ["push", "schedule"],
+          "scopes": [{"id": "main", "ref": "^main$"}],
+          "targets": [
+            {"id": "cp314", "job": "^windows \\(arm64, arm64, windows-11-arm, 3\\.14, tests-nocoverage\\)$"},
+            {"id": "cp315", "job": "^windows \\(arm64, arm64, windows-11-arm, 3\\.15, tests-nocoverage\\)$"}
+          ],
+          "required_steps": [
+            {"stage": "test", "pattern": "^Run \\./\\.github/actions/windows-tests$"}
+          ],
+          "max_silence_hours": 72,
+          "baseline": "2026-10-19: https://github.com/pyca/cryptography/actions/runs/39243624070"
+        }
+      ]
+    },
+    {
+      "package": "pyproj",
+      "owner": "khmyznikov",
+      "channels": [
+        {
+          "id": "wheel-win-arm64",
+          "repository": "pyproj4/pyproj",
+          "workflow": "release.yaml",
+          "events": ["push", "schedule", "workflow_dispatch"],
+          "scopes": [{"id": "main", "ref": "^main$"}],
+          "targets": [{"id": "windows-arm64", "job": "^Build ARM64 wheels on windows-11-arm$"}],
+          "required_steps": [
+            {"stage": "build-test", "pattern": "^Build wheels$"},
+            {"stage": "upload", "pattern": "^Upload artifacts$"}
+          ],
+          "baseline": "2026-10-19: https://github.com/pyproj4/pyproj/actions/runs/39259020458; main-branch push builder, no scheduled-cadence assumption."
+        }
+      ]
+    },
+    {
+      "package": "rpds-py",
+      "owner": "khmyznikov",
+      "channels": [
+        {
+          "id": "wheel-win-arm64",
+          "repository": "crate-py/rpds",
+          "workflow": "CI.yml",
+          "events": ["push", "workflow_dispatch"],
+          "scopes": [{"id": "main", "ref": "^main$"}],
+          "targets": [{"id": "windows-arm64", "job": "^Build Windows ARM wheels \\(aarch64-pc-windows-msvc\\)$"}],
+          "required_steps": [
+            {"stage": "build-test", "pattern": "^Build wheels$"},
+            {"stage": "upload", "pattern": "^Upload wheels$"}
+          ],
+          "baseline": "2026-10-19: https://github.com/crate-py/rpds/actions/runs/37520710815; no scheduled-cadence assumption."
+        }
+      ]
+    },
+    {
+      "package": "mypy",
+      "owner": "khmyznikov",
+      "channels": [
+        {
+          "id": "wheel-win-arm64",
+          "repository": "mypyc/mypy_mypyc-wheels",
+          "workflow": "build.yml",
+          "events": ["push"],
+          "scopes": [{"id": "development", "ref": "^v[0-9]+\\.[0-9]+\\.[0-9]+\\+dev\\.[0-9a-f]+$"}],
+          "targets": [
+            {"id": "cp314", "job": "^Build cp314-win_arm64$"},
+            {"id": "cp314t", "job": "^Build cp314t-win_arm64$"}
+          ],
+          "required_steps": [
+            {"stage": "build-test", "pattern": "^Run pypa/cibuildwheel@.*$"}
+          ],
+          "max_silence_hours": 72,
+          "baseline": "2026-10-19: https://github.com/mypyc/mypy_mypyc-wheels/actions/runs/39281902434; actual delegated mypy builder."
+        }
+      ]
+    },
+    {
+      "package": "pyodbc",
+      "owner": "khmyznikov",
+      "channels": [
+        {
+          "id": "wheel-win-arm64",
+          "repository": "mkleehammer/pyodbc",
+          "workflow": "artifacts_build.yml",
+          "events": ["workflow_dispatch"],
+          "scopes": [{"id": "main", "ref": "^master$"}],
+          "targets": [{"id": "windows-arm64", "job": "^Build wheels on Windows ARM64$"}],
+          "baseline": "2026-10-19: https://github.com/mkleehammer/pyodbc/actions/runs/18600198971; historical logs/steps expired, manual-only cadence."
+        }
+      ]
+    }
+  ]
+}
