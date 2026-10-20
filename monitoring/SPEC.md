@@ -4,13 +4,41 @@ Status: approved direction; daily read-only pilot rollout started on 2026-10-19.
 
 Date: 2026-10-19.
 
+### Collection update (2026-10-20)
+
+The user approved **all relevant runs in the past 24 hours, including PRs,
+for every configured package**, to detect regressions before merge. Evaluate
+every settled run, not merely the latest mainline success. PR/fork/ref histories
+are isolated; if GitHub omits PR association, use the immutable head commit
+rather than guessing. Cross-workflow baselines must match the source SHA, head
+repository, event and ref. The original ARM-failed/AMD-successful rule is unchanged.
+The all-package observer is being deployed read-only. Public issue creation,
+status writes and participant notifications remain unapproved and disabled in
+the new workflow; the legacy cryptography workflow is unchanged by request.
+
+### Mandatory comparative policy update (2026-10-20 UTC)
+
+Only a failed Windows Arm64 build/test job with a successful equivalent Windows
+AMD64 baseline is an Arm-specific failure. AMD64 failure, skip, cancellation,
+missing evidence or an unverified comparator cannot produce Broken. Arm64 success
+is not a failure when AMD64 is non-success. Runs that build/test neither platform
+are inapplicable, not coverage regressions.
+
+Pair the same source, Python/ABI and build/test role. An explicitly configured
+cross-workflow comparator must join on identical source SHA and reviewed ref.
+Different build-source checkout SHAs cannot be hidden by equal workflow SHAs.
+Legacy single-platform failure state must be rebased before using this policy.
+All-package comparative observation is read-only; no new public issues are
+approved. The planned tracking UI is a master issue with package sub-issues; Projects is
+deferred and is not a prerequisite.
+
 ### First implementation milestone
 
-The [daily read-only pilot](../.github/workflows/wheel-monitor.yml) is deployed on
-the tracker repository's main branch. It observes five verified package
-configurations, preserves report/state artifacts, and plans notification
-transitions without posting comments. The full 84-package audit is imported as
-an onboarding backlog. See the [pilot guide](README.md) for implemented behavior
+The [daily read-only observer](../.github/workflows/wheel-monitor.yml) is deployed on
+the tracker repository's main branch. It evaluates all 84 audited dispositions
+and their configured platform comparisons, preserves report/state artifacts,
+and plans notification transitions without posting comments. Exclusions and
+unverified coverage remain explicit. See the [observer guide](README.md) for implemented behavior
 and remaining gates. Live issue reconciliation, participant notifications, and
 board synchronization are subsequent milestones, not enabled features of this
 first deployment.
@@ -18,8 +46,8 @@ first deployment.
 ## 1. Goal and agreed scope
 
 Maintain one long-lived tracking issue per Python package in
-**CoreCollective-dev/windows-on-arm-wg**, with those issues displayed on a
-GitHub Projects board. A scheduled GitHub Actions monitor checks selected
+**CoreCollective-dev/windows-on-arm-wg**, linked under one master issue.
+Projects is deferred. A scheduled GitHub Actions monitor checks selected
 upstream **Windows Arm64 wheel builds and related tests**, updates each
 package's health, and comments on its existing issue when something needs
 attention or recovers.
@@ -47,7 +75,8 @@ and board belong in the agreed tracker repository, not this repository.
 - Creating issues or comments in upstream repositories.
 - Proving that a wheel was uploaded to PyPI. Build/test health and publication
   availability are different signals; PyPI checks can be added separately.
-- Monitoring Linux/macOS/Windows x64 jobs or every contributor's pull requests.
+- Monitoring unrelated Linux/macOS failures. Windows AMD64 is the required
+  comparison baseline, and relevant PR runs are now explicitly in scope.
 - AI-based failure diagnosis, external databases, or a continuously running service.
 
 ## 2. Inputs and eligibility
@@ -219,9 +248,9 @@ Existing manually maintained labels, assignees, issue titles and body content
 must be preserved. Machine markers are trusted only in expected locations and,
 for status/event comments, only from the configured bot identity.
 
-### GitHub Projects board
+### Optional future GitHub Projects board (deferred)
 
-Use the supplied [khmyznikov Project 2](https://github.com/users/khmyznikov/projects/2),
+If separately approved later, use the supplied [khmyznikov Project 2](https://github.com/users/khmyznikov/projects/2),
 linked to the tracker repository. This user-owned board replaces the originally
 proposed organization-owned Project. Add each enrolled issue once after live
 rollout is approved and board credentials have been verified.
@@ -235,32 +264,33 @@ rollout is approved and board credentials have been verified.
 | Status, assignees, priority | Human-owned triage fields; do not confuse work status with build health. |
 
 Recommended views: Health board, Broken/Attention table, and All packages.
-Missing board configuration is a deployment error, not an invitation to create a
-different project. Board synchronization failure does not undo a posted alert:
+Board configuration is not required for the current issue-first rollout. If a
+future board integration is enabled, missing configuration is an error, not an
+invitation to create a different project. Its synchronization failure must not undo a posted alert:
 record it, fail the monitoring run, and retry synchronization next time.
 
 ## 7. Collection, ordering, and coverage
 
 1. Poll every 24 hours, UTC cron `17 15 * * *`, plus manual runs.
    Scheduling off the hour reduces contention; it is not an exact-time SLA.
-2. On onboarding, inspect up to seven days of history to establish a baseline.
-   If currently broken, post one current-state notification, not one per old run.
-   If no eligible run exists, initialize Unknown rather than Healthy.
-3. Afterwards, use the last fully scanned window with a 48-hour overlap.
-   Paginate all runs/jobs/comments; never interpret a page size as complete history.
-4. Discover runs without a success-only filter. Apply reviewed event/ref rules;
-   default coverage is the configured mainline and relevant release/manual
-   build refs. PR runs are excluded unless deliberately enrolled separately.
+2. Each poll evaluates every relevant settled run created in the past 24 hours.
+   An empty window is Unknown/no recent comparison, not an old successful baseline.
+3. Paginate all run/job/comment lists. Persist run/attempt/outcome fingerprints
+   so overlapping manual or scheduled polls do not resend transitions.
+4. Discover without success, branch, or PR-exclusion filters. Include relevant
+   PRs, pushes, schedules, manual and release runs. Keep each PR/head repository
+   and non-PR ref/event stream separate; do not let another PR recover an incident.
 5. Persist pending run IDs and recheck them until terminal. A long-running job
    must not disappear merely because its creation time leaves the overlap window.
-6. Poll recent run IDs for changed `run_attempt`, including reruns of old runs.
-   Keep a lightweight index of eligible run IDs discovered over the last 90 days
-   and refresh that index once daily; a manual replay can inspect older reruns.
-   Older reruns are outside automatic coverage and this boundary is documented.
+6. Evaluate the latest attempt of each discovered run and recheck pending IDs.
+   Ninety days is the deduplication/notification-memory retention horizon, not
+   an upstream 90-day search. Older reruns outside the observation window need
+   explicit replay; no automatic coverage of those reruns is claimed.
 7. Retrieve attempt-specific jobs. A partial rerun can omit jobs that were not
    rerun: carry their evidence from earlier attempts of the **same run and SHA**;
    never borrow evidence from a different commit. Missing prior evidence is Unknown.
-8. Within a channel/target, order runs by run creation sequence, not scan order
+8. Record every settled comparison, including failures later fixed in the same
+   window. Within each PR/ref/target stream, order by run creation sequence
    or late completion time. A newer attempt supersedes the same run's older
    attempt, but rerunning an old run cannot clear a failure on a newer run.
 9. Track discovery progress separately from unresolved evidence. Only advance a
@@ -288,9 +318,11 @@ or fabricate a recovery.
 | Observation | Result / action |
 | --- | --- |
 | All required jobs/steps and configured evidence pass | Healthy for those targets. |
-| Required build, test, repair, or upload step fails or times out | Broken; record which stage failed. |
-| Job fails and required-stage attribution is unavailable | Broken / Unattributed job failure; do not claim compilation specifically failed. |
-| Build marker exists but a required test fails | Broken / Test regression; wheel-build evidence does not suppress it. |
+| Arm64 build/test job fails; equivalent AMD64 build/test baseline succeeds | Broken; record both jobs and the failed stage. |
+| Arm64 fails but AMD64 also fails, skips or is unverified | Unknown comparison, not an Arm-specific failure; no failure ping. |
+| Arm64 passes but AMD64 does not | Not an Arm-specific failure; show the AMD64 result separately. |
+| Neither platform builds/tests on an intentionally gated run | Inapplicable; ignore for regression detection. |
+| Build marker exists but required Arm tests fail | Broken only with a successful equivalent AMD64 test baseline. |
 | Only an explicitly optional/non-gating step fails | Attention; record the warning without claiming a broken required build. |
 | Required job/step skipped, neutral, or unexpectedly absent | Attention / Coverage gap, unless a verified applicability rule explains it. |
 | Run queued, waiting for approval, or in progress | Pending; retain prior established result, subject to the configured timeout. |
@@ -313,7 +345,7 @@ Optional log evidence must not downgrade a conclusively successful required job.
   evidence produces Unknown, and only complete fresh success produces Healthy.
   All channels deliberately paused produces Paused. Display observation gaps
   alongside an established Broken result.
-- Open an incident after the first definitive eligible failure, with a
+- Open an incident only after the first definitive paired Arm-specific failure, with a
   30-minute settlement grace from the **latest attempt's completion** before
   notifying. Re-fetch before publishing so a quick successful rerun can suppress
   a transient failure notification. Grace may end between scheduled polls.
@@ -478,7 +510,8 @@ available.
 - Retry transient failures with exponential backoff and jitter; respect
   `Retry-After`, rate-limit headers, and secondary limits. Do not treat every
   403 as rate limiting, or every 404 as proof that a workflow was deleted.
-- Use a default budget of 800 REST requests and a 30-minute run timeout, preserving
+- Use a default bulk budget of 1,200 REST requests (320 per package) and a
+  30-minute run timeout, preserving
   available quota for reconciliation. Bound work per package so a busy source
   cannot monopolize a scan. Record deferred work and resume it next time.
 - Check rate-limit resources for the actual token; do not assume every token gets

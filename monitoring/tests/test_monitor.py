@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from monitoring.monitor import (
-    GitHub, MonitorError, REPOSITORY, SCHEMA, attempt_jobs, discover,
+    APIError, FAILURE_POLICY, GitHub, MonitorError, REPOSITORY, SCHEMA, attempt_jobs, discover,
     evaluate, literal, normalize, observe_channel, plan, restore, scan, stamp, summary, validate,
 )
 
@@ -17,7 +17,7 @@ NOW = datetime(2026, 10, 19, 15, 0, tzinfo=timezone.utc)
 CHANNEL = {
     "id": "wheel", "repository": "example/package", "workflow": "build.yml",
     "events": ["push"], "scopes": [{"id": "main", "ref": "^main$"}],
-    "targets": [{"id": "cp314", "job": "^Windows ARM64 cp314$"}],
+    "targets": [{"id": "cp314", "job": "^Windows ARM64 cp314$", "amd64_job": "^Windows AMD64 cp314$"}],
     "required_steps": [{"stage": "build", "pattern": "^Build wheel$"}],
     "baseline": "Verified against a recorded public run",
 }
@@ -36,6 +36,7 @@ def empty_state():
 def job(conclusion="success", name="Windows ARM64 cp314", steps=None):
     return {
         "name": name, "conclusion": conclusion, "status": "completed", "head_sha": "abc",
+        "run_id": 10,
         "html_url": "https://github.com/example/package/actions/runs/10/job/20",
         "steps": steps if steps is not None else [{"name": "Build wheel", "conclusion": conclusion}],
     }
@@ -54,7 +55,9 @@ def run(identifier=10, conclusion="success", age=2, attempt=1, branch="main", ev
 class FakeAPI:
     def __init__(self, runs=None, jobs=None, error=None):
         self.runs = runs if runs is not None else [run()]
-        self.jobs = jobs if jobs is not None else [job()]
+        self.jobs = list(jobs) if jobs is not None else [job()]
+        if self.jobs and not any("AMD64 cp314" in j["name"] for j in self.jobs):
+            self.jobs.append(job(name="Windows AMD64 cp314"))
         self.error = error
         self.requests = 0
         self.paths = []
@@ -106,9 +109,9 @@ class ValidationTests(unittest.TestCase):
         with self.assertRaises(MonitorError):
             validate(data)
 
-    def test_pull_requests_not_enrolled(self):
+    def test_pull_request_target_is_not_treated_as_pr_head_source(self):
         data = config()
-        data["packages"][0]["channels"][0]["events"] = ["pull_request"]
+        data["packages"][0]["channels"][0]["events"] = ["pull_request_target"]
         with self.assertRaises(MonitorError):
             validate(data)
 
@@ -127,16 +130,19 @@ class ValidationTests(unittest.TestCase):
 
 class EvaluationTests(unittest.TestCase):
     def assess(self, jobs):
-        return evaluate(jobs, CHANNEL["targets"][0], CHANNEL["required_steps"])
+        control = job(name="Windows AMD64 cp314", steps=[
+            {"name": "Build wheel", "conclusion": "success"}, {"name": "Test", "conclusion": "success"},
+        ])
+        return evaluate(jobs + [control], CHANNEL["targets"][0], CHANNEL["required_steps"])
 
     def test_success(self):
         self.assertEqual(self.assess([job()])["health"], "Healthy")
 
     def test_missing_job_is_not_green(self):
-        self.assertEqual(self.assess([])["health"], "Attention")
+        self.assertEqual(self.assess([])["health"], "Unknown")
 
     def test_other_arm64_platform_not_selected(self):
-        self.assertEqual(self.assess([job(name="macOS ARM64 cp314")])["condition"], "coverage")
+        self.assertEqual(self.assess([job(name="macOS ARM64 cp314")])["health"], "Unknown")
 
     def test_build_failure(self):
         result = self.assess([job("failure")])
@@ -150,16 +156,16 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(self.assess([job("failure", steps=steps)])["health"], "Broken")
 
     def test_cancelled_not_recovery(self):
-        self.assertEqual(self.assess([job("cancelled")])["condition"], "pending")
+        self.assertEqual(self.assess([job("cancelled")])["health"], "Unknown")
 
     def test_missing_required_step(self):
-        self.assertEqual(self.assess([job(steps=[])])["health"], "Attention")
+        self.assertEqual(self.assess([job(steps=[])])["health"], "Unknown")
 
     def test_required_skipped_job(self):
-        self.assertEqual(self.assess([job("skipped", steps=[])])["health"], "Attention")
+        self.assertEqual(self.assess([job("skipped", steps=[])])["health"], "Unknown")
 
     def test_multiple_matches_cannot_hide_failure(self):
-        self.assertEqual(self.assess([job(), job("failure")])["health"], "Broken")
+        self.assertEqual(self.assess([job(), job("failure")])["health"], "Unknown")
 
 
 class CollectionTests(unittest.TestCase):
@@ -204,6 +210,35 @@ class CollectionTests(unittest.TestCase):
         api.pages = lambda path, key: [job("failure")] if "/1/" in path else [job()]
         self.assertEqual(attempt_jobs(api, "example/package", run(attempt=2))[0]["conclusion"], "success")
 
+    def test_attempt_endpoint_outage_has_validated_fallback(self):
+        api = FakeAPI()
+
+        def pages(path, key, params=None):
+            if "/attempts/" in path:
+                raise APIError(path, 502)
+            return [{**job("failure"), "run_attempt": 1}, {**job(), "run_attempt": 2}]
+
+        api.pages = pages
+        self.assertEqual(attempt_jobs(api, "example/package", run(attempt=2))[0]["conclusion"], "success")
+
+    def test_fallback_without_attempt_identity_is_rejected(self):
+        api = FakeAPI()
+
+        def pages(path, key, params=None):
+            if "/attempts/" in path:
+                raise APIError(path, 502)
+            return [job()]
+
+        api.pages = pages
+        with self.assertRaises(MonitorError):
+            attempt_jobs(api, "example/package", run(attempt=2))
+
+    def test_discovery_filters_fixed_ref(self):
+        api = FakeAPI()
+        observe_channel(api, CHANNEL, {}, NOW)
+        self.assertEqual(api.paths[0][1]["branch"], "main")
+        self.assertEqual(api.paths[0][1]["event"], "push")
+
     def test_manual_builder_has_no_generic_stale_alarm(self):
         result = observe_channel(FakeAPI([run(age=500)]), CHANNEL, {}, NOW)
         self.assertEqual(result["results"]["main/cp314"]["health"], "Healthy")
@@ -222,7 +257,7 @@ class CollectionTests(unittest.TestCase):
         prior = observe_channel(FakeAPI(jobs=[job("failure")]), CHANNEL, {}, NOW)
         current = observe_channel(FakeAPI([run(20)], jobs=[]), CHANNEL, prior, NOW)
         self.assertEqual(current["results"]["main/cp314"]["health"], "Broken")
-        self.assertIn("missing", current["results"]["main/cp314"]["warning"])
+        self.assertIn("neither platform", current["results"]["main/cp314"]["warning"])
 
     def test_no_success_shaped_history_truncation(self):
         api = FakeAPI()
@@ -250,17 +285,17 @@ class TransitionTests(unittest.TestCase):
         self.assertIsNone(plan({}, {"cell": {"health": "Healthy", "condition": "pass"}}, 0))
 
     def test_repeated_failure_no_ping(self):
-        result = {"cell": {"health": "Broken", "condition": "build-failure"}}
+        result = {"cell": {"health": "Broken", "condition": "build-failure", "arm_specific_failure": True}}
         self.assertIsNone(plan(result, result, 1))
 
     def test_recurrence_has_new_sequence(self):
         good = {"cell": {"health": "Healthy", "condition": "pass"}}
-        bad = {"cell": {"health": "Broken", "condition": "build-failure"}}
+        bad = {"cell": {"health": "Broken", "condition": "build-failure", "arm_specific_failure": True}}
         self.assertEqual(plan(good, bad, 2)["sequence"], 3)
 
     def test_recovery(self):
-        old = {"cell": {"health": "Broken", "condition": "build-failure"}}
-        new = {"cell": {"health": "Healthy", "condition": "pass"}}
+        old = {"cell": {"health": "Broken", "condition": "build-failure", "arm_specific_failure": True}}
+        new = {"cell": {"health": "Healthy", "condition": "pass", "arm64": {"status": "passed"}}}
         self.assertEqual(plan(old, new, 1)["changes"][0]["kind"], "recovery")
 
     def test_scope_independence(self):
@@ -270,7 +305,7 @@ class TransitionTests(unittest.TestCase):
 
     def test_removed_target_not_a_recovery(self):
         old = {"cell": {"health": "Broken", "condition": "build-failure"}}
-        self.assertEqual(plan(old, {}, 1)["changes"][0]["kind"], "setup-change")
+        self.assertIsNone(plan(old, {}, 1))
 
     def test_scan_does_not_mutate_input(self):
         state = empty_state()
@@ -288,7 +323,8 @@ class TransitionTests(unittest.TestCase):
         first, state = scan(api, config(), empty_state(), NOW, scheduled=True)
         self.assertIsNone(first["packages"][0]["planned_notification"])
         second, _ = scan(api, config(), state, NOW + timedelta(days=1), scheduled=True)
-        self.assertIsNotNone(second["packages"][0]["planned_notification"])
+        self.assertIsNone(second["packages"][0]["planned_notification"])
+        self.assertTrue(second["errors"])
 
     def test_manual_checks_do_not_increment_gap_threshold(self):
         _, state = scan(FakeAPI(error="403"), config(), empty_state(), NOW)
@@ -303,9 +339,10 @@ class TransitionTests(unittest.TestCase):
     def test_removed_failed_target_retains_failure(self):
         original = config()
         original["packages"][0]["channels"][0]["targets"].append(
-            {"id": "cp314t", "job": "^Windows ARM64 cp314t$"}
+            {"id": "cp314t", "job": "^Windows ARM64 cp314t$", "amd64_job": "^Windows AMD64 cp314t$"}
         )
-        _, state = scan(FakeAPI(jobs=[job(), job("failure", name="Windows ARM64 cp314t")]),
+        _, state = scan(FakeAPI(jobs=[job(), job("failure", name="Windows ARM64 cp314t"),
+                                     job(name="Windows AMD64 cp314t")]),
                         original, empty_state(), NOW)
         report, _ = scan(FakeAPI(), config(), state, NOW)
         self.assertEqual(report["packages"][0]["health"], "Broken")

@@ -1,4 +1,4 @@
-name: Windows Arm64 wheel monitor (daily pilot)
+name: Windows Arm64 wheel monitor (daily fleet)
 
 on:
   schedule:
@@ -26,7 +26,7 @@ jobs:
           python-version: '3.12'
       - name: Test monitor
         run: python -m unittest discover -s monitoring/tests -v
-      - name: Observe upstream builds (no issue or board writes)
+      - name: Observe all 84 dispositions (read-only; no issue writes)
         env:
           GH_TOKEN: ${{ github.token }}
           MONITOR_EVENT: ${{ github.event_name }}

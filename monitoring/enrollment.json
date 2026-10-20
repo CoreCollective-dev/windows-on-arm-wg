@@ -1,0 +1,2160 @@
+{
+  "checked_at": "2026-10-19T21:09:21Z",
+  "packages": [
+    {
+      "package": "aiohttp",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/aio-libs/aiohttp/actions/runs/39208648953: 43 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/aio-libs/aiohttp/actions/runs/39103019573: 43 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/aio-libs/aiohttp/actions/runs/39008822464: 43 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "aio-libs/aiohttp/pages-build-deployment: workflow not found"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "aiohttp",
+        "decision": "paired",
+        "explanation": "Native Windows wheel builds are release-gated, not exercised by the successful master schedule sampled initially. Actual v3.14.5 tag jobs pass on both architectures even though the overall run fails elsewhere: whole-run failure is not an ARM failure. The pinned pyproject has test-command empty for these desktop wheel builds; mobile tests and AMD64-only Test jobs are not ARM wheel-test coverage.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/aio-libs/aiohttp/actions/runs/38097142483",
+            "label": "Push v3.14.5, source f17c631bddcfd4ec712342db28f1d3381a3fec71; run failed elsewhere, both Windows build jobs passed"
+          },
+          {
+            "url": "https://github.com/aio-libs/aiohttp/actions/runs/38097142483/job/114347510669",
+            "label": "ARM64: \ud83d\udce6 Build platform-specific wheels / windows-11-arm; Build wheels success"
+          },
+          {
+            "url": "https://github.com/aio-libs/aiohttp/actions/runs/38097142483/job/114347510614",
+            "label": "AMD64: \ud83d\udce6 Build platform-specific wheels / windows-latest; Build wheels success"
+          },
+          {
+            "url": "https://github.com/aio-libs/aiohttp/blob/f17c631bddcfd4ec712342db28f1d3381a3fec71/.github/workflows/ci-cd.yml",
+            "label": "Release-gated build-wheels matrix passes one shared source tarball into native Windows reusable builder jobs"
+          },
+          {
+            "url": "https://github.com/aio-libs/aiohttp/blob/f17c631bddcfd4ec712342db28f1d3381a3fec71/.github/workflows/reusable-cibuildwheel.yml",
+            "label": "Actual Build wheels action consumes dist/source-tarball-name and uploads compiled distributions"
+          },
+          {
+            "url": "https://github.com/aio-libs/aiohttp/blob/f17c631bddcfd4ec712342db28f1d3381a3fec71/pyproject.toml",
+            "label": "Desktop wheel test-command empty: do not infer tests from the cibuildwheel action"
+          }
+        ]
+      }
+    },
+    {
+      "package": "argon2-cffi-bindings",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/hynek/argon2-cffi-bindings/actions/runs/38711816016: 8 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "argon2-cffi-bindings",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/hynek/argon2-cffi-bindings/actions/runs/38711816016",
+            "label": "Observed platform jobs and source ecfd52d477af30a3a3294d0ed50e7f5faee60041"
+          }
+        ]
+      }
+    },
+    {
+      "package": "bcrypt",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "bcrypt",
+        "decision": "no-arm-target",
+        "explanation": "Suggested run contains Windows x64/x86 but no Windows Arm64 job. Its pinned Windows matrix includes only x86 and x64; Linux aarch64 is not a Windows comparator.",
+        "paired_targets": 0,
+        "targets": 0,
+        "evidence": [
+          {
+            "url": "https://github.com/pyca/bcrypt/actions/runs/38581422824",
+            "label": "Observed platform jobs and source 8bdaa018054ceaabd4d6e04d4bc1c91399461bea"
+          },
+          {
+            "url": "https://github.com/pyca/bcrypt/blob/8bdaa018054ceaabd4d6e04d4bc1c91399461bea/.github/workflows/wheel-builder.yml",
+            "label": "WINDOWS matrix at lines 200-202"
+          }
+        ]
+      }
+    },
+    {
+      "package": "bitarray",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/ilanschnell/bitarray/actions/runs/39301028865: 9 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "bitarray",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/ilanschnell/bitarray/actions/runs/39372420538",
+            "label": "Observed platform jobs and source 63e32a9619183772cd08a936c6568bd7aff610c8"
+          }
+        ]
+      }
+    },
+    {
+      "package": "bitsandbytes",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/bitsandbytes-foundation/bitsandbytes/actions/runs/33789167923: 49 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "bitsandbytes",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/bitsandbytes-foundation/bitsandbytes/actions/runs/33789167923",
+            "label": "Observed platform jobs and source 833649043474794b8fe7a4136e0c40faf077b2e0"
+          }
+        ]
+      }
+    },
+    {
+      "package": "cffi",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/python-cffi/cffi/actions/runs/39301876443: 118 jobs, 7 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "cffi",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 7,
+        "targets": 7,
+        "evidence": [
+          {
+            "url": "https://github.com/python-cffi/cffi/actions/runs/39301876443",
+            "label": "Observed platform jobs and source 7ac2b18fa2212052315a904ef5000f34edbd5ddf"
+          }
+        ]
+      }
+    },
+    {
+      "package": "clickhouse-connect",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/ClickHouse/clickhouse-connect/actions/runs/38936051914: 15 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/ClickHouse/clickhouse-connect/actions/runs/38932150762: 15 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/ClickHouse/clickhouse-connect/actions/runs/38927936960: 15 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/ClickHouse/clickhouse-connect/actions/runs/38936133665: 69 jobs, 15 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "clickhouse-connect",
+        "decision": "unresolved",
+        "explanation": "Old discovery selected clickhouse-connect-core, not clickhouse-connect. Need a verified driver Windows ARM64/AMD64 run; current native publish.yml has both declared jobs but no paired driver run was established.",
+        "paired_targets": 0,
+        "targets": 0,
+        "evidence": [
+          {
+            "url": "https://github.com/ClickHouse/clickhouse-connect/blob/d5a1d85c8c4ae119d6a65af219533e4cea059af3/.github/workflows/publish.yml",
+            "label": "Correct driver workflow"
+          },
+          {
+            "url": "https://github.com/ClickHouse/clickhouse-connect/blob/d5a1d85c8c4ae119d6a65af219533e4cea059af3/.github/workflows/publish_core.yml",
+            "label": "Wrong sibling distribution identified and removed"
+          }
+        ]
+      }
+    },
+    {
+      "package": "contourpy",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/contourpy/contourpy/actions/runs/39106689605: 17 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "contourpy",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/contourpy/contourpy/actions/runs/39106689605",
+            "label": "Observed platform jobs and source a783c576a583ae5c8a17ab773cfb34db062981a2"
+          }
+        ]
+      }
+    },
+    {
+      "package": "coverage",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "coverage",
+        "decision": "paired",
+        "explanation": "User-supplied run validated; both Windows platform selectors recorded without guessing. Main dispatch and the specifically reviewed kit branch are isolated; no recovery across arbitrary kit branches.",
+        "paired_targets": 5,
+        "targets": 5,
+        "evidence": [
+          {
+            "url": "https://github.com/coveragepy/coveragepy/actions/runs/38248667792",
+            "label": "Observed platform jobs and source 8605d4827694b727d90b966f12ed2f16645d95a7"
+          }
+        ]
+      }
+    },
+    {
+      "package": "cramjam",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/milesgranger/cramjam/actions/runs/36821129850: 42 jobs, 2 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "cramjam",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success. The distinct cramjam-pure-rust distribution is excluded from this package's targets.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/milesgranger/cramjam/actions/runs/36821129850",
+            "label": "Observed platform jobs and source 9ee07a89a0d477f20dd9fef59a25747cdcfbc2ee"
+          }
+        ]
+      }
+    },
+    {
+      "package": "cryptography",
+      "outcome": "verified-pilot",
+      "examined": [],
+      "channels": 2,
+      "error": null,
+      "comparison_review": {
+        "package": "cryptography",
+        "decision": "partial",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success. ARM64 3.14 test comparator remains unresolved; 3.15 uses the same test function with extra AMD64 coverage instrumentation.",
+        "paired_targets": 3,
+        "targets": 4,
+        "evidence": [
+          {
+            "url": "https://github.com/pyca/cryptography/actions/runs/39243624070",
+            "label": "Observed platform jobs and source b43c3a7b87e4c57408b50b31b028d80dbb98bdac"
+          }
+        ]
+      }
+    },
+    {
+      "package": "cymem",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "cymem",
+        "decision": "paired",
+        "explanation": "User-supplied run validated; both Windows platform selectors recorded without guessing. Release/prerelease tag prefixes are explicitly admitted; old expired step data remains unknown until a fresh run.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/explosion/cymem/actions/runs/38000198236",
+            "label": "Observed platform jobs and source ab7415bc36d77a937bb03392c2a3bd3123d9fd10"
+          }
+        ]
+      }
+    },
+    {
+      "package": "ddtrace",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/DataDog/dd-trace-py/actions/runs/39315120078: 5 jobs, 4 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "ddtrace",
+        "decision": "unresolved",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 0,
+        "targets": 4,
+        "evidence": [
+          {
+            "url": "https://github.com/DataDog/dd-trace-py/actions/runs/39315120078",
+            "label": "Observed platform jobs and source 77123daa79c8e668fb5b5f89cf50f4c13c548d0d"
+          }
+        ]
+      }
+    },
+    {
+      "package": "duckdb",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/duckdb/duckdb-python/actions/runs/39305085700: 10 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/duckdb/duckdb-python/actions/runs/39242549640: 48 jobs, 6 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "duckdb",
+        "decision": "paired",
+        "explanation": "User-supplied run validated; both Windows platform selectors recorded without guessing. Uses the reviewed release caller and pairs seed, wheel and each ABI test separately; both-platform omissions are skipped.",
+        "paired_targets": 6,
+        "targets": 6,
+        "evidence": [
+          {
+            "url": "https://github.com/duckdb/duckdb-python/actions/runs/38997181439",
+            "label": "Observed platform jobs and source 8076209b1b4ab41fc48880941dbdd4feab1ecdf4"
+          }
+        ]
+      }
+    },
+    {
+      "package": "faiss-cpu",
+      "outcome": "paused-archived",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "faiss-cpu",
+        "decision": "inactive",
+        "explanation": "Audited faiss-wheels/faiss-wheels is archived (rechecked). Keep it inactive; the newer PyPI release's actual producer still needs independent provenance before enrolling a replacement.",
+        "paired_targets": 0,
+        "targets": 0,
+        "evidence": [
+          {
+            "url": "https://github.com/faiss-wheels/faiss-wheels",
+            "label": "Archived audited wheel-packaging repository"
+          }
+        ]
+      }
+    },
+    {
+      "package": "fastavro",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/fastavro/fastavro/actions/runs/39276738519: 32 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/fastavro/fastavro/actions/runs/39127337907: 32 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/fastavro/fastavro/actions/runs/39030748673: 32 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/fastavro/fastavro/actions/runs/39277564092: 7 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/fastavro/fastavro/actions/runs/39127610854: 7 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/fastavro/fastavro/actions/runs/39030982735: 7 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/fastavro/fastavro/actions/runs/39274236658: 11 jobs, 5 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "fastavro",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 5,
+        "targets": 5,
+        "evidence": [
+          {
+            "url": "https://github.com/fastavro/fastavro/actions/runs/39274236658",
+            "label": "Observed platform jobs and source c62f6fe32505415824df1672dfc2195478187bb0"
+          }
+        ]
+      }
+    },
+    {
+      "package": "frozenlist",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/aio-libs/frozenlist/actions/runs/39210216939: 41 jobs, 6 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "frozenlist",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 6,
+        "targets": 6,
+        "evidence": [
+          {
+            "url": "https://github.com/aio-libs/frozenlist/actions/runs/39210216939",
+            "label": "Observed platform jobs and source 28558c022231feafc013d3039e0988988cf7697e"
+          }
+        ]
+      }
+    },
+    {
+      "package": "gevent",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/gevent/gevent/actions/runs/35110072261: 30 jobs, 5 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "gevent",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 5,
+        "targets": 5,
+        "evidence": [
+          {
+            "url": "https://github.com/gevent/gevent/actions/runs/35110072261",
+            "label": "Observed platform jobs and source 725ecc3e53dd74f3828f1cf189e1cbeaebbdfae9"
+          }
+        ]
+      }
+    },
+    {
+      "package": "google-re2",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "google-re2",
+        "decision": "excluded",
+        "explanation": "Excluded per Human input: the intended build pipeline is not observable through the requested public GitHub Actions monitoring.",
+        "paired_targets": 0,
+        "targets": 0,
+        "evidence": []
+      }
+    },
+    {
+      "package": "greenlet",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/python-greenlet/greenlet/actions/runs/30811699991: 38 jobs, 6 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "greenlet",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 6,
+        "targets": 6,
+        "evidence": [
+          {
+            "url": "https://github.com/python-greenlet/greenlet/actions/runs/30811699991",
+            "label": "Observed platform jobs and source b6690a5ecb7c550f96f790aad636b91db088a8b7"
+          }
+        ]
+      }
+    },
+    {
+      "package": "gymnasium",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/Farama-Foundation/Gymnasium/actions/runs/38627422430: 2 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/Farama-Foundation/Gymnasium/actions/runs/38535858433: 2 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/Farama-Foundation/Gymnasium/actions/runs/38535564463: 2 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/Farama-Foundation/Gymnasium/actions/runs/38627422412: 1 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/Farama-Foundation/Gymnasium/actions/runs/38535858448: 1 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/Farama-Foundation/Gymnasium/actions/runs/38535564622: 1 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/Farama-Foundation/Gymnasium/actions/runs/37300281659: 1 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "Farama-Foundation/Gymnasium/pages-build-deployment: workflow not found"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "gymnasium",
+        "decision": "universal",
+        "explanation": "Verified actual universal output, not an inferred absence of ARM jobs. The mainline PyPI builder invokes pyproject-build on Ubuntu with setuptools.build_meta and logs Successfully built gymnasium-1.4.0.tar.gz and gymnasium-1.4.0-py3-none-any.whl. There is no architecture-specific wheel pair to enroll.",
+        "paired_targets": 0,
+        "targets": 0,
+        "evidence": [
+          {
+            "url": "https://github.com/Farama-Foundation/Gymnasium/actions/runs/38627422430/job/116070013483",
+            "label": "Reviewed main push, SHA 57c1610e80214db72c1c7410d6b65bb1a989e233; build-wheels job logs the exact py3-none-any output"
+          },
+          {
+            "url": "https://github.com/Farama-Foundation/Gymnasium/blob/57c1610e80214db72c1c7410d6b65bb1a989e233/.github/workflows/pypi-publish.yml",
+            "label": "Actual caller: Ubuntu pyproject-build, Build sdist and wheels, distribution upload"
+          },
+          {
+            "url": "https://github.com/Farama-Foundation/Gymnasium/blob/57c1610e80214db72c1c7410d6b65bb1a989e233/pyproject.toml",
+            "label": "setuptools.build_meta backend and Python distribution project"
+          },
+          {
+            "url": "https://pypi.org/pypi/gymnasium/1.4.0/json",
+            "label": "Published wheel gymnasium-1.4.0-py3-none-any.whl corroborates the actual build log"
+          }
+        ]
+      }
+    },
+    {
+      "package": "h3",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/uber/h3-py/actions/runs/39302097664: 24 jobs, 5 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "h3",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success. AMD64 source matrix cp3*-win_amd64 is a superset of all five ARM interpreter cells; require its entire build/test job to pass.",
+        "paired_targets": 5,
+        "targets": 5,
+        "evidence": [
+          {
+            "url": "https://github.com/uber/h3-py/actions/runs/39302097664",
+            "label": "Observed platform jobs and source 83fac55493f55f0719a70f6948cf56751faca8bf"
+          }
+        ]
+      }
+    },
+    {
+      "package": "h5py",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/h5py/h5py/actions/runs/39209081220: 10 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "h5py",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/h5py/h5py/actions/runs/39209081220",
+            "label": "Observed platform jobs and source 270e8c1ed2d10d784db7c88faee7521e4939e7b8"
+          }
+        ]
+      }
+    },
+    {
+      "package": "hiredis",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/redis/hiredis-py/actions/runs/38772366767: 6 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "hiredis",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/redis/hiredis-py/actions/runs/38772366767",
+            "label": "Observed platform jobs and source 797e82650e183c524b3e7496b0bf4f66346dfd70"
+          }
+        ]
+      }
+    },
+    {
+      "package": "ijson",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/ICRAR/ijson/actions/runs/39176932046: 10 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "ijson",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/ICRAR/ijson/actions/runs/39176932046",
+            "label": "Observed platform jobs and source 6db23168512f82cd9e53fc26f0e871df7f90d42f"
+          }
+        ]
+      }
+    },
+    {
+      "package": "jiter",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/pydantic/jiter/actions/runs/38724189063: 75 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "jiter",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success. Compared the whole seven-interpreter ARM batch to ALL seven corresponding AMD64 production jobs; any AMD64 non-success suppresses the verdict.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/pydantic/jiter/actions/runs/38724189063",
+            "label": "Observed platform jobs and source e02134b389f90d1aaefa8caeda3c2df1ce9c053f"
+          }
+        ]
+      }
+    },
+    {
+      "package": "libcst",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/Instagram/LibCST/actions/runs/31461508173: 6 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "libcst",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/Instagram/LibCST/actions/runs/31461508173",
+            "label": "Observed platform jobs and source d9a255843b5cdbecc6834684d233bce1f2987f9d"
+          }
+        ]
+      }
+    },
+    {
+      "package": "llvmlite",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/numba/llvmlite/actions/runs/39027250984: 25 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/38053702870: 25 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/37121190845: 25 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/36930074476: 9 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/33016384019: 9 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/32894087744: 9 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/39027270634: 25 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/38053799163: 25 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/37121209567: 25 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/39027056025: 25 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/38053161280: 25 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/37120968795: 25 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/39027080502: 25 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/38053364158: 25 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/llvmlite/actions/runs/37121022709: 25 jobs, 0 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "llvmlite",
+        "decision": "paired",
+        "explanation": "Cache-only conversion of the previously verified mainline manual runs. ARM64 run 36974484173 and AMD64 run 36974481826 both have ref main and source SHA fac5ffe8ac216d419d1766019c162bee960edc97. Their actual CPython 3.12 ordinary-GIL wheel-build/repair and installed-wheel-test jobs all succeeded. These are named llvmlite Python wheels, not llvmdev or conda dependency packaging. Cross-workflow comparison must join by identical source SHA AND reviewed ref, then select the same Python/ABI and stage. A missing, skipped, failed, or stage-incomplete AMD64 comparator cannot establish an ARM-specific failure. No new upstream probes were made.",
+        "paired_targets": 2,
+        "targets": 2,
+        "evidence": [
+          {
+            "url": "https://github.com/numba/llvmlite/actions/runs/36974484173",
+            "label": "ARM64 workflow_dispatch, main, attempt 1, SHA fac5ffe8ac216d419d1766019c162bee960edc97"
+          },
+          {
+            "url": "https://github.com/numba/llvmlite/actions/runs/36974481826",
+            "label": "AMD64 workflow_dispatch, main, attempt 1, identical source SHA"
+          },
+          {
+            "url": "https://github.com/numba/llvmlite/actions/runs/36974484173/job/110735246118",
+            "label": "win-arm64-build-py3.12: Build wheel and Repair wheel with delvewheel both succeeded"
+          },
+          {
+            "url": "https://github.com/numba/llvmlite/actions/runs/36974481826/job/110735238915",
+            "label": "win-64-build (3.12): Build wheel and Repair wheel with delvewheel both succeeded"
+          },
+          {
+            "url": "https://github.com/numba/llvmlite/actions/runs/36974484173/job/110736484223",
+            "label": "win-arm64-test-py3.12: Install and test succeeded"
+          },
+          {
+            "url": "https://github.com/numba/llvmlite/actions/runs/36974481826/job/110736952304",
+            "label": "win-64-test (3.12): Install and test succeeded"
+          },
+          {
+            "url": "https://github.com/numba/llvmlite/blob/fac5ffe8ac216d419d1766019c162bee960edc97/.github/workflows/llvmlite_win-arm64_wheel_builder.yml",
+            "label": "Retained source reference for the actual ARM64 llvmlite wheel builder and installed-wheel tests"
+          },
+          {
+            "url": "https://github.com/numba/llvmlite/blob/fac5ffe8ac216d419d1766019c162bee960edc97/.github/workflows/llvmlite_win-64_wheel_builder.yml",
+            "label": "Retained source reference for the separate AMD64 wheel builder and installed-wheel tests"
+          }
+        ]
+      }
+    },
+    {
+      "package": "logbook",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "logbook",
+        "decision": "paired",
+        "explanation": "User-supplied run validated; both Windows platform selectors recorded without guessing. Provided PR run is selector evidence only; existing non-PR monitoring scope is preserved.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/getlogbook/logbook/actions/runs/39134666975",
+            "label": "Observed platform jobs and source 43172b4a29e6b57bbe3b79c2b2e3ccaa2e5a9362"
+          }
+        ]
+      }
+    },
+    {
+      "package": "lxml",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/lxml/lxml/actions/runs/38706693416: 158 jobs, 9 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "lxml",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 9,
+        "targets": 9,
+        "evidence": [
+          {
+            "url": "https://github.com/lxml/lxml/actions/runs/38706693416",
+            "label": "Observed platform jobs and source 584df5c85997bebdb23a4ab4aee15b0ffe96ac66"
+          }
+        ]
+      }
+    },
+    {
+      "package": "marisa-trie",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "marisa-trie",
+        "decision": "paired",
+        "explanation": "User-supplied run validated; both Windows platform selectors recorded without guessing. Provided PR run is selector evidence only; existing non-PR monitoring scope is preserved.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/pytries/marisa-trie/actions/runs/29778673854",
+            "label": "Observed platform jobs and source cc050dcd26ed98f23206e6e8b29537a1ec04bd4d"
+          }
+        ]
+      }
+    },
+    {
+      "package": "markupsafe",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/pallets/markupsafe/actions/runs/37073936755: 14 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "markupsafe",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/pallets/markupsafe/actions/runs/37073936755",
+            "label": "Observed platform jobs and source ece26078ec168ebac69f02877238e68d4b376c91"
+          }
+        ]
+      }
+    },
+    {
+      "package": "matplotlib",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/matplotlib/matplotlib/actions/runs/39213176459: 7 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "matplotlib",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/matplotlib/matplotlib/actions/runs/39213176459",
+            "label": "Observed platform jobs and source d7a19fbf48918c1a99f771c954c49c14ea95fc5d"
+          }
+        ]
+      }
+    },
+    {
+      "package": "maxminddb",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/maxmind/MaxMind-DB-Reader-python/actions/runs/38630507499: 11 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/maxmind/MaxMind-DB-Reader-python/actions/runs/38630470625: 11 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/maxmind/MaxMind-DB-Reader-python/actions/runs/38630436755: 11 jobs, 0 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "maxminddb",
+        "decision": "paired",
+        "explanation": "Generic windows-arm/windows-intel job names are genuine package wheel builders. Native ARM64 logs show maxminddb-3.2.0-cp310-cp310-win_arm64.whl and MAXMINDDB_REQUIRE_EXTENSION=1, ruling out a pure-Python fallback or libmaxminddb-only build. Desktop wheel test_command is empty in the actual log: this channel is build-only.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/maxmind/MaxMind-DB-Reader-python/actions/runs/39342899110",
+            "label": "Reviewed main push, SHA 82095788b74ff7d48c93f30c5344075375f7c5b4"
+          },
+          {
+            "url": "https://github.com/maxmind/MaxMind-DB-Reader-python/actions/runs/39342899110/job/118368485333",
+            "label": "ARM64 Build wheels for windows-arm; actual win_arm64 Python wheel output and empty test_command verified in log"
+          },
+          {
+            "url": "https://github.com/maxmind/MaxMind-DB-Reader-python/actions/runs/39342899110/job/118368485224",
+            "label": "Successful AMD64 Build wheels for windows-intel in the identical run"
+          },
+          {
+            "url": "https://github.com/maxmind/MaxMind-DB-Reader-python/blob/82095788b74ff7d48c93f30c5344075375f7c5b4/.github/workflows/release.yml",
+            "label": "windows-11-arm versus windows-latest; Build wheels uses cibuildwheel, MAXMINDDB_REQUIRE_EXTENSION=1 and maxminddb wheel artifact"
+          }
+        ]
+      }
+    },
+    {
+      "package": "ml-dtypes",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/jax-ml/ml_dtypes/actions/runs/39243087087: 8 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "ml-dtypes",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/jax-ml/ml_dtypes/actions/runs/39243087087",
+            "label": "Observed platform jobs and source c0674e3dbdc4de884b45a97cc49bf0fc28a41d8f"
+          }
+        ]
+      }
+    },
+    {
+      "package": "mmh3",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/hajimes/mmh3/actions/runs/36741097485: 26 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "mmh3",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/hajimes/mmh3/actions/runs/36741097485",
+            "label": "Observed platform jobs and source 4d81eca9cbbcb4e516c64c051287fe2076b7c72b"
+          }
+        ]
+      }
+    },
+    {
+      "package": "msgpack",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/msgpack/msgpack-python/actions/runs/39198367381: 10 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "msgpack",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/msgpack/msgpack-python/actions/runs/39198367381",
+            "label": "Observed platform jobs and source 3650629db01ef1ca8e3fc7d0c742614bb783c3a7"
+          }
+        ]
+      }
+    },
+    {
+      "package": "msgspec",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/msgspec/msgspec/actions/runs/39233664695: 18 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "msgspec",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/msgspec/msgspec/actions/runs/39233664695",
+            "label": "Observed platform jobs and source a9b39788d27eb86e69c97afb4e5ea4c96de4c547"
+          }
+        ]
+      }
+    },
+    {
+      "package": "multidict",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/aio-libs/multidict/actions/runs/39295708861: 43 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/aio-libs/multidict/actions/runs/39290634613: 43 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/aio-libs/multidict/actions/runs/39225551560: 43 jobs, 0 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "multidict",
+        "decision": "paired",
+        "explanation": "Current master schedules deliberately omit windows-11-arm, whereas release-tag v7.1.0 has independent native Windows builder jobs. Enroll only the verified 7.1 release series, not master PR/push/schedule coverage. Both Windows jobs use the same generated sdist and the pyproject pytest wheel-test command. Actual run attempt 2 retains both successful comparator jobs.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/aio-libs/multidict/actions/runs/37929221966",
+            "label": "Successful push v7.1.0, attempt 2, source 709f2600d00c4c3ed28f696e578027a299c7da83"
+          },
+          {
+            "url": "https://github.com/aio-libs/multidict/actions/runs/37929221966/job/114002124158",
+            "label": "ARM64 exact job \ud83d\udce6 Build wheels for other platforms / Build  wheels on windows-11-arm; double space after Build is real"
+          },
+          {
+            "url": "https://github.com/aio-libs/multidict/actions/runs/37929221966/job/114002124475",
+            "label": "Successful AMD64 \ud83d\udce6 Build wheels for other platforms / Build  wheels on windows-latest"
+          },
+          {
+            "url": "https://github.com/aio-libs/multidict/blob/709f2600d00c4c3ed28f696e578027a299c7da83/.github/workflows/ci-cd.yml",
+            "label": "Release-only native ARM runner condition and same source-tarball input"
+          },
+          {
+            "url": "https://github.com/aio-libs/multidict/blob/709f2600d00c4c3ed28f696e578027a299c7da83/pyproject.toml",
+            "label": "cibuildwheel tests pytest excluding leaks/hypothesis/capi; Windows tests not disabled by the macOS PR exception"
+          },
+          {
+            "url": "https://github.com/aio-libs/multidict/actions/runs/39210588832",
+            "label": "Counterexample: successful master schedule has only Windows AMD64 wheel job 117922947843, not ARM64"
+          }
+        ]
+      }
+    },
+    {
+      "package": "mypy",
+      "outcome": "verified-pilot",
+      "examined": [],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "mypy",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 2,
+        "targets": 2,
+        "evidence": [
+          {
+            "url": "https://github.com/mypyc/mypy_mypyc-wheels/actions/runs/39281902434",
+            "label": "Observed platform jobs and source 217cef1d6cf263bf6a43e4eb882c10bd4f55f3ff"
+          }
+        ]
+      }
+    },
+    {
+      "package": "nh3",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/messense/nh3/actions/runs/38994482488: 18 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "nh3",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/messense/nh3/actions/runs/38994482488",
+            "label": "Observed platform jobs and source 112cd0540b04ecfd6c871f22bc220e7a23a7d08b"
+          }
+        ]
+      }
+    },
+    {
+      "package": "numba",
+      "outcome": "paired-approved-numpy-exception",
+      "examined": [
+        "https://github.com/numba/numba/actions/runs/39017001423: 22 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/numba/actions/runs/38037735755: 22 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/numba/actions/runs/37109576227: 22 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/numba/actions/runs/39013156856: 22 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/numba/actions/runs/38034333479: 22 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/numba/actions/runs/37106296148: 22 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/numba/actions/runs/39013446879: 20 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/numba/actions/runs/38034665847: 20 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/numba/actions/runs/37106673599: 20 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/numba/actions/runs/39014098575: 22 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/numba/actions/runs/38035094816: 22 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numba/numba/actions/runs/37107117191: 22 jobs, 0 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "numba",
+        "decision": "paired",
+        "explanation": "User approved Numba's configured NumPy version differences on 2026-10-20. ARM build NumPy 2.3.5 may be compared with AMD64 build NumPy 2.0.2/2.1.3/2.3.3 for the matching Python 3.12/3.13/3.14; the Python 3.13 runtime pair may use 2.3.5 versus 2.3.0. These differences no longer block the four Numba comparisons. Source SHA, repository/ref/event, Python/ABI, build/test stage and successful AMD64 baseline checks remain mandatory. No other package's dependency requirements are waived.",
+        "paired_targets": 4,
+        "targets": 4,
+        "evidence": [
+          {
+            "url": "https://github.com/numba/numba/actions/runs/39452429967",
+            "label": "Supplied actual WoA wheel builder"
+          },
+          {
+            "url": "https://github.com/numba/numba/actions/runs/39452429887",
+            "label": "Located same-source AMD64 builder"
+          },
+          {
+            "url": "https://github.com/numba/numba/actions/runs/39452429967/job/118731667111",
+            "label": "Arm CPython 3.13 tests: actual NumPy 2.3.5"
+          },
+          {
+            "url": "https://github.com/numba/numba/actions/runs/39452429887/job/118733985919",
+            "label": "AMD64 CPython 3.13 tests: actual NumPy 2.3.0"
+          }
+        ]
+      }
+    },
+    {
+      "package": "numexpr",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/pydata/numexpr/actions/runs/38373633472: 6 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "numexpr",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/pydata/numexpr/actions/runs/38373633472",
+            "label": "Observed platform jobs and source d7c975073be01045010a71206f6c85fff3416a35"
+          }
+        ]
+      }
+    },
+    {
+      "package": "numpy",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/numpy/numpy/actions/runs/31035194234: 0 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/numpy/numpy/actions/runs/31035116520: 0 jobs, 0 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "numpy",
+        "decision": "paired",
+        "explanation": "The new native numpy/numpy PR example resolves wheel-build monitoring without the numpy-release mutable-source problem. CPython 3.13 Windows Arm64 and AMD64 Build wheels jobs both succeed in one source-commit run, and the pinned cibuildwheel configuration runs tools/wheels/cibw_test_command.sh on both. The additional windows.yml example really tests Arm64 CPython 3.12/full/no-BLAS, but its AMD64 candidates are 3.12/fast/openblas32 and 3.15/full/openblas64, so that extra test surface is retained as unpaired evidence outside active failure monitoring, not incorrectly compared.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/numpy/numpy/actions/runs/39440763314/job/118689655017",
+            "label": "Supplied Arm64 CPython 3.13 wheel build/test"
+          },
+          {
+            "url": "https://github.com/numpy/numpy/actions/runs/39440763314/job/118689655130",
+            "label": "Equivalent AMD64 CPython 3.13 wheel build/test"
+          },
+          {
+            "url": "https://github.com/numpy/numpy/actions/runs/39440763449/job/118689653900",
+            "label": "Additional Arm64 full/no-BLAS CPython 3.12 tests, no equivalent AMD64 cell"
+          },
+          {
+            "url": "https://github.com/numpy/numpy/blob/35ad3af05edf8c59ba60169fba68303ae1a12383/pyproject.toml#L305",
+            "label": "Pinned actual wheel-test configuration"
+          }
+        ]
+      }
+    },
+    {
+      "package": "onnx",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/onnx/onnx/actions/runs/39207153545: 34 jobs, 4 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "onnx",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 4,
+        "targets": 4,
+        "evidence": [
+          {
+            "url": "https://github.com/onnx/onnx/actions/runs/39207153545",
+            "label": "Observed platform jobs and source 18fb3cfb3b7b2c3f3b05ba9bd3829333432c095d"
+          }
+        ]
+      }
+    },
+    {
+      "package": "onnxruntime-qnn",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/onnxruntime/onnxruntime-qnn/actions/runs/39113854466: 84 jobs, 8 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "onnxruntime-qnn",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success. Native release win_arm64 Python cells only; ARM64EC/ARM64X/debug/relwithdebinfo variants do not have equivalent native-release AMD64 comparators and are outside this channel.",
+        "paired_targets": 4,
+        "targets": 4,
+        "evidence": [
+          {
+            "url": "https://github.com/onnxruntime/onnxruntime-qnn/actions/runs/39113854466",
+            "label": "Observed platform jobs and source ce84606175e10ecce60a4b05d028e55d87304d46"
+          }
+        ]
+      }
+    },
+    {
+      "package": "orjson",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/ijl/orjson/actions/runs/31816596684: 68 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/ijl/orjson/actions/runs/31815777144: 68 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/ijl/orjson/actions/runs/31814267756: 68 jobs, 0 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "orjson",
+        "decision": "paired",
+        "explanation": "Actual master artifact workflow has exact windows_arm64_python3.x and windows_x64_python3.x jobs, which generic 'AMD64' discovery missed. Pair each non-free-threaded CPython 3.11-3.15 separately; ARM has no comparable 3.10 job. Pinned source uses maturin to build/install the named orjson wheel followed by pytest. Do not promote recent try-branch results into master. Historical baseline jobs have no retained steps, so fresh missing-stage data must remain Attention rather than inventing stage results.",
+        "paired_targets": 5,
+        "targets": 5,
+        "evidence": [
+          {
+            "url": "https://github.com/ijl/orjson/actions/runs/31816596684",
+            "label": "Successful master push, source 6737895a1a4e3e26df0569a40147893a786f9a58"
+          },
+          {
+            "url": "https://github.com/ijl/orjson/actions/runs/31816596684/job/94819655792",
+            "label": "Actual ARM CPython 3.12 windows_arm64_python3.12 job"
+          },
+          {
+            "url": "https://github.com/ijl/orjson/actions/runs/31816596684/job/94819655797",
+            "label": "Actual equivalent AMD64 windows_x64_python3.12 job, not windows_x86"
+          },
+          {
+            "url": "https://github.com/ijl/orjson/blob/6737895a1a4e3e26df0569a40147893a786f9a58/.github/workflows/artifact.yaml",
+            "label": "Exact matrix, fixed nightly-2026-08-01 Rust toolchain, maturin build/install, pytest command, target/wheels orjson upload"
+          }
+        ]
+      }
+    },
+    {
+      "package": "pandas",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/pandas-dev/pandas/actions/runs/39297293115: 7 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/pandas-dev/pandas/actions/runs/39295679387: 7 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/pandas-dev/pandas/actions/runs/39295194609: 7 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/pandas-dev/pandas/actions/runs/39297293166: 2 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/pandas-dev/pandas/actions/runs/39295679616: 2 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/pandas-dev/pandas/actions/runs/39295194604: 2 jobs, 0 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "pandas",
+        "decision": "paired",
+        "explanation": "Actual main scheduled run has separate Build wheel for cpXYZ-win_arm64 and win_amd64 jobs. Every Windows comparator below passes despite overall run failure on unrelated jobs. Pair CPython/ABI exactly, including separate cp314t and cp315t. Build wheels invokes configured installed-wheel pandas tests; do not infer an ARM regression from the run conclusion or an unrelated platform.",
+        "paired_targets": 7,
+        "targets": 7,
+        "evidence": [
+          {
+            "url": "https://github.com/pandas-dev/pandas/actions/runs/39365271941",
+            "label": "Reviewed main schedule at bb4297c4e6fc0fd8afc2d05c4bd4b51596d20264; run failure does not reflect its all-successful Windows pairs"
+          },
+          {
+            "url": "https://github.com/pandas-dev/pandas/actions/runs/39365271941/job/118440856264",
+            "label": "ARM Build wheel for cp314-win_arm64; Build wheels success"
+          },
+          {
+            "url": "https://github.com/pandas-dev/pandas/actions/runs/39365271941/job/118440856255",
+            "label": "AMD64 Build wheel for cp314-win_amd64; same run/Python/ABI"
+          },
+          {
+            "url": "https://github.com/pandas-dev/pandas/blob/bb4297c4e6fc0fd8afc2d05c4bd4b51596d20264/.github/workflows/wheels.yml",
+            "label": "Actual per-interpreter/platform Windows wheel matrix, common generated sdist, cibuildwheel Build wheels and wheel RECORD validation"
+          },
+          {
+            "url": "https://github.com/pandas-dev/pandas/blob/bb4297c4e6fc0fd8afc2d05c4bd4b51596d20264/pyproject.toml",
+            "label": "Windows cibuildwheel test-command runs installed pandas tests with explicit shared exclusions"
+          }
+        ]
+      }
+    },
+    {
+      "package": "preshed",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "preshed",
+        "decision": "paired",
+        "explanation": "User-supplied run validated; both Windows platform selectors recorded without guessing. Release/prerelease tag prefixes are explicitly admitted; old expired step data remains unknown until a fresh run.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/explosion/preshed/actions/runs/23428708476",
+            "label": "Observed platform jobs and source 19c233fd4473bd8f5b86c72a8257ce8a7e09b795"
+          }
+        ]
+      }
+    },
+    {
+      "package": "propcache",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/aio-libs/propcache/actions/runs/39211222053: 56 jobs, 8 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "propcache",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 8,
+        "targets": 8,
+        "evidence": [
+          {
+            "url": "https://github.com/aio-libs/propcache/actions/runs/39211222053",
+            "label": "Observed platform jobs and source 989ee4d643bc6d077fb5cf7d6b9a2ba880f4fe18"
+          }
+        ]
+      }
+    },
+    {
+      "package": "psutil",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/giampaolo/psutil/actions/runs/39322815087: 13 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/giampaolo/psutil/actions/runs/39317817011: 13 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/giampaolo/psutil/actions/runs/39316170954: 13 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "giampaolo/psutil/pages-build-deployment: workflow not found"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "psutil",
+        "decision": "paired",
+        "explanation": "Real native Windows wheel jobs are named win ARM64 (abi3)/(cp314t) and win AMD64 (...). The ordinary stable-ABI wheel is built using CPython 3.14 on BOTH architectures; do not compare its advertised Python 3.8 compatibility with a different build interpreter. The wheel workflow's tests are import/version smoke tests, not the entire psutil suite.",
+        "paired_targets": 2,
+        "targets": 2,
+        "evidence": [
+          {
+            "url": "https://github.com/giampaolo/psutil/actions/runs/39334531400",
+            "label": "Successful reviewed master push at 1107a5443ed9d973e320b37b14d35f4b325a8d48"
+          },
+          {
+            "url": "https://github.com/giampaolo/psutil/actions/runs/39334531400/job/118340560074",
+            "label": "ARM64 win ARM64 (abi3), successful Build wheels"
+          },
+          {
+            "url": "https://github.com/giampaolo/psutil/actions/runs/39334531400/job/118340559887",
+            "label": "AMD64 win AMD64 (abi3), same CPython 3.14 stable-ABI variant"
+          },
+          {
+            "url": "https://github.com/giampaolo/psutil/actions/runs/39334531400/job/118340560088",
+            "label": "ARM64 free-threaded win ARM64 (cp314t)"
+          },
+          {
+            "url": "https://github.com/giampaolo/psutil/actions/runs/39334531400/job/118340560085",
+            "label": "AMD64 matching free-threaded win AMD64 (cp314t)"
+          },
+          {
+            "url": "https://github.com/giampaolo/psutil/blob/1107a5443ed9d973e320b37b14d35f4b325a8d48/.github/workflows/wheels.yml",
+            "label": "Exact Windows architectures/CPython build selectors and CIBW_TEST_COMMAND import psutil/version smoke test"
+          }
+        ]
+      }
+    },
+    {
+      "package": "pycares",
+      "outcome": "access-or-discovery-error",
+      "examined": [],
+      "channels": 0,
+      "error": "GitHub GET repos/saghul/pycares/actions/runs/38406321077/attempts/2/jobs?per_page=100&page=1: HTTP 502",
+      "comparison_review": {
+        "package": "pycares",
+        "decision": "paired",
+        "explanation": "Six real same-run ARM64/AMD64 release pairs verified in v5.1.0. The v5.2.0 attempt/job-list API was returning 502; keep an operational Unknown on unreadable current evidence, never reuse old AMD64 success as the new run's baseline.",
+        "paired_targets": 6,
+        "targets": 6,
+        "evidence": [
+          {
+            "url": "https://github.com/saghul/pycares/actions/runs/37285185980",
+            "label": "Successful paired release baseline"
+          },
+          {
+            "url": "https://github.com/saghul/pycares/actions/runs/38406321077",
+            "label": "Current release with degraded job API"
+          }
+        ]
+      }
+    },
+    {
+      "package": "pycryptodome",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/Legrandin/pycryptodome/actions/runs/39231924547: 6 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "pycryptodome",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/Legrandin/pycryptodome/actions/runs/39231924547",
+            "label": "Observed platform jobs and source 29372bd5ae21b02a50f07181d1f82721b3ea81bb"
+          }
+        ]
+      }
+    },
+    {
+      "package": "pymongo",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/mongodb/mongo-python-driver/actions/runs/39205437200: 17 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "pymongo",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success. Corrected upstream's win_amd6 job-name typo using explicit cp3*-win_amd64 source matrix.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/mongodb/mongo-python-driver/actions/runs/39205437200",
+            "label": "Observed platform jobs and source df8f10ba87172665a856f9bec0a58447543f277a"
+          }
+        ]
+      }
+    },
+    {
+      "package": "pymupdf",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "pymupdf",
+        "decision": "excluded",
+        "explanation": "Excluded per Human input: selected GitHub tests are not the intended observable wheel-production pipeline.",
+        "paired_targets": 0,
+        "targets": 0,
+        "evidence": []
+      }
+    },
+    {
+      "package": "pynacl",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "pynacl",
+        "decision": "excluded",
+        "explanation": "Excluded per Human input: maintainers dropped Windows Arm64 support; do not treat missing native jobs as regressions.",
+        "paired_targets": 0,
+        "targets": 0,
+        "evidence": []
+      }
+    },
+    {
+      "package": "pyodbc",
+      "outcome": "verified-pilot",
+      "examined": [],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "pyodbc",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/mkleehammer/pyodbc/actions/runs/18600198971",
+            "label": "Observed platform jobs and source 7ee5b566984f7bd3d8fcfa0369e9e163e70e1cbd"
+          }
+        ]
+      }
+    },
+    {
+      "package": "pyproj",
+      "outcome": "verified-pilot",
+      "examined": [],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "pyproj",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/pyproj4/pyproj/actions/runs/39259020458",
+            "label": "Observed platform jobs and source 74e9eefd0973ee2e0ceb100f43a72dbb229ee394"
+          }
+        ]
+      }
+    },
+    {
+      "package": "pyyaml",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "pyyaml",
+        "decision": "paired",
+        "explanation": "User-supplied run validated; both Windows platform selectors recorded without guessing. Only Python wheel jobs are compared, not libyaml prerequisite jobs; cp312/cp313/cp314/cp315/free-threaded variants remain separate.",
+        "paired_targets": 6,
+        "targets": 6,
+        "evidence": [
+          {
+            "url": "https://github.com/yaml/pyyaml/actions/runs/37695338325",
+            "label": "Observed platform jobs and source 98d4a6b35ea3055fb04a989df842b215ff09520f"
+          }
+        ]
+      }
+    },
+    {
+      "package": "regex",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/mrabarnett/mrab-regex/actions/runs/36499035291: 13 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/mrabarnett/mrab-regex/actions/runs/35457778763: 13 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/mrabarnett/mrab-regex/actions/runs/34397217583: 13 jobs, 0 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "regex",
+        "decision": "paired",
+        "explanation": "Confirmed your summary: ONE Windows job builds AMD64, x86 and ARM64. Separate physical jobs are not required. Its bounded job log has explicit per-interpreter Building cpXYZ-win_PLATFORM wheel blocks and successful finished markers, so the monitor now derives independent outcomes for eight matching ARM64/AMD64 interpreter pairs. A failing ARM block is only actionable with its matching completed AMD64 block. An aggregate red icon or incomplete block is insufficient. GitHub annotations explicitly warn that ARM wheels cannot be tested on this AMD64 host, so this channel is build-only, not WoA test coverage.",
+        "paired_targets": 8,
+        "targets": 8,
+        "evidence": [
+          {
+            "url": "https://github.com/mrabarnett/mrab-regex/actions/runs/34397217583/attempts/1#summary-102619780387",
+            "label": "Supplied aggregate Windows summary"
+          },
+          {
+            "url": "https://github.com/mrabarnett/mrab-regex/actions/runs/34397217583/job/102619780387",
+            "label": "Exact aggregate job with independent cibuildwheel interpreter records"
+          },
+          {
+            "url": "https://github.com/mrabarnett/mrab-regex/blob/7dd71c15c4fb5c94206bed1763abd4c2bd2f1b33/.github/workflows/main.yml",
+            "label": "Pinned Windows architecture expansion"
+          }
+        ]
+      }
+    },
+    {
+      "package": "rpds-py",
+      "outcome": "verified-pilot",
+      "examined": [],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "rpds-py",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/crate-py/rpds/actions/runs/37520710815",
+            "label": "Observed platform jobs and source 81fffcfe121ab3d7cd6de1af9a6deadc24d702b0"
+          }
+        ]
+      }
+    },
+    {
+      "package": "safetensors",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/safetensors/safetensors/actions/runs/35755530521: 34 jobs, 2 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "safetensors",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 2,
+        "targets": 2,
+        "evidence": [
+          {
+            "url": "https://github.com/safetensors/safetensors/actions/runs/35755530521",
+            "label": "Observed platform jobs and source e246a2560645b7525f5775669ed816eb57c5bcc8"
+          }
+        ]
+      }
+    },
+    {
+      "package": "scikit-image",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/scikit-image/scikit-image/actions/runs/37951699570: 1 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/scikit-image/scikit-image/actions/runs/37746738309: 1 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/scikit-image/scikit-image/actions/runs/37709975457: 1 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/scikit-image/scikit-image/actions/runs/39123469513: 35 jobs, 4 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "scikit-image",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 4,
+        "targets": 4,
+        "evidence": [
+          {
+            "url": "https://github.com/scikit-image/scikit-image/actions/runs/39123469513",
+            "label": "Observed platform jobs and source b700edc8005e4ee9e74fc83259f09e8df3213f15"
+          }
+        ]
+      }
+    },
+    {
+      "package": "scikit-learn",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/scikit-learn/scikit-learn/actions/runs/39271378047: 5 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/scikit-learn/scikit-learn/actions/runs/39224834863: 5 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/scikit-learn/scikit-learn/actions/runs/39224577128: 5 jobs, 0 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "scikit-learn",
+        "decision": "paired",
+        "explanation": "Reviewed main scheduled wheel run has four exact CPython/ABI Windows pairs, with a meaningful trailing '-' in each job name. Each source-selected Build and test wheels step builds the actual scikit-learn wheel and runs build_tools/wheels/test_wheels.sh. cp314 and cp314t are kept separate; the same Python variant's conditional test dependencies apply to both architectures.",
+        "paired_targets": 4,
+        "targets": 4,
+        "evidence": [
+          {
+            "url": "https://github.com/scikit-learn/scikit-learn/actions/runs/39366421259",
+            "label": "Successful reviewed main schedule at 274ac3498cb40bb9d7d670141d82a242d89daba8"
+          },
+          {
+            "url": "https://github.com/scikit-learn/scikit-learn/actions/runs/39366421259/job/118444239380",
+            "label": "ARM Build wheel for cp314-win_arm64-; Build and test wheels succeeds"
+          },
+          {
+            "url": "https://github.com/scikit-learn/scikit-learn/actions/runs/39366421259/job/118444239517",
+            "label": "AMD64 Build wheel for cp314-win_amd64-; exact same Python/ABI and stage"
+          },
+          {
+            "url": "https://github.com/scikit-learn/scikit-learn/blob/274ac3498cb40bb9d7d670141d82a242d89daba8/.github/workflows/wheels.yml",
+            "label": "Actual native Windows matrix and exact CIBW_BUILD cp${python}-${platform_id}"
+          },
+          {
+            "url": "https://github.com/scikit-learn/scikit-learn/blob/274ac3498cb40bb9d7d670141d82a242d89daba8/cibuildwheel.toml",
+            "label": "Actual selected config-file: bash build_tools/wheels/test_wheels.sh, not an inferred test from the action name"
+          }
+        ]
+      }
+    },
+    {
+      "package": "scipy",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "scipy",
+        "decision": "paired",
+        "explanation": "User-supplied run validated; both Windows platform selectors recorded without guessing. User examples are PR runs; regular mainline/manual/scheduled scope is kept. This proves selectors, not current mainline activity.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/scipy/scipy/actions/runs/39364529815",
+            "label": "Observed platform jobs and source 3d509764f03a05cdaca5f7e8957c9c04a810f6ae"
+          }
+        ]
+      }
+    },
+    {
+      "package": "sentencepiece",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/google/sentencepiece/actions/runs/39282836342: 9 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "sentencepiece",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/google/sentencepiece/actions/runs/39282836342",
+            "label": "Observed platform jobs and source 45a89036d21b6c2f4430da2f3b42ba12afc9229b"
+          }
+        ]
+      }
+    },
+    {
+      "package": "shap",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/shap/shap/actions/runs/39233208922: 9 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/shap/shap/actions/runs/39112960193: 9 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/shap/shap/actions/runs/39017718154: 14 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "shap",
+        "decision": "paired",
+        "explanation": "User-supplied run validated; both Windows platform selectors recorded without guessing. Runs with neither platform build/test are not applicable, not coverage incidents.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/shap/shap/actions/runs/39017718154",
+            "label": "Observed platform jobs and source 4f8a9c97fb0ea4ce4b3c023f7aa6e86f4780610d"
+          }
+        ]
+      }
+    },
+    {
+      "package": "spacy",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "spacy",
+        "decision": "paired",
+        "explanation": "Release-tag discovery finds real native Windows builds hidden from recent generic run sampling. Monitor only the reviewed 3.8 release series. These are wheel COMPILATION jobs, not Windows unit-test jobs: the pinned package configuration has an empty cibuildwheel test-command. Linux-only smoke/upgrade jobs are not ARM64 tests. An ARM failure is actionable only when the corresponding AMD64 build step succeeds in the SAME release run/SHA; setup, upload, missing steps, and skipped comparators are not ARM-specific failures.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/explosion/spaCy/actions/runs/32706299673",
+            "label": "Successful push release-v3.8.16; source SHA 26b4d1dc04a812f426e4bef3e8a1b6f159d6f048"
+          },
+          {
+            "url": "https://github.com/explosion/spaCy/actions/runs/32706299673/job/97368061711",
+            "label": "ARM64: build_wheels / Build wheels on windows-11-arm; Build compiled wheels succeeded"
+          },
+          {
+            "url": "https://github.com/explosion/spaCy/actions/runs/32706299673/job/97368061783",
+            "label": "AMD64: build_wheels / Build wheels on windows-latest; Build compiled wheels succeeded"
+          },
+          {
+            "url": "https://github.com/explosion/spaCy/blob/26b4d1dc04a812f426e4bef3e8a1b6f159d6f048/.github/workflows/cibuildwheel.yml",
+            "label": "Actual release caller: spacy-*.whl, pure-python false, shared builder pinned to 2c98f757f13d112cf73fcf4b627249f1fffb5aae"
+          },
+          {
+            "url": "https://github.com/explosion/gha-cibuildwheel/blob/2c98f757f13d112cf73fcf4b627249f1fffb5aae/.github/workflows/cibuildwheel.yml",
+            "label": "Shared implementation has separate native Windows matrix jobs and Build compiled wheels"
+          },
+          {
+            "url": "https://github.com/explosion/spaCy/blob/26b4d1dc04a812f426e4bef3e8a1b6f159d6f048/pyproject.toml",
+            "label": "Native architecture; Windows ARM64 skips cp310; free-threaded builds excluded; test-command empty"
+          }
+        ]
+      }
+    },
+    {
+      "package": "srsly",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "srsly",
+        "decision": "universal",
+        "explanation": "Current master and the 3.0.0 release use pure-python true, producing the actual universal wheel srsly-3.0.0-py2.py3-none-any.whl. The shared backend selects ONE Ubuntu Build universal wheel job, not its compiled Windows matrix. The separately maintained legacy 2.5.4 release DOES have real compiled Windows jobs (run 36322929455, ARM 108630132373, AMD64 108630132384); those must not be mistaken for current master/3.x or used to invent ARM jobs for the universal channel.",
+        "paired_targets": 0,
+        "targets": 0,
+        "evidence": [
+          {
+            "url": "https://github.com/explosion/srsly/blob/050951efad45e2347f2b90b52398affcecf86fca/.github/workflows/cibuildwheel.yml",
+            "label": "Current master SHA and release-v3.0.0 caller: srsly-*.whl, pure-python true, shared builder 2c98f757f13d112cf73fcf4b627249f1fffb5aae"
+          },
+          {
+            "url": "https://github.com/explosion/srsly/actions/runs/23431486582/job/68158706080",
+            "label": "Successful release-v3.0.0 run at SHA 050951efad45e2347f2b90b52398affcecf86fca: build_wheels / Build universal wheel"
+          },
+          {
+            "url": "https://github.com/explosion/gha-cibuildwheel/blob/2c98f757f13d112cf73fcf4b627249f1fffb5aae/.github/workflows/cibuildwheel.yml",
+            "label": "Verified caller-controlled universal branch: Ubuntu only, pip wheel, requested package pattern"
+          },
+          {
+            "url": "https://pypi.org/pypi/srsly/3.0.0/json",
+            "label": "Actual distribution filename srsly-3.0.0-py2.py3-none-any.whl"
+          },
+          {
+            "url": "https://github.com/explosion/srsly/blob/fe0b8039891998047c4c9da568b253eb003f834b/.github/workflows/cibuildwheel.yml",
+            "label": "Counterexample intentionally separated: legacy release-v2.5.4 sets pure-python false"
+          }
+        ]
+      }
+    },
+    {
+      "package": "statsmodels",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/statsmodels/statsmodels/actions/runs/39284100303: 2 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/statsmodels/statsmodels/actions/runs/39206296539: 2 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/statsmodels/statsmodels/actions/runs/39155338241: 2 jobs, 0 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "statsmodels",
+        "decision": "excluded",
+        "explanation": "Applied your confirmation: no observable public WoA GitHub build was identified, so statsmodels is excluded/Paused. This is not a regression and not a claim that the package cannot work on Windows Arm64. No missing-builder ping is generated.",
+        "paired_targets": 0,
+        "targets": 0,
+        "evidence": [
+          {
+            "url": "https://github.com/statsmodels/statsmodels/blob/main/.github/workflows/cron-test.yml",
+            "label": "Inspected AMD64-only scheduled wheel workflow"
+          }
+        ]
+      }
+    },
+    {
+      "package": "thinc",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "thinc",
+        "decision": "paired",
+        "explanation": "Actual release-v8.3.13 jobs establish separate native ARM64 and AMD64 compilation in the same upstream release run. Generic recent-run sampling missed the release tags. The package's pinned cibuildwheel configuration has test-command empty, so this is build-only monitoring. Historical job records retain success/name/IDs but have empty steps arrays; missing stage metadata must remain Attention until a fresh run exposes the required build step, never an inferred failure.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/explosion/thinc/actions/runs/23424966006",
+            "label": "Successful push release-v8.3.13, SHA f72185afe413d8750e990ed07f4589466df0332c"
+          },
+          {
+            "url": "https://github.com/explosion/thinc/actions/runs/23424966006/job/68137750368",
+            "label": "Successful exact ARM64 job: build_wheels / Build wheels on windows-11-arm"
+          },
+          {
+            "url": "https://github.com/explosion/thinc/actions/runs/23424966006/job/68137750354",
+            "label": "Successful exact AMD64 job: build_wheels / Build wheels on windows-latest"
+          },
+          {
+            "url": "https://github.com/explosion/thinc/blob/f72185afe413d8750e990ed07f4589466df0332c/.github/workflows/cibuildwheel.yml",
+            "label": "Actual caller pins shared builder 2c98f757f13d112cf73fcf4b627249f1fffb5aae, thinc-*.whl, pure-python false"
+          },
+          {
+            "url": "https://github.com/explosion/thinc/blob/f72185afe413d8750e990ed07f4589466df0332c/pyproject.toml",
+            "label": "Native architecture; skip cp38/cp39/free-threaded and cp310-win_arm64; empty test-command"
+          },
+          {
+            "url": "https://github.com/explosion/gha-cibuildwheel/blob/2c98f757f13d112cf73fcf4b627249f1fffb5aae/.github/workflows/cibuildwheel.yml",
+            "label": "Native Windows jobs and source-defined Build compiled wheels step"
+          }
+        ]
+      }
+    },
+    {
+      "package": "thriftpy2",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/Thriftpy/thriftpy2/actions/runs/33950768644: 7 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "thriftpy2",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/Thriftpy/thriftpy2/actions/runs/33950768644",
+            "label": "Observed platform jobs and source 929b8d3da92d880670bd5326e983d47575167a21"
+          }
+        ]
+      }
+    },
+    {
+      "package": "tokenizers",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/huggingface/tokenizers/actions/runs/39286932278: 34 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "tokenizers",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/huggingface/tokenizers/actions/runs/39286932278",
+            "label": "Observed platform jobs and source f8f41813f4bf8f3e2a467e31637c8837373b8dfa"
+          }
+        ]
+      }
+    },
+    {
+      "package": "tornado",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/tornadoweb/tornado/actions/runs/38274694055: 24 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "tornado",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/tornadoweb/tornado/actions/runs/38274694055",
+            "label": "Observed platform jobs and source b303c124b5f068c51dfb524d3d036b97ad2993e6"
+          }
+        ]
+      }
+    },
+    {
+      "package": "tree-sitter-language-pack",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/xberg-io/tree-sitter-language-pack/actions/runs/38997473342: 150 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "tree-sitter-language-pack",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/xberg-io/tree-sitter-language-pack/actions/runs/38997473342",
+            "label": "Observed platform jobs and source 67d9d9e6f8c67d1393aabbadca4f69cc75e6eae4"
+          }
+        ]
+      }
+    },
+    {
+      "package": "triton-windows",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/triton-lang/triton-windows/actions/runs/35716211357: 3 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "triton-windows",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success. Dynamic source hashes are captured and compared on both sides; the reviewed input code ref stays explicit. Current release/3.9.x-windows is a separate reviewed built-source scope; its real ARM failure and AMD64 success must not be hidden by an older main-windows pass.",
+        "paired_targets": 2,
+        "targets": 2,
+        "evidence": [
+          {
+            "url": "https://github.com/triton-lang/triton-windows/actions/runs/35716211357",
+            "label": "Observed platform jobs and source 7eba6dac61bf885463d3371bb39bed81cd34c48c"
+          }
+        ]
+      }
+    },
+    {
+      "package": "ujson",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/ultrajson/ultrajson/actions/runs/37362538631: 8 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "ujson",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success. Explicit matrix verification resolves auto versus ARM64 naming; the hosted Windows auto set includes AMD64.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/ultrajson/ultrajson/actions/runs/37362538631",
+            "label": "Observed platform jobs and source 0f95c6d39ed081be162f237b650c12c75a8bc76c"
+          }
+        ]
+      }
+    },
+    {
+      "package": "winloop",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/Vizonex/Winloop/actions/runs/38081098543: 18 jobs, 7 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "winloop",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 7,
+        "targets": 7,
+        "evidence": [
+          {
+            "url": "https://github.com/Vizonex/Winloop/actions/runs/38081098543",
+            "label": "Observed platform jobs and source b2addd60b8ffb765fd48b1f3eaa16e366a3c5e46"
+          }
+        ]
+      }
+    },
+    {
+      "package": "wrapt",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/GrahamDumpleton/wrapt/actions/runs/39187412375: 46 jobs, 1 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "wrapt",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/GrahamDumpleton/wrapt/actions/runs/39187412375",
+            "label": "Observed platform jobs and source 6b4e844950213118b19e613248d2bc9469eb731e"
+          }
+        ]
+      }
+    },
+    {
+      "package": "xgboost-cpu",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/dmlc/xgboost/actions/runs/39279943209: 2 jobs, 2 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "xgboost-cpu",
+        "decision": "unresolved",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 0,
+        "targets": 2,
+        "evidence": [
+          {
+            "url": "https://github.com/dmlc/xgboost/actions/runs/39279943209",
+            "label": "Observed platform jobs and source dd59cc41c0d72ac91d225d4638b38bcf8c3b2025"
+          }
+        ]
+      }
+    },
+    {
+      "package": "yarl",
+      "outcome": "needs-verification",
+      "examined": [
+        "https://github.com/aio-libs/yarl/actions/runs/39208145866: 51 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/aio-libs/yarl/actions/runs/39102788170: 51 jobs, 0 explicit Windows Arm64 wheel jobs",
+        "https://github.com/aio-libs/yarl/actions/runs/39008585581: 51 jobs, 0 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "yarl",
+        "decision": "paired",
+        "explanation": "The native ARM wheel job is intentionally absent from ordinary master/PR builds and appears on release tags. Actual v1.25.1 jobs isolate CIBW_ARCHS_WINDOWS to ARM64 versus AMD64 and consume the same source tarball. Release builds retain cibuildwheel pytest; the non-tag CIBW_TEST_SKIP=* optimization must not be mistaken for release test coverage. Monitor the verified 1.25 release series only.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/aio-libs/yarl/actions/runs/35007891886",
+            "label": "Successful push v1.25.1, source 604eb6da83267f4e8faf1512ffeabc23df10052e"
+          },
+          {
+            "url": "https://github.com/aio-libs/yarl/actions/runs/35007891886/job/104513305180",
+            "label": "ARM64 exact job \ud83d\udce6 Build wheels for tested arches / Build  wheels on windows-11-arm; Build wheels succeeds"
+          },
+          {
+            "url": "https://github.com/aio-libs/yarl/actions/runs/35007891886/job/104513305112",
+            "label": "AMD64 exact job \ud83d\udce6 Build wheels for tested arches / Build  wheels on windows-latest; double space is real"
+          },
+          {
+            "url": "https://github.com/aio-libs/yarl/blob/604eb6da83267f4e8faf1512ffeabc23df10052e/.github/workflows/ci-cd.yml",
+            "label": "Tag-only ARM native runner, architecture pinning, shared sdist, tag keeps in-build tests"
+          },
+          {
+            "url": "https://github.com/aio-libs/yarl/blob/604eb6da83267f4e8faf1512ffeabc23df10052e/pyproject.toml",
+            "label": "cibuildwheel pytest command, pure-python false, shared requirements/test-cibuildwheel.txt"
+          }
+        ]
+      }
+    },
+    {
+      "package": "zope-interface",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/zopefoundation/zope.interface/actions/runs/39138596230: 67 jobs, 14 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "zope-interface",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 14,
+        "targets": 14,
+        "evidence": [
+          {
+            "url": "https://github.com/zopefoundation/zope.interface/actions/runs/39138596230",
+            "label": "Observed platform jobs and source c220969089921d58d24df3eb3e1588f75bd6c12a"
+          }
+        ]
+      }
+    },
+    {
+      "package": "zopfli",
+      "outcome": "needs-verification",
+      "examined": [],
+      "channels": 0,
+      "error": null,
+      "comparison_review": {
+        "package": "zopfli",
+        "decision": "paired",
+        "explanation": "The real job names are auto64 on windows-11-arm and auto64 on windows-latest, not package/architecture substring conventions. Both compile and run the configured pytest wheel tests. The separate auto32 Windows job and Linux aarch64 jobs are not comparators.",
+        "paired_targets": 1,
+        "targets": 1,
+        "evidence": [
+          {
+            "url": "https://github.com/fonttools/py-zopfli/actions/runs/27265017989",
+            "label": "Successful reviewed master push at 9ab72eeb472022ecebdade5a678c42d310743973"
+          },
+          {
+            "url": "https://github.com/fonttools/py-zopfli/actions/runs/27265017989/job/80519866054",
+            "label": "ARM64 auto64 on windows-11-arm; Build Wheels succeeded"
+          },
+          {
+            "url": "https://github.com/fonttools/py-zopfli/actions/runs/27265017989/job/80519866051",
+            "label": "AMD64 auto64 on windows-latest; Build Wheels succeeded"
+          },
+          {
+            "url": "https://github.com/fonttools/py-zopfli/blob/9ab72eeb472022ecebdade5a678c42d310743973/.github/workflows/ci.yml",
+            "label": "Architecture matrix, CIBW_BUILD CPython 3.10-3.14, CIBW_TEST_COMMAND pytest {package}/tests -v, wheelhouse/*.whl"
+          },
+          {
+            "url": "https://github.com/fonttools/py-zopfli/blob/9ab72eeb472022ecebdade5a678c42d310743973/pyproject.toml",
+            "label": "Limited-API wheel configuration; PyPy override disables limited API"
+          }
+        ]
+      }
+    },
+    {
+      "package": "zstandard",
+      "outcome": "observed-targets",
+      "examined": [
+        "https://github.com/indygreg/python-zstandard/actions/runs/39310594239: 97 jobs, 5 explicit Windows Arm64 wheel jobs"
+      ],
+      "channels": 1,
+      "error": null,
+      "comparison_review": {
+        "package": "zstandard",
+        "decision": "paired",
+        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "paired_targets": 5,
+        "targets": 5,
+        "evidence": [
+          {
+            "url": "https://github.com/indygreg/python-zstandard/actions/runs/39310594239",
+            "label": "Observed platform jobs and source a2bb3c0bb3657007b79617dcd63ff3c6e2acedd2"
+          }
+        ]
+      }
+    }
+  ],
+  "requests": 252,
+  "failure_policy": "windows-arm64-failure-with-successful-amd64-v1",
+  "comparison_reviewed_at": "2026-10-20T07:55:20Z",
+  "collection_policy": "all-tracked-runs-last24-including-pr-v1",
+  "window_hours": 24
+}

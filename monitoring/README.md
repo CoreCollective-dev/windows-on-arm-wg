@@ -1,22 +1,29 @@
-# Daily Windows Arm64 wheel monitoring pilot
+# Daily Windows Arm64 versus AMD64 wheel monitoring
 
 Deployment home: **CoreCollective-dev/windows-on-arm-wg**.
 Operational owner: **khmyznikov**.
-Planned board: [khmyznikov Project 2](https://github.com/users/khmyznikov/projects/2).
+Tracking direction: one master issue and package sub-issues. Projects is deferred.
 
 ## Current deployment
 
-This is the **read-only pilot**, not the live issue tracker. The
+This deployment replaces the five-package pilot with the **all-package read-only
+observer**. It includes all 84 audited dispositions, retaining explicit excluded,
+universal, inactive and unresolved entries rather than claiming those are healthy
+native monitors. It is not the live issue tracker. The
 [daily workflow](../.github/workflows/wheel-monitor.yml) runs at **15:17 UTC every
 day**, and can be started manually. GitHub scheduling can be delayed or disabled;
 this is a 24-hour polling cadence, not a guaranteed notification delivery time.
 
-The implementation has no issue/comment/Project writing API and the workflow
-does not request `issues: write`. No mentions are sent. The older
+The workflow grants only `contents: read` and `actions: read`. It has no issue-sync
+job and never invokes the separately tested issue helper. The manual issue-bootstrap
+workflow is not part of this deployment. No new issues, comments, labels, or
+mentions are produced by this observer. The older
 [cryptography monitor](../.github/workflows/monitoring_cryptography.yml) remains
 active during comparison; it can still create its own per-job issues.
+The operator explicitly chose to leave that legacy workflow active during this
+rollout; it retains its own separate issue-creation behavior.
 
-Five packages exercise different patterns:
+The original pilot subset exercised these patterns:
 
 | Package | Pattern | Current required coverage |
 | --- | --- | --- |
@@ -26,10 +33,85 @@ Five packages exercise different patterns:
 | mypy | Separate wheel-building repository | Development builds of CPython 3.14/3.14t Windows Arm64 wheels |
 | pyodbc | Irregular manually dispatched builder | Mainline Windows Arm64 wheel job; no inactivity deadline |
 
-Selectors and baseline evidence are in [pilot.json](pilot.json). The full dated
-[84-package inventory](inventory.json) is an onboarding backlog, not 84 verified
-or activated monitors. Candidate inclusion does not establish Windows Arm64
-support. An archived packaging repository remains marked as such.
+The [fleet.json](fleet.json) registry contains all 84 package dispositions and
+paired-platform selectors; [pilot.json](pilot.json) retains the five-package
+subset. The [inventory](inventory.json) is discovery provenance, not proof of
+coverage. Excluded, universal, archived and unresolved entries remain explicit.
+
+## Current collection strategy: every run in the last 24 hours
+
+The observer evaluates **all relevant runs of each configured
+workflow from the last 24 hours**, including PRs and feature-branch pushes,
+regardless of the overall success/failure conclusion. It no longer selects
+only the latest mainline/release run. Pending runs remain tracked across polls.
+
+Each PR is isolated by head repository and PR number. When GitHub omits the
+association, an immutable head-commit stream is used rather than guessing the PR.
+Forks and refs never recover each other's incidents. Cross-workflow baselines
+must match source SHA, head repository, ref and event; the newest matching
+baseline is used, not an older convenient success.
+
+Every settled comparison is recorded in `observations`, including a failure
+later fixed inside the same daily window. Latest results describe each stream;
+the summary separately lists all qualifying failures seen in the window.
+Replay fingerprints prevent the same overlapping window from reopening old
+incidents. Runs with no relevant builds are skipped, not reported as failures.
+An empty window is Unknown/no recent comparison, not a historical green result.
+Public upstream PR code is never downloaded or executed by the monitor.
+
+Unconfigured/blocked comparisons collect run metadata but avoid expensive job
+downloads that cannot yield an admissible failure verdict. The reason is visible.
+
+### Follow-up examples
+
+- **NumPy:** native `numpy/numpy` CPython 3.13 wheel jobs include equivalent
+  build/tests on both Windows platforms. The additional Windows no-BLAS CPython
+  3.12 test job has no equivalent AMD64 full/no-BLAS cell and remains unpaired.
+- **Numba:** real same-source AMD64 and Arm builders are located. Actual NumPy
+  build dependencies differ; the supplied CPython 3.13 test logs resolve NumPy
+  2.3.5 on ARM versus 2.3.0 on AMD64. The operator approved these configured
+  Numba-specific build/runtime differences on 2026-10-20. They no longer block
+  comparison; source identity, matching Python/ABI/stage and AMD64 success are
+  still required. This approval does not waive other packages' checks.
+- **regex:** a bounded, read-only log parser extracts cibuildwheel's per-interpreter
+  completion/error markers from the one aggregate Windows job. A successful AMD64
+  interpreter and a failed matching ARM interpreter can be compared independently.
+  Missing/truncated/unsupported output is Unknown, never inferred from the parent
+  job icon. ARM test coverage is not claimed on this AMD64 cross-compiling host.
+- **statsmodels:** excluded at the operator's request; no public WoA build found.
+
+## Mandatory failure rule
+
+**Only Windows Arm64 build/test failure AND equivalent Windows AMD64 success
+can produce Broken.**
+
+| Arm64 | AMD64 | Result |
+| --- | --- | --- |
+| Failed | Successful equivalent build/test job | Arm-specific failure |
+| Failed | Failed, skipped, pending, missing or unverified | Not a confirmed Arm-specific failure; no failure notification |
+| Passed | Passed or non-success | Not an Arm-specific failure |
+| Neither platform built/tested | Neither platform built/tested | Ignore the inapplicable run; retain the last applicable observation |
+
+Selectors preserve Python version, free-threaded/ABI and build/test roles.
+Both sides must be Windows, with the correct architecture and source. An x86,
+Linux or macOS job cannot be a Windows AMD64 baseline. Aggregate AMD64 baselines
+require every configured equivalent job to succeed. Cross-workflow joins require
+identical source SHA and reviewed ref and explicitly configured counterpart
+workflows; they never select an unrelated successful run.
+
+A selected build/test job failing before its required phase finishes is a
+pipeline failure, even if that phase was skipped after setup failed. Upload-only
+failures after successful build/tests are not automatically build/test failures.
+Stage metadata that has expired remains unknown, not inferred from a green
+workflow icon. Cibuildwheel invocation alone does not establish unit-test coverage.
+
+Healthy describes the observed Arm result, not a guarantee that AMD64 is green.
+The report includes both platform job links/statuses. Unconfigured comparators
+and guarded source-identity cases remain Unknown. In particular, NumPy's release
+workflow SHA is not the SHA of its separately checked-out NumPy source.
+
+Old single-platform failure state is explicitly rebased under this policy;
+uncompared historical failures cannot remain Broken or create false recoveries.
 
 ## Running and testing
 
@@ -44,9 +126,10 @@ python -m monitoring.monitor --output monitor-output
 python -m monitoring.monitor --state monitor-output\state.json --output monitor-output
 ```
 
-The second scan uses the previous dry-run baseline to suppress repeat planned
-notifications. `--scheduled` advances the two-daily-poll threshold for operational
-observation gaps; manual checks do not advance it.
+The second scan uses the previous baseline to suppress repeat planned
+notifications. Shared failures and non-success AMD64 baselines do not open or
+recover Arm-specific incidents. Observation/API errors remain explicit in the
+report and process exit status; they are not upstream regression pings.
 
 Outputs:
 
@@ -71,31 +154,30 @@ be observed after one package fails.
 ## Pilot evaluation rules
 
 - Lists all run conclusions, not only successful workflow runs.
-- Selects explicit upstream events/refs; PRs are excluded.
+- Includes PR and non-PR runs in the 24-hour window, with isolated source streams.
 - Reads attempt-specific jobs and merges unchanged jobs only from the same
   run/SHA. Jobs from a partial rerun cannot erase another target's failure.
-- Uses required steps and job conclusions. A success-looking wheel marker cannot
-  override a failed test. No logs or artifacts from upstream are executed.
+- Requires paired platform results, not a workflow's overall conclusion.
+  A success-looking wheel marker cannot override a failed required test.
+  No logs or artifacts from upstream are executed.
 - Keeps scopes separate. A release success does not clear mainline failure;
   another Python target cannot clear a free-threaded target's failure.
-- Missing jobs or required steps produce Attention, not green. Known failures
-  remain visible when coverage or API access disappears.
+- Missing jobs or required steps cannot establish a new Arm-specific failure.
+  A proven prior paired failure remains historical evidence during API outages.
 - Uses a 30-minute settlement window. Pending/cancelled runs are not recovery
   evidence. Newer established observations cannot be cleared by an older rerun.
 - Recurring identical current conditions do not produce new planned transitions.
   Recurrence after recovery gets a new monotonic transition sequence.
-- Regular test/development channels have explicit silence limits; push-only and
-  manual/release builders do not get arbitrary inactivity alarms.
-- Reads are bounded by 800 requests globally and 160 per package. Pagination
+- No runs in the window is not a failure or a generic inactivity alarm.
+- Daily bulk reads are bounded by 1,200 requests globally and 320 per package
+  (the all-PR scan exceeded the old 160-request package cap for pandas). Pagination
   and split time windows avoid silently truncating the GitHub search ceiling.
 
-The pilot deliberately inspects a rolling **90-day** run-metadata horizon, even
-on bootstrap, to compare infrequent builders and rediscover changed attempts.
-It fetches jobs for the latest settled eligible run in each recovery scope,
-not every historical job. Pending runs persist beyond that horizon. If there is
-no usable baseline in the horizon, the result is Unknown, not a fabricated pass.
-This is a current-health observer: an incident that opens and recovers entirely
-between daily polls is not guaranteed to be reported.
+The collector uses a **24-hour** run window, plus persisted pending runs.
+Ninety days is the retention horizon for deduplication/notification memory, not
+the default upstream search window. Deleted or already-retention-expired evidence
+and polling outages longer than the observation window can still leave gaps;
+the monitor does not promise evidence it cannot retrieve.
 
 ## What remains gated
 
@@ -112,12 +194,12 @@ Before live rollout:
    and reruns with upstream evidence. Re-run tests after registry changes.
 2. Confirm target Python versions and retirement rules for each package. Do not
    auto-discover/broaden selectors when upstream changes naming or release series.
-3. Implement and test the live issue reconciler, participant opt-outs,
-   crash-safe comment deduplication, and Project synchronization against fixtures.
-4. Supply an authorized credential for user-owned Project 2. The current operator
-   token lacks Projects scopes, and a repository `GITHUB_TOKEN` is not sufficient.
-   Do not put tokens in configuration or issue comments.
-5. Preview and approve permanent issue creation/adoption and board fields.
+3. Finish any separately documented comparison gaps and participant notification
+   implementation. All 31 original investigations now have a scoped configuration
+   or explicit exclusion, including the approved Numba NumPy exception. The
+   bootstrap/status helper is tested but not invoked by any deployed workflow.
+4. Keep Projects deferred; no Project credentials are needed for issue tracking.
+5. Preview and explicitly approve permanent issue creation/adoption.
 6. Disable the old cryptography issue creator **before** enabling live pings.
 7. Enroll additional candidates in reviewed batches; never create 84 issues from
    an unverified discovery inventory.
