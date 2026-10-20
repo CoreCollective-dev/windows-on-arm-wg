@@ -9,7 +9,7 @@ from urllib.parse import quote
 from monitoring.monitor import APIError, HEALTH_ORDER, MonitorError, instant, stamp
 
 
-BASELINE_VERSION = 1
+BASELINE_VERSION = 2
 
 
 def decisive(value):

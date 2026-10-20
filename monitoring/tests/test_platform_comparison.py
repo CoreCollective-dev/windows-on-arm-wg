@@ -138,6 +138,28 @@ class PlatformComparisonTests(unittest.TestCase):
         jobs[1]["name"] = f"Build main-windows (x64) @ {'b' * 40}"
         self.assertFalse(self.assess(jobs, target)["arm_specific_failure"])
 
+    def test_resolved_code_ref_rerun_uses_latest_coherent_platform_attempts(self):
+        target = {
+            "job": r"^Build main-windows \(arm64\) @ (?P<source_sha>[0-9a-f]{40})$",
+            "amd64_job": r"^Build main-windows \(x64\) @ (?P<source_sha>[0-9a-f]{40})$",
+            "resolved_source_group": "source_sha",
+        }
+        records = []
+        for attempt, source, conclusion in [(1, "a" * 40, "failure"), (2, "b" * 40, "success")]:
+            for arch in ("arm64", "x64"):
+                records.append({**job(conclusion if arch == "arm64" else "success",
+                                      name=f"Build main-windows ({arch}) @ {source}"),
+                                "run_attempt": attempt})
+        result = self.assess(records, target)
+        self.assertEqual(result["health"], "Healthy")
+        self.assertEqual(result["resolved_source_sha"], "b" * 40)
+        partial = [record for record in records if not (
+            record["run_attempt"] == 2 and "(x64)" in record["name"]
+        )]
+        result = self.assess(partial, target)
+        self.assertEqual(result["health"], "Unknown")
+        self.assertIn("commits", result["detail"])
+
     def test_other_built_source_refs_do_not_recover_or_override_reviewed_scope(self):
         current = config()
         channel = current["packages"][0]["channels"][0]

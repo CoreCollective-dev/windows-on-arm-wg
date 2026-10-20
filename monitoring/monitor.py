@@ -422,8 +422,20 @@ def baseline_result(jobs, target, required_steps):
 
 
 def evaluate(jobs, target, required_steps, amd64_jobs=None, comparison_context=None):
-    arm = platform_result(jobs, target["job"], target.get("required_steps", required_steps))
-    amd = baseline_result(jobs if amd64_jobs is None else amd64_jobs, target, required_steps)
+    arm_jobs = jobs
+    controls = jobs if amd64_jobs is None else amd64_jobs
+    if target.get("resolved_source_group"):
+        # A rerun can resolve a mutable code ref to a new SHA, changing job names.
+        # Select each platform's latest attempt; the source capture guard below
+        # still rejects different resolved code SHAs.
+        def latest_matching(records, selector):
+            matches = [job for job in records if selector and re.fullmatch(selector, job["name"])]
+            latest = max((job.get("run_attempt") or 1 for job in matches), default=1)
+            return [job for job in records if job not in matches or (job.get("run_attempt") or 1) == latest]
+        arm_jobs = latest_matching(jobs, target["job"])
+        controls = latest_matching(controls, target.get("amd64_job"))
+    arm = platform_result(arm_jobs, target["job"], target.get("required_steps", required_steps))
+    amd = baseline_result(controls, target, required_steps)
     result = {"health": "Unknown", "condition": "comparison-unavailable",
               "arm_specific_failure": False, "arm64": arm, "amd64": amd,
               "jobs": arm["jobs"] + amd["jobs"], "notify": False, "policy": FAILURE_POLICY}
