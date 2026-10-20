@@ -148,6 +148,17 @@ def validate(config):
                     raise MonitorError(f"Duplicate {field}: {name}")
             if not channel.get("baseline"):
                 raise MonitorError(f"Unverified channel: {name}")
+            if channel.get("baseline_run_id") is not None and (
+                type(channel["baseline_run_id"]) is not int or channel["baseline_run_id"] <= 0
+            ):
+                raise MonitorError(f"Invalid baseline run ID: {name}")
+            for field, maximum in (("baseline_search_days", 365), ("baseline_search_limit", 25)):
+                if field in channel and (
+                    type(channel[field]) is not int or not 1 <= channel[field] <= maximum
+                ):
+                    raise MonitorError(f"Invalid {field}: {name}")
+            if "baseline_search" in channel and type(channel["baseline_search"]) is not bool:
+                raise MonitorError(f"Invalid baseline search flag: {name}")
     return config
 
 
@@ -657,6 +668,8 @@ def scan(api, config, state, now, scheduled=False, progress=False):
             package.pop("notification_results", None)
             for channel in package.get("channels", {}).values():
                 channel.pop("results", None)
+                for field in ("last_known", "baseline_version", "baseline_definition", "retired"):
+                    channel.pop(field, None)
     report = {"schema": SCHEMA, "mode": "dry-run", "tracker": config["tracker"],
               "checked_at": stamp(now), "packages": [], "errors": [],
               "failure_policy": FAILURE_POLICY, "state_policy_migrated": migrated,
@@ -669,6 +682,12 @@ def scan(api, config, state, now, scheduled=False, progress=False):
         entry = copy.deepcopy(old)
         entry.setdefault("channels", {})
         results = {}
+        last_known = {}
+        retired = {}
+        activities = []
+        channel_health = []
+        baseline_warnings = []
+        history_warnings = []
         observations = []
         errors = []
         if not package.get("channels"):
@@ -685,12 +704,22 @@ def scan(api, config, state, now, scheduled=False, progress=False):
                     raise MonitorError("Package read budget exhausted; coverage incomplete")
                 fresh = observe_channel(api, channel, prior, now)
                 entry["channels"][identifier] = fresh
+                errors.extend(f"{identifier}: {error}" for error in fresh.get("errors", []))
+                activities.append(fresh.get("activity", ""))
+                channel_health.append(fresh.get("health", "Unknown"))
+                baseline_warnings.extend(f"{identifier}: {warning}" for warning in fresh.get("baseline_warnings", []))
+                history_warnings.extend(f"{identifier}: {warning}" for warning in fresh.get("history_warnings", []))
+                last_known.update({f"{identifier}/{key}": value for key, value in fresh.get("last_known", {}).items()})
+                retired.update({f"{identifier}/{key}": value for key, value in fresh.get("retired", {}).items()})
                 for key, value in fresh["results"].items():
                     results[f"{identifier}/{key}"] = value
                 observations.extend({"key": f"{identifier}/{observation['key']}", "value": observation["value"]}
                                     for observation in fresh.get("observations", []))
             except MonitorError as error:
                 errors.append(f"{identifier}: {error}")
+                activities.append("Monitoring warning")
+                last_known.update({f"{identifier}/{key}": value for key, value in prior.get("last_known", {}).items()})
+                baseline_warnings.extend(f"{identifier}: {warning}" for warning in prior.get("baseline_warnings", []))
                 for key, value in prior.get("results", {}).items():
                     retained = copy.deepcopy(value)
                     retained["warning"] = "Observation gap: " + str(error)
@@ -724,6 +753,8 @@ def scan(api, config, state, now, scheduled=False, progress=False):
             seen = copy.deepcopy(old.get("seen_observations", {}))
             for observation in observations:
                 key, value = observation["key"], observation["value"]
+                if key in retired:
+                    continue
                 identity = f"{key}/{value['run_id']}/{value['attempt']}"
                 fingerprint = hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
                 if seen.get(identity, {}).get("fingerprint") == fingerprint:
@@ -758,13 +789,40 @@ def scan(api, config, state, now, scheduled=False, progress=False):
                         announced[key] = copy.deepcopy(result)
             if recent:
                 announced = {key: value for key, value in announced.items()
-                             if value.get("observed_at") and now - instant(value["observed_at"]) <= timedelta(days=90)}
+                             if key not in retired and value.get("observed_at")
+                             and now - instant(value["observed_at"]) <= timedelta(days=90)}
             entry["notification_results"] = announced
-        health = min((r["health"] for r in results.values()), key=HEALTH_ORDER.index)
+        if recent and package.get("channels"):
+            health = min((value["health"] for value in last_known.values()), key=HEALTH_ORDER.index) if last_known else "Unknown"
+            if not last_known and channel_health and all(value == "Paused" for value in channel_health):
+                health = "Paused"
+            if baseline_warnings and health != "Broken":
+                health = "Unknown"
+            if errors:
+                activity = "Monitoring warning"
+            elif "PR closed - tracking retired, not a recovery" in activities:
+                activity = "PR closed - tracking retired, not a recovery"
+            elif "Comparison inconclusive" in activities:
+                activity = "Comparison inconclusive"
+            elif "Arm-specific failure observed" in activities:
+                activity = "Arm-specific failure observed"
+            elif "Passing builds observed" in activities:
+                activity = "Passing builds observed"
+            elif "Builds pending" in activities:
+                activity = "Builds pending"
+            else:
+                activity = "No changes - no new applicable builds"
+        else:
+            health = min((r["health"] for r in results.values()), key=HEALTH_ORDER.index)
+            activity = "Not monitored" if health == "Paused" else "Needs setup"
         entry["health"] = health
         packages[name] = entry
         report["packages"].append({"package": name, "health": health, "owner": package["owner"],
                                    "results": results, "observations": observations,
+                                   "last_known": last_known, "retired": retired, "activity": activity,
+                                   "last_verified_at": max((v["observed_at"] for v in last_known.values()), default=None),
+                                   "baseline_warnings": baseline_warnings,
+                                   "history_warnings": history_warnings,
                                    "planned_notification": event, "errors": errors})
         report["errors"].extend(f"{name}: {error}" for error in errors)
         if progress:
@@ -783,21 +841,23 @@ def summary(report):
              f"Checked: {report['checked_at']}. Polling: every 24 hours.",
              "Failure rule: Windows Arm64 build/tests failed AND equivalent Windows AMD64 succeeded.",
              "No issues, comments, mentions, labels or Project items were changed.", "",
-             "| Package | Health | Observation | Planned transition |",
+             "| Package | Last verified health | Today's activity | Last verified evidence |",
              "| --- | --- | --- | --- |"]
     for package in report["packages"]:
-        event = package["planned_notification"]
         descriptions = []
-        for key, result in package["results"].items():
+        evidence_items = package.get("last_known") or package["results"]
+        ordered = sorted(evidence_items.items(), key=lambda item: HEALTH_ORDER.index(item[1]["health"]))
+        for key, result in ordered[:3]:
             evidence = f"[run]({result['url']})" if result.get("url") else "no run"
-            descriptions.append(f"{literal(key)}: {literal(result['detail'])} ({evidence})")
-            for platform in ("arm64", "amd64"):
-                for job in result.get(platform, {}).get("jobs", []):
-                    descriptions.append(f"[{platform}: {literal(job['name'])}]({job['url']})")
-            if result.get("warning"):
-                descriptions.append("Warning: " + literal(result["warning"]))
+            descriptions.append(f"{literal(key)}: {result['health']} ({evidence}; {result.get('observed_at', 'no baseline')})")
+        if len(evidence_items) > 3:
+            descriptions.append(f"+{len(evidence_items) - 3} other target/stream results in report.json")
+        if package.get("baseline_warnings"):
+            descriptions.append(literal("; ".join(package["baseline_warnings"])))
+        if package.get("history_warnings"):
+            descriptions.append(f"{len(package['history_warnings'])} historical evidence notes in report.json")
         lines.append(f"| {package['package']} | {package['health']} | "
-                     f"{'<br>'.join(descriptions)} | {len(event['changes']) if event else 0} |")
+                     f"{package.get('activity', 'Not evaluated')} | {'<br>'.join(descriptions)} |")
     failures = [(package["package"], observation["value"]) for package in report["packages"]
                 for observation in package.get("observations", [])
                 if observation["value"].get("arm_specific_failure")]
@@ -806,6 +866,10 @@ def summary(report):
                       "Includes runs later fixed by another run; latest stream health is shown above."])
         lines.extend(f"- {name}: [{literal(value['stream'])}]({value['url']})"
                      for name, value in failures)
+    lines.extend(["", "No changes means no new applicable build evidence, not a new successful build.",
+                  "Last-known failures remain open through silence and inconclusive comparisons.",
+                  "Historical baseline initialization is evidence-only and does not emit regression pings.",
+                  "Unknown now means no validated baseline/required target evidence; daily API errors are reported separately."])
     if report["errors"]:
         lines.extend(["", "## Incomplete observations", *["- " + literal(e) for e in report["errors"]]])
     lines.extend(["", f"REST requests: {report['requests']}; last reported quota remaining: {report['rate_remaining']}.",
@@ -850,6 +914,8 @@ def main():
     parser.add_argument("--output", type=Path, default=Path("monitor-output"))
     parser.add_argument("--scheduled", action="store_true")
     parser.add_argument("--restore", action="store_true")
+    parser.add_argument("--refresh-baselines", action="store_true",
+                        help="Recheck historical baseline candidates without discarding known failures")
     args = parser.parse_args()
     config = validate(read_json(args.registry))
     api = GitHub(budget=1200 if config.get("collection_policy") == COLLECTION_POLICY else 800)
@@ -860,6 +926,11 @@ def main():
         print(f"Restored monitor state: {restored or 'first execution'}")
         args.state = args.output / "state.json" if restored else None
     state = read_json(args.state) if args.state else {"schema": SCHEMA, "tracker": REPOSITORY, "packages": {}}
+    if args.refresh_baselines:
+        for package in state.get("packages", {}).values():
+            for channel in package.get("channels", {}).values():
+                channel.pop("baseline_version", None)
+                channel["refresh_baseline"] = True
     report, output = scan(api, config, state, utcnow(), args.scheduled, progress=True)
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output / "state.json").write_text(json.dumps(output, indent=2), encoding="utf-8")

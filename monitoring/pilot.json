@@ -58,7 +58,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/pyca/cryptography/actions/runs/36713008517; source 4dda5c7fe4ae71b8925f2551910a0ef959df9c7a.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 36713008517,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         },
         {
           "id": "tests-win-arm64",
@@ -99,7 +102,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/pyca/cryptography/actions/runs/39243624070; source b43c3a7b87e4c57408b50b31b028d80dbb98bdac.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39243624070,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "partial",
@@ -155,7 +161,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/pyproj4/pyproj/actions/runs/39259020458; source 74e9eefd0973ee2e0ceb100f43a72dbb229ee394.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39259020458,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -211,7 +220,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/crate-py/rpds/actions/runs/37520710815; source 81fffcfe121ab3d7cd6de1af9a6deadc24d702b0.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 37520710815,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -274,7 +286,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/mypyc/mypy_mypyc-wheels/actions/runs/39281902434; source 217cef1d6cf263bf6a43e4eb882c10bd4f55f3ff.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39281902434,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -320,7 +335,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/mkleehammer/pyodbc/actions/runs/18600198971; source 7ee5b566984f7bd3d8fcfa0369e9e163e70e1cbd.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 18600198971,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",

@@ -127,8 +127,10 @@ def package_body(package):
 def status_body(package, checked_at):
     lines = [STATUS, "", f"## Current health: {package['health']}", "",
              f"Last checked: {checked_at}. Daily observation; no incident pings enabled.", "",
+             "Daily activity: " + package.get("activity", "Not recorded") + ".",
+             "Health is last verified evidence, not an assertion that a new build ran today.", "",
              "| Target | Health | Evidence |", "| --- | --- | --- |"]
-    for key, result in package["results"].items():
+    for key, result in (package.get("last_known") or package["results"]).items():
         detail = literal(result["detail"])
         if result.get("url"):
             detail += f" - [run]({result['url']})"

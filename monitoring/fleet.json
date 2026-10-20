@@ -61,7 +61,10 @@
               }
             ]
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38097142483,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -107,7 +110,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/hynek/argon2-cffi-bindings/actions/runs/38711816016; source ecfd52d477af30a3a3294d0ed50e7f5faee60041.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38711816016,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -166,7 +172,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/ilanschnell/bitarray/actions/runs/39372420538; source 63e32a9619183772cd08a936c6568bd7aff610c8.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39372420538,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -212,7 +221,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/bitsandbytes-foundation/bitsandbytes/actions/runs/33789167923; source 833649043474794b8fe7a4136e0c40faf077b2e0.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 33789167923,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -318,7 +330,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/python-cffi/cffi/actions/runs/39301876443; source 7ac2b18fa2212052315a904ef5000f34edbd5ddf.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39301876443,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -377,7 +392,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/contourpy/contourpy/actions/runs/39106689605; source a783c576a583ae5c8a17ab773cfb34db062981a2.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39106689605,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -469,7 +487,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: https://github.com/coveragepy/coveragepy/actions/runs/38248667792; source 8605d4827694b727d90b966f12ed2f16645d95a7. User-supplied run validated; both Windows platform selectors recorded without guessing. Main dispatch and the specifically reviewed kit branch are isolated; no recovery across arbitrary kit branches.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38248667792,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -515,7 +536,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/milesgranger/cramjam/actions/runs/36821129850; source 9ee07a89a0d477f20dd9fef59a25747cdcfbc2ee.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 36821129850,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -577,7 +601,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/pyca/cryptography/actions/runs/36713008517; source 4dda5c7fe4ae71b8925f2551910a0ef959df9c7a.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 36713008517,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         },
         {
           "id": "tests-win-arm64",
@@ -618,7 +645,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/pyca/cryptography/actions/runs/39243624070; source b43c3a7b87e4c57408b50b31b028d80dbb98bdac.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39243624070,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "partial",
@@ -670,7 +700,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: https://github.com/explosion/cymem/actions/runs/38000198236; source ab7415bc36d77a937bb03392c2a3bd3123d9fd10. User-supplied run validated; both Windows platform selectors recorded without guessing. Release/prerelease tag prefixes are explicitly admitted; old expired step data remains unknown until a fresh run.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38000198236,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -726,7 +759,8 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/DataDog/dd-trace-py/actions/runs/39315120078; source 77123daa79c8e668fb5b5f89cf50f4c13c548d0d.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_search": false
         }
       ],
       "comparison_status": "unresolved",
@@ -823,7 +857,10 @@
           ],
           "required_steps": [],
           "baseline": "2026-10-20T07:45:52Z: https://github.com/duckdb/duckdb-python/actions/runs/38997181439; source 8076209b1b4ab41fc48880941dbdd4feab1ecdf4. User-supplied run validated; both Windows platform selectors recorded without guessing. Uses the reviewed release caller and pairs seed, wheel and each ABI test separately; both-platform omissions are skipped.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38997181439,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -923,7 +960,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/fastavro/fastavro/actions/runs/39274236658; source c62f6fe32505415824df1672dfc2195478187bb0.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39274236658,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1019,7 +1059,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/aio-libs/frozenlist/actions/runs/39210216939; source 28558c022231feafc013d3039e0988988cf7697e.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39210216939,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1105,7 +1148,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/gevent/gevent/actions/runs/35110072261; source 725ecc3e53dd74f3828f1cf189e1cbeaebbdfae9.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 35110072261,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1214,7 +1260,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/python-greenlet/greenlet/actions/runs/30811699991; source b6690a5ecb7c550f96f790aad636b91db088a8b7.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 30811699991,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1293,7 +1342,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/uber/h3-py/actions/runs/39302097664; source 83fac55493f55f0719a70f6948cf56751faca8bf.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39302097664,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1339,7 +1391,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/h5py/h5py/actions/runs/39209081220; source 270e8c1ed2d10d784db7c88faee7521e4939e7b8.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39209081220,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1385,7 +1440,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/redis/hiredis-py/actions/runs/38772366767; source 797e82650e183c524b3e7496b0bf4f66346dfd70.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38772366767,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1431,7 +1489,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/ICRAR/ijson/actions/runs/39176932046; source 6db23168512f82cd9e53fc26f0e871df7f90d42f.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39176932046,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1481,7 +1542,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/pydantic/jiter/actions/runs/38724189063; source e02134b389f90d1aaefa8caeda3c2df1ce9c053f.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38724189063,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1527,7 +1591,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/Instagram/LibCST/actions/runs/31461508173; source d9a255843b5cdbecc6834684d233bce1f2987f9d.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 31461508173,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1643,7 +1710,10 @@
               }
             ]
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 36974484173,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1695,7 +1765,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: https://github.com/getlogbook/logbook/actions/runs/39134666975; source 43172b4a29e6b57bbe3b79c2b2e3ccaa2e5a9362. User-supplied run validated; both Windows platform selectors recorded without guessing. Provided PR run is selector evidence only; existing non-PR monitoring scope is preserved.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39134666975,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1821,7 +1894,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/lxml/lxml/actions/runs/38706693416; source 584df5c85997bebdb23a4ab4aee15b0ffe96ac66.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38706693416,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1873,7 +1949,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: https://github.com/pytries/marisa-trie/actions/runs/29778673854; source cc050dcd26ed98f23206e6e8b29537a1ec04bd4d. User-supplied run validated; both Windows platform selectors recorded without guessing. Provided PR run is selector evidence only; existing non-PR monitoring scope is preserved.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 29778673854,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1919,7 +1998,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/pallets/markupsafe/actions/runs/37073936755; source ece26078ec168ebac69f02877238e68d4b376c91.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 37073936755,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -1965,7 +2047,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/matplotlib/matplotlib/actions/runs/39213176459; source d7a19fbf48918c1a99f771c954c49c14ea95fc5d.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39213176459,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2028,7 +2113,10 @@
               }
             ]
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39342899110,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2074,7 +2162,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/jax-ml/ml_dtypes/actions/runs/39243087087; source c0674e3dbdc4de884b45a97cc49bf0fc28a41d8f.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39243087087,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2120,7 +2211,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/hajimes/mmh3/actions/runs/36741097485; source 4d81eca9cbbcb4e516c64c051287fe2076b7c72b.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 36741097485,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2166,7 +2260,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/msgpack/msgpack-python/actions/runs/39198367381; source 3650629db01ef1ca8e3fc7d0c742614bb783c3a7.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39198367381,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2212,7 +2309,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/msgspec/msgspec/actions/runs/39233664695; source a9b39788d27eb86e69c97afb4e5ea4c96de4c547.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39233664695,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2275,7 +2375,10 @@
               }
             ]
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 37929221966,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2338,7 +2441,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/mypyc/mypy_mypyc-wheels/actions/runs/39281902434; source 217cef1d6cf263bf6a43e4eb882c10bd4f55f3ff.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39281902434,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2384,7 +2490,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/messense/nh3/actions/runs/38994482488; source 112cd0540b04ecfd6c871f22bc220e7a23a7d08b.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38994482488,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2502,7 +2611,10 @@
             "approved_on": "2026-10-20",
             "scope": "The configured Numba ARM64/AMD64 build and test pairs may use different NumPy versions. Other packages and source/Python/ABI/stage checks are not waived."
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39452429967,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2548,7 +2660,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/pydata/numexpr/actions/runs/38373633472; source d7c975073be01045010a71206f6c85fff3416a35.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38373633472,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2600,7 +2715,10 @@
             "amd64": "https://github.com/numpy/numpy/actions/runs/39440763314/job/118689655130",
             "source": "https://github.com/numpy/numpy/blob/35ad3af05edf8c59ba60169fba68303ae1a12383/.github/workflows/wheels.yml"
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39440763314,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2710,7 +2828,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/onnx/onnx/actions/runs/39207153545; source 18fb3cfb3b7b2c3f3b05ba9bd3829333432c095d.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39207153545,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2786,7 +2907,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/onnxruntime/onnxruntime-qnn/actions/runs/39113854466; source ce84606175e10ecce60a4b05d028e55d87304d46.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39113854466,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -2905,7 +3029,10 @@
               }
             ]
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 31816596684,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3046,7 +3173,10 @@
               }
             ]
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39365271941,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3098,7 +3228,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: https://github.com/explosion/preshed/actions/runs/23428708476; source 19c233fd4473bd8f5b86c72a8257ce8a7e09b795. User-supplied run validated; both Windows platform selectors recorded without guessing. Release/prerelease tag prefixes are explicitly admitted; old expired step data remains unknown until a fresh run.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 23428708476,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3214,7 +3347,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/aio-libs/propcache/actions/runs/39211222053; source 989ee4d643bc6d077fb5cf7d6b9a2ba880f4fe18.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39211222053,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3290,7 +3426,10 @@
               }
             ]
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39334531400,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3362,7 +3501,10 @@
             }
           ],
           "baseline": "Verified pairs at https://github.com/saghul/pycares/actions/runs/37285185980",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 37285185980,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3408,7 +3550,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/Legrandin/pycryptodome/actions/runs/39231924547; source 29372bd5ae21b02a50f07181d1f82721b3ea81bb.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39231924547,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3450,7 +3595,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/mongodb/mongo-python-driver/actions/runs/39205437200; source df8f10ba87172665a856f9bec0a58447543f277a.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39205437200,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3522,7 +3670,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/mkleehammer/pyodbc/actions/runs/18600198971; source 7ee5b566984f7bd3d8fcfa0369e9e163e70e1cbd.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 18600198971,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3578,7 +3729,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/pyproj4/pyproj/actions/runs/39259020458; source 74e9eefd0973ee2e0ceb100f43a72dbb229ee394.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39259020458,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3680,7 +3834,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: https://github.com/yaml/pyyaml/actions/runs/37695338325; source 98d4a6b35ea3055fb04a989df842b215ff09520f. User-supplied run validated; both Windows platform selectors recorded without guessing. Only Python wheel jobs are compared, not libyaml prerequisite jobs; cp312/cp313/cp314/cp315/free-threaded variants remain separate.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 37695338325,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3764,7 +3921,10 @@
             }
           ],
           "baseline": "User summary https://github.com/mrabarnett/mrab-regex/actions/runs/34397217583/attempts/1#summary-102619780387. One job indeed builds all Windows architectures. Read independent cibuildwheel interpreter completion/error markers from that exact job log; require the matching AMD64 interpreter to finish successfully. ARM wheels are cross-compiled and not tested on this AMD64 host.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 34397217583,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3820,7 +3980,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/crate-py/rpds/actions/runs/37520710815; source 81fffcfe121ab3d7cd6de1af9a6deadc24d702b0.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 37520710815,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3876,7 +4039,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/safetensors/safetensors/actions/runs/35755530521; source e246a2560645b7525f5775669ed816eb57c5bcc8.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 35755530521,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -3952,7 +4118,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/scikit-image/scikit-image/actions/runs/39123469513; source b700edc8005e4ee9e74fc83259f09e8df3213f15.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39123469513,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4054,7 +4223,10 @@
               }
             ]
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39366421259,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4106,7 +4278,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: https://github.com/scipy/scipy/actions/runs/39364529815; source 3d509764f03a05cdaca5f7e8957c9c04a810f6ae. User-supplied run validated; both Windows platform selectors recorded without guessing. User examples are PR runs; regular mainline/manual/scheduled scope is kept. This proves selectors, not current mainline activity.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39364529815,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4152,7 +4327,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/google/sentencepiece/actions/runs/39282836342; source 45a89036d21b6c2f4430da2f3b42ba12afc9229b.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39282836342,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4199,7 +4377,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: https://github.com/shap/shap/actions/runs/39017718154; source 4f8a9c97fb0ea4ce4b3c023f7aa6e86f4780610d. User-supplied run validated; both Windows platform selectors recorded without guessing. Runs with neither platform build/test are not applicable, not coverage incidents.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39017718154,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4262,7 +4443,10 @@
               }
             ]
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 32706299673,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4351,7 +4535,10 @@
               }
             ]
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 23424966006,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4397,7 +4584,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/Thriftpy/thriftpy2/actions/runs/33950768644; source 929b8d3da92d880670bd5326e983d47575167a21.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 33950768644,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4443,7 +4633,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/huggingface/tokenizers/actions/runs/39286932278; source f8f41813f4bf8f3e2a467e31637c8837373b8dfa.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39286932278,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4489,7 +4682,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/tornadoweb/tornado/actions/runs/38274694055; source b303c124b5f068c51dfb524d3d036b97ad2993e6.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38274694055,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4535,7 +4731,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/xberg-io/tree-sitter-language-pack/actions/runs/38997473342; source 67d9d9e6f8c67d1393aabbadca4f69cc75e6eae4.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38997473342,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4587,7 +4786,10 @@
             "group": "build_ref",
             "value": "main-windows"
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 35716211357,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         },
         {
           "id": "release-3-9-windows",
@@ -4627,7 +4829,10 @@
             "group": "build_ref",
             "value": "release/3.9.x-windows"
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39371034114,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4669,7 +4874,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/ultrajson/ultrajson/actions/runs/37362538631; source 0f95c6d39ed081be162f237b650c12c75a8bc76c.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 37362538631,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4775,7 +4983,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/Vizonex/Winloop/actions/runs/38081098543; source b2addd60b8ffb765fd48b1f3eaa16e366a3c5e46.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 38081098543,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4821,7 +5032,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/GrahamDumpleton/wrapt/actions/runs/39187412375; source 6b4e844950213118b19e613248d2bc9469eb731e.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39187412375,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -4867,7 +5081,8 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/dmlc/xgboost/actions/runs/39279943209; source dd59cc41c0d72ac91d225d4638b38bcf8c3b2025.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_search": false
         }
       ],
       "comparison_status": "unresolved",
@@ -4930,7 +5145,10 @@
               }
             ]
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 35007891886,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -5106,7 +5324,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/zopefoundation/zope.interface/actions/runs/39138596230; source c220969089921d58d24df3eb3e1588f75bd6c12a.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39138596230,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -5169,7 +5390,10 @@
               }
             ]
           },
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 27265017989,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",
@@ -5255,7 +5479,10 @@
             }
           ],
           "baseline": "2026-10-20T07:45:52Z: paired-platform review of https://github.com/indygreg/python-zstandard/actions/runs/39310594239; source a2bb3c0bb3657007b79617dcd63ff3c6e2acedd2.",
-          "collection": "rolling-24h"
+          "collection": "rolling-24h",
+          "baseline_run_id": 39310594239,
+          "baseline_search_days": 90,
+          "baseline_search_limit": 4
         }
       ],
       "comparison_status": "paired",

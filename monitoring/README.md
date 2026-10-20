@@ -56,8 +56,54 @@ later fixed inside the same daily window. Latest results describe each stream;
 the summary separately lists all qualifying failures seen in the window.
 Replay fingerprints prevent the same overlapping window from reopening old
 incidents. Runs with no relevant builds are skipped, not reported as failures.
-An empty window is Unknown/no recent comparison, not a historical green result.
+An empty window preserves the last verified result and reports **No changes**.
+Only a never-validated baseline stays Unknown/Needs setup. Historical health
+always includes its evidence date; it is not presented as a fresh passing build.
 Public upstream PR code is never downloaded or executed by the monitor.
+
+## Baselines and last-known health
+
+The report separates **Last verified health**, **Today's activity** and
+**Last verified evidence**. Silence preserves both passing and failing results:
+an open Arm-specific failure does not disappear after 24 hours. A new shared
+failure, skipped AMD64 job or unavailable comparison does not clear it either.
+API errors retain known health but show **Monitoring warning** and fail the poll.
+
+Each reviewed channel can provide:
+
+```json
+{
+  "baseline_run_id": 37695338325,
+  "baseline_search_days": 90,
+  "baseline_search_limit": 4
+}
+```
+
+These are additional channel fields, not a complete registry entry. The observer
+validates the seed's workflow and actual platform jobs with the same comparison
+rules as daily runs. It also inspects bounded newer candidates on that seed's
+branch/event, **without a success-only filter**. A more recent qualifying failure
+wins over an old successful seed. The seed is not an override asserting success.
+A deleted seed falls back to bounded historical discovery with a visible note.
+Unusable/expired stage evidence stays unverified.
+
+Baseline discovery runs only when a channel lacks initialized state, its
+comparison definition changes, or an operator explicitly requests refresh.
+`baseline_search: false` disables historical reads; ordinary new observations
+still establish health. Read caps and incomplete/unreadable searches are explicit,
+not success-shaped defaults. Search limits and historical inconclusive candidates
+are recorded in the report. They do not imply complete historical incident coverage.
+
+Last-known results are per channel, PR/ref/source stream and target. Different
+PRs or branches cannot recover each other. A closed PR is removed from active
+health and retained in `retired`, recording merged/closed-without-merge rather
+than inventing a successful recovery. When GitHub omits the PR association,
+commit-isolated evidence cannot safely be auto-retired as a closed PR.
+
+Last-known active failures are not aged out with notification deduplication data.
+They survive in the state artifact until superseded by applicable passing
+evidence, explicitly retired, or invalidated by reviewed selector changes.
+Historic bootstrap observations establish state but do not emit incident pings.
 
 Unconfigured/blocked comparisons collect run metadata but avoid expensive job
 downloads that cannot yield an admissible failure verdict. The reason is visible.
@@ -124,6 +170,7 @@ From the repository root:
 python -m unittest discover -s monitoring\tests -v
 python -m monitoring.monitor --output monitor-output
 python -m monitoring.monitor --state monitor-output\state.json --output monitor-output
+python -m monitoring.monitor --state monitor-output\state.json --output monitor-output --refresh-baselines
 ```
 
 The second scan uses the previous baseline to suppress repeat planned
@@ -133,8 +180,10 @@ report and process exit status; they are not upstream regression pings.
 
 Outputs:
 
-- `report.json`: current per-target observations and planned transitions.
-- `state.json`: next poll's baseline, pending runs, notification sequence and
+- `report.json`: last-known health, today's activity, historical initialization
+  notes, all current per-target observations and planned transitions.
+- `state.json`: durable last-known/retired results, initialization metadata,
+  pending runs, notification sequence and
   last complete channel scan time.
 - `summary.md`: human-readable report, also displayed in the Actions run summary.
 
@@ -173,9 +222,11 @@ be observed after one package fails.
   (the all-PR scan exceeded the old 160-request package cap for pandas). Pagination
   and split time windows avoid silently truncating the GitHub search ceiling.
 
-The collector uses a **24-hour** run window, plus persisted pending runs.
-Ninety days is the retention horizon for deduplication/notification memory, not
-the default upstream search window. Deleted or already-retention-expired evidence
+The daily collector uses a **24-hour** run window, plus persisted pending runs.
+The one-time baseline search may look back 90 days (bounded by candidate/read caps);
+reviewed seed IDs may be older and remain explicitly dated. Ninety days is also
+the deduplication memory horizon, not a time-to-live for last-known failures.
+Deleted or already-retention-expired evidence
 and polling outages longer than the observation window can still leave gaps;
 the monitor does not promise evidence it cannot retrieve.
 

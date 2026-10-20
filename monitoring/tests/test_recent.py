@@ -70,7 +70,10 @@ class RecentTests(unittest.TestCase):
     def test_pr_pending_is_rechecked_after_leaving_window(self):
         api = FakeAPI(runs=[])
         old = recent_run(age=30)
-        api.get = lambda path, params=None: old if "/runs/10" in path else {"total_count": 0, "workflow_runs": []}
+        api.get = lambda path, params=None: (
+            {"state": "open"} if "/pulls/" in path else
+            old if "/runs/10" in path else {"total_count": 0, "workflow_runs": []}
+        )
         api.pages = lambda *args: pair()
         result = observe_recent(api, CHANNEL, {"pending_runs": [10]}, NOW)
         self.assertEqual(len(result["observations"]), 1)

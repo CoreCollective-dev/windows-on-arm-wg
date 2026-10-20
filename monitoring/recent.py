@@ -46,8 +46,9 @@ def same_request(candidate, run):
     return True
 
 
-def observe_recent(api, channel, prior, now):
-    runs = discover(api, channel, now - timedelta(hours=24), now)
+def observe_recent(api, channel, prior, now, *, runs=None, retain=True):
+    if runs is None:
+        runs = discover(api, channel, now - timedelta(hours=24), now)
     known = {run["id"]: run for run in runs}
     for identifier in prior.get("pending_runs", []):
         if identifier not in known:
@@ -122,5 +123,9 @@ def observe_recent(api, channel, prior, now):
             "health": "Unknown", "condition": "no-recent-comparison", "notify": False, "jobs": [],
             "detail": "No applicable settled comparison in the past 24 hours; not a passing or failing build",
         }
-    return {"results": results, "observations": observations, "pending_runs": pending,
-            "last_complete_scan": stamp(now), "window_hours": 24}
+    fresh = {"results": results, "observations": observations, "pending_runs": pending,
+             "last_complete_scan": stamp(now), "window_hours": 24, "runs_in_window": len(runs)}
+    if retain:
+        from monitoring.baselines import retain_health
+        return retain_health(api, channel, prior, fresh, now)
+    return fresh

@@ -67,6 +67,8 @@ class FakeAPI:
         self.paths.append((path, params))
         if self.error:
             raise MonitorError(self.error)
+        if "/pulls/" in path:
+            return {"state": "open", "merged_at": None}
         return {"total_count": len(self.runs), "workflow_runs": self.runs}
 
     def pages(self, path, key, params=None):

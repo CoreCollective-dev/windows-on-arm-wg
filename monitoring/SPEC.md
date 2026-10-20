@@ -4,6 +4,18 @@ Status: approved direction; daily read-only pilot rollout started on 2026-10-19.
 
 Date: 2026-10-19.
 
+### Persistent baseline update (2026-10-20)
+
+Separate last verified health from daily activity. No new applicable build means
+**No changes**, preserving the last dated passing or failing result. Never-verified
+targets remain Unknown/Needs setup. Inconclusive comparisons cannot recover a
+known Arm-specific failure; API errors show Monitoring warning alongside retained
+health. Optional `baseline_run_id` seeds and bounded newest-applicable historical
+discovery establish initial state without a workflow-success filter. Historical
+initialization does not send incident pings. PR/ref/source streams remain isolated;
+closed PRs may be retired without claiming they passed. Active failure evidence
+does not expire with the daily window or 90-day deduplication memory.
+
 ### Collection update (2026-10-20)
 
 The user approved **all relevant runs in the past 24 hours, including PRs,
@@ -274,7 +286,8 @@ record it, fail the monitoring run, and retry synchronization next time.
 1. Poll every 24 hours, UTC cron `17 15 * * *`, plus manual runs.
    Scheduling off the hour reduces contention; it is not an exact-time SLA.
 2. Each poll evaluates every relevant settled run created in the past 24 hours.
-   An empty window is Unknown/no recent comparison, not an old successful baseline.
+   An empty window is No changes with the last verified health/date retained;
+   only targets without validated evidence remain Unknown/Needs setup.
 3. Paginate all run/job/comment lists. Persist run/attempt/outcome fingerprints
    so overlapping manual or scheduled polls do not resend transitions.
 4. Discover without success, branch, or PR-exclusion filters. Include relevant
