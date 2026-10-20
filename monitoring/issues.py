@@ -16,7 +16,7 @@ from pathlib import Path
 
 from monitoring.monitor import (
     APIError, GitHub, MonitorError, REPOSITORY, ROOT, instant, literal,
-    read_json, utcnow, validate,
+    read_json, report_key, utcnow, validate,
 )
 
 
@@ -154,7 +154,7 @@ def master_status(report, mapping):
              "Permanent tracking issues stay open when healthy; sub-issue completion is not build health.",
              "", "; ".join(f"**{health}: {counts[health]}**" for health in HEALTH), "",
              "| Package | Health | Tracker |", "| --- | --- | --- |"]
-    for package in report["packages"]:
+    for package in sorted(report["packages"], key=report_key):
         issue = mapping["package=" + package["package"]]
         lines.append(f"| {package['package']} | {package['health']} | [tracking issue]({issue['html_url']}) |")
     return "\n".join(lines)

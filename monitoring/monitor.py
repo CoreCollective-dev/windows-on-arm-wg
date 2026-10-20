@@ -29,6 +29,11 @@ COLLECTION_POLICY = "all-tracked-runs-last24-including-pr-v1"
 REPOSITORY = "CoreCollective-dev/windows-on-arm-wg"
 ARTIFACT = "wheel-monitor-report"
 HEALTH_ORDER = ("Broken", "Attention", "Unknown", "Healthy", "Paused")
+REPORT_ORDER = ("Broken", "Unknown", "Attention", "Healthy", "Paused")
+
+
+def report_key(package):
+    return REPORT_ORDER.index(package["health"]), package["package"].casefold()
 
 
 class MonitorError(RuntimeError):
@@ -159,6 +164,8 @@ def validate(config):
                     raise MonitorError(f"Invalid {field}: {name}")
             if "baseline_search" in channel and type(channel["baseline_search"]) is not bool:
                 raise MonitorError(f"Invalid baseline search flag: {name}")
+            if "historical_job_success" in channel and type(channel["historical_job_success"]) is not bool:
+                raise MonitorError(f"Invalid historical job-success flag: {name}")
     return config
 
 
@@ -343,7 +350,7 @@ def attempt_jobs(api, repository, run):
     return [job for group in jobs.values() for job in group]
 
 
-def platform_result(jobs, selector, required_steps):
+def platform_result(jobs, selector, required_steps, historical_success=False):
     matches = [job for job in jobs if selector and re.fullmatch(selector, job["name"])]
     if len(matches) != 1:
         return {"status": "ambiguous" if matches else "missing", "jobs": [],
@@ -357,6 +364,11 @@ def platform_result(jobs, selector, required_steps):
         result["status"] = "skipped" if job.get("conclusion") == "skipped" else "pending"
         return result
     steps = [s for s in job.get("steps", []) if not s["name"].startswith("Post ")]
+    if historical_success and job.get("conclusion") == "success" and not steps:
+        result.update(status="passed", evidence_level="historical-job-conclusion",
+                      detail="Successful historical platform job; detailed steps/artifacts expired",
+                      successful_stages=[])
+        return result
     result["failed_steps"] = [{"name": step["name"], "conclusion": step["conclusion"]} for step in steps
                               if step.get("conclusion") in ("failure", "timed_out")]
     phases = []
@@ -401,9 +413,10 @@ def platform_result(jobs, selector, required_steps):
     return result
 
 
-def baseline_result(jobs, target, required_steps):
+def baseline_result(jobs, target, required_steps, historical_success=False):
     selectors = target.get("amd64_jobs", [target.get("amd64_job")])
-    parts = [platform_result(jobs, selector, target.get("amd64_steps", required_steps)) for selector in selectors]
+    parts = [platform_result(jobs, selector, target.get("amd64_steps", required_steps), historical_success)
+             for selector in selectors]
     if len(parts) == 1:
         return parts[0]
     statuses = {part["status"] for part in parts}
@@ -421,7 +434,8 @@ def baseline_result(jobs, target, required_steps):
             "detail": "AMD64 aggregate requires every configured equivalent job to succeed"}
 
 
-def evaluate(jobs, target, required_steps, amd64_jobs=None, comparison_context=None):
+def evaluate(jobs, target, required_steps, amd64_jobs=None, comparison_context=None, *,
+             historical_success=False):
     arm_jobs = jobs
     controls = jobs if amd64_jobs is None else amd64_jobs
     if target.get("resolved_source_group"):
@@ -434,12 +448,23 @@ def evaluate(jobs, target, required_steps, amd64_jobs=None, comparison_context=N
             return [job for job in records if job not in matches or (job.get("run_attempt") or 1) == latest]
         arm_jobs = latest_matching(jobs, target["job"])
         controls = latest_matching(controls, target.get("amd64_job"))
-    arm = platform_result(arm_jobs, target["job"], target.get("required_steps", required_steps))
-    amd = baseline_result(controls, target, required_steps)
+    arm = platform_result(arm_jobs, target["job"], target.get("required_steps", required_steps), historical_success)
+    amd = baseline_result(controls, target, required_steps, historical_success)
     result = {"health": "Unknown", "condition": "comparison-unavailable",
               "arm_specific_failure": False, "arm64": arm, "amd64": amd,
               "jobs": arm["jobs"] + amd["jobs"], "notify": False, "policy": FAILURE_POLICY}
     if not target.get("amd64_job") and not target.get("amd64_jobs"):
+        matched = [job for job in arm_jobs if re.fullmatch(target["job"], job["name"])]
+        if (historical_success and arm["status"] == "passed" and len(matched) == 1
+                and is_arm64(matched[0]) and matched[0].get("head_sha")
+                and matched[0].get("run_id") is not None and not target.get("comparison_blocker")):
+            result.update(
+                health="Healthy", condition="pass", verified_platforms={"arm64": True, "amd64": False},
+                evidence_level="historical-arm-job-success",
+                detail="Historical Windows Arm64 build/test job succeeded; AMD64 comparator is not configured",
+                coverage_warning="ARM baseline known, but comparative failure alerts remain unavailable without an equivalent AMD64 job",
+            )
+            return result
         result["detail"] = "AMD64 comparator not configured; no Arm-specific failure verdict"
         return result
     if arm["status"] in ("missing", "skipped") and amd["status"] in ("missing", "skipped"):
@@ -502,6 +527,9 @@ def evaluate(jobs, target, required_steps, amd64_jobs=None, comparison_context=N
     if arm["status"] == "passed" and arm_verified:
         result.update(health="Healthy", condition="pass",
                       detail=f"Monitored Windows Arm64 job passed; AMD64={amd['status']} (not an Arm regression)")
+        if arm.get("evidence_level") == "historical-job-conclusion":
+            result["evidence_level"] = "historical-job-conclusion"
+            result["detail"] = "Historical Windows Arm64 job succeeded; step/artifact retention is not required for this baseline"
     elif arm["status"] == "failed" and amd["status"] == "passed" and arm_verified and amd_verified:
         stage = arm.get("stage", "build-test")
         successful = set(amd.get("successful_stages", []))
@@ -700,6 +728,7 @@ def scan(api, config, state, now, scheduled=False, progress=False):
         channel_health = []
         baseline_warnings = []
         history_warnings = []
+        coverage_warnings = []
         observations = []
         errors = []
         if not package.get("channels"):
@@ -721,6 +750,7 @@ def scan(api, config, state, now, scheduled=False, progress=False):
                 channel_health.append(fresh.get("health", "Unknown"))
                 baseline_warnings.extend(f"{identifier}: {warning}" for warning in fresh.get("baseline_warnings", []))
                 history_warnings.extend(f"{identifier}: {warning}" for warning in fresh.get("history_warnings", []))
+                coverage_warnings.extend(f"{identifier}: {warning}" for warning in fresh.get("coverage_warnings", []))
                 last_known.update({f"{identifier}/{key}": value for key, value in fresh.get("last_known", {}).items()})
                 retired.update({f"{identifier}/{key}": value for key, value in fresh.get("retired", {}).items()})
                 for key, value in fresh["results"].items():
@@ -835,6 +865,7 @@ def scan(api, config, state, now, scheduled=False, progress=False):
                                    "last_verified_at": max((v["observed_at"] for v in last_known.values()), default=None),
                                    "baseline_warnings": baseline_warnings,
                                    "history_warnings": history_warnings,
+                                   "coverage_warnings": coverage_warnings,
                                    "planned_notification": event, "errors": errors})
         report["errors"].extend(f"{name}: {error}" for error in errors)
         if progress:
@@ -842,6 +873,7 @@ def scan(api, config, state, now, scheduled=False, progress=False):
     output = {"schema": SCHEMA, "tracker": config["tracker"], "packages": packages,
               "checked_at": stamp(now), "registry_revision": revision, "failure_policy": FAILURE_POLICY,
               "collection_policy": config.get("collection_policy")}
+    report["packages"].sort(key=report_key)
     report["requests"] = api.requests
     api.package_limit = None
     report["rate_remaining"] = getattr(api, "remaining", None)
@@ -852,10 +884,14 @@ def summary(report):
     lines = ["# Windows Arm64 wheel monitor: read-only pilot", "",
              f"Checked: {report['checked_at']}. Polling: every 24 hours.",
              "Failure rule: Windows Arm64 build/tests failed AND equivalent Windows AMD64 succeeded.",
-             "No issues, comments, mentions, labels or Project items were changed.", "",
-             "| Package | Last verified health | Today's activity | Last verified evidence |",
-             "| --- | --- | --- | --- |"]
-    for package in report["packages"]:
+             "No issues, comments, mentions, labels or Project items were changed.", ""]
+    group = None
+    for package in sorted(report["packages"], key=report_key):
+        if package["health"] != group:
+            group = package["health"]
+            lines.extend(["", "## " + group, "",
+                          "| Package | Last verified health | Today's activity | Last verified evidence |",
+                          "| --- | --- | --- | --- |"])
         descriptions = []
         evidence_items = package.get("last_known") or package["results"]
         ordered = sorted(evidence_items.items(), key=lambda item: HEALTH_ORDER.index(item[1]["health"]))
@@ -868,6 +904,8 @@ def summary(report):
             descriptions.append(literal("; ".join(package["baseline_warnings"])))
         if package.get("history_warnings"):
             descriptions.append(f"{len(package['history_warnings'])} historical evidence notes in report.json")
+        if package.get("coverage_warnings"):
+            descriptions.append("Alert coverage: " + literal("; ".join(package["coverage_warnings"])))
         lines.append(f"| {package['package']} | {package['health']} | "
                      f"{package.get('activity', 'Not evaluated')} | {'<br>'.join(descriptions)} |")
     failures = [(package["package"], observation["value"]) for package in report["packages"]

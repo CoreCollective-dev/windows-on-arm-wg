@@ -4,6 +4,17 @@ Status: approved direction; daily read-only pilot rollout started on 2026-10-19.
 
 Date: 2026-10-19.
 
+### Historical-success baseline and report ordering update (2026-10-21 UTC)
+
+The operator accepts the specific historical platform job's success conclusion
+as sufficient dated baseline evidence even when wheel artifacts, logs or steps
+have expired. This does not relax the Arm-failed/AMD-successful alert rule or
+infer test execution. Known Arm-only successes can establish health while an
+explicit coverage warning explains that no equivalent AMD64 failure comparator
+is available. Historical evidence cannot manufacture a new failed-stage verdict.
+Sort the report by Broken, Unknown, Healthy, Paused, with package names
+alphabetical inside each status group.
+
 ### Persistent baseline update (2026-10-20)
 
 Separate last verified health from daily activity. No new applicable build means

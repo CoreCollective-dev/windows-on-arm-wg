@@ -61,7 +61,8 @@
           "collection": "rolling-24h",
           "baseline_run_id": 36713008517,
           "baseline_search_days": 90,
-          "baseline_search_limit": 4
+          "baseline_search_limit": 4,
+          "historical_job_success": true
         },
         {
           "id": "tests-win-arm64",
@@ -105,10 +106,12 @@
           "collection": "rolling-24h",
           "baseline_run_id": 39243624070,
           "baseline_search_days": 90,
-          "baseline_search_limit": 4
+          "baseline_search_limit": 4,
+          "historical_job_success": true,
+          "baseline_search": true
         }
       ],
-      "comparison_status": "partial",
+      "comparison_status": "partial-alert-coverage",
       "reviewed": true
     },
     {
@@ -164,7 +167,8 @@
           "collection": "rolling-24h",
           "baseline_run_id": 39259020458,
           "baseline_search_days": 90,
-          "baseline_search_limit": 4
+          "baseline_search_limit": 4,
+          "historical_job_success": true
         }
       ],
       "comparison_status": "paired",
@@ -223,7 +227,8 @@
           "collection": "rolling-24h",
           "baseline_run_id": 37520710815,
           "baseline_search_days": 90,
-          "baseline_search_limit": 4
+          "baseline_search_limit": 4,
+          "historical_job_success": true
         }
       ],
       "comparison_status": "paired",
@@ -289,7 +294,8 @@
           "collection": "rolling-24h",
           "baseline_run_id": 39281902434,
           "baseline_search_days": 90,
-          "baseline_search_limit": 4
+          "baseline_search_limit": 4,
+          "historical_job_success": true
         }
       ],
       "comparison_status": "paired",
@@ -338,7 +344,8 @@
           "collection": "rolling-24h",
           "baseline_run_id": 18600198971,
           "baseline_search_days": 90,
-          "baseline_search_limit": 4
+          "baseline_search_limit": 4,
+          "historical_job_success": true
         }
       ],
       "comparison_status": "paired",

@@ -46,7 +46,7 @@ def same_request(candidate, run):
     return True
 
 
-def observe_recent(api, channel, prior, now, *, runs=None, retain=True):
+def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historical_success=False):
     if runs is None:
         runs = discover(api, channel, now - timedelta(hours=24), now)
     known = {run["id"]: run for run in runs}
@@ -69,7 +69,7 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True):
         )
         # Run metadata is still collected, but unconfigured comparisons cannot
         # benefit from downloading hundreds of job graphs.
-        jobs = attempt_jobs(api, channel["repository"], run) if comparable else []
+        jobs = attempt_jobs(api, channel["repository"], run) if comparable or historical_success else []
         if channel.get("source_ref"):
             rule = channel["source_ref"]
             refs = [match.group(rule["group"]) for job in jobs
@@ -106,8 +106,9 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True):
             observed_target = copy.deepcopy(target)
             if channel.get("aggregate_job"):
                 observed_target["interpreter_evidence"] = "cibuildwheel-windows-v1"
-            value = evaluate(jobs, observed_target, channel.get("required_steps", []), amd_jobs, context)
-            if not comparable:
+            value = evaluate(jobs, observed_target, channel.get("required_steps", []), amd_jobs, context,
+                             historical_success=historical_success)
+            if not comparable and not historical_success:
                 value.update(condition="comparison-withheld", not_applicable=False,
                              detail=target.get("comparison_blocker") or "AMD64 comparison mapping is not configured; run discovered but not eligible for a failure verdict")
             value.update(run_id=run["id"], attempt=run["run_attempt"], sha=run["head_sha"],

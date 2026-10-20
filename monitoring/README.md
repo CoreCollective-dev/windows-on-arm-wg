@@ -85,7 +85,20 @@ rules as daily runs. It also inspects bounded newer candidates on that seed's
 branch/event, **without a success-only filter**. A more recent qualifying failure
 wins over an old successful seed. The seed is not an override asserting success.
 A deleted seed falls back to bounded historical discovery with a visible note.
-Unusable/expired stage evidence stays unverified.
+For reviewed platform jobs, `historical_job_success: true` accepts a retained
+**successful job conclusion** as baseline evidence even when detailed steps,
+logs or wheel artifacts have expired. Evidence is labelled historical-job-conclusion
+and remains tied to the actual run, source, platform and selector. This does not
+invent a failed build or unit-test coverage, and it does not relax live failure
+attribution. Artifacts are not required merely to remember that a build succeeded.
+
+A verified historical Arm-only success can establish last-known health even if
+an equivalent AMD64 job has not been located. In that case the report explicitly
+shows **Alert coverage: comparator unavailable**. Baseline health and regression
+alert coverage are separate: an Arm failure still cannot qualify without AMD64
+success. This is how cryptography's unpaired ordinary-GIL 3.14 test and ddtrace's
+Arm-only public builder are represented, rather than reporting their known
+successful Arm builds as Unknown.
 
 Baseline discovery runs only when a channel lacks initialized state, its
 comparison definition changes, or an operator explicitly requests refresh.
@@ -125,6 +138,20 @@ downloads that cannot yield an admissible failure verdict. The reason is visible
   Missing/truncated/unsupported output is Unknown, never inferred from the parent
   job icon. ARM test coverage is not claimed on this AMD64 cross-compiling host.
 - **statsmodels:** excluded at the operator's request; no public WoA build found.
+- **ClickHouse Connect:** actual driver wheels are built by manually dispatched
+  `publish.yml`. The reviewed run 38939939945 contains the Windows Arm64/AMD64
+  driver pair. `publish_core.yml` builds the separate Rust core distribution;
+  the supplied PR lint/binding workflows are Linux-only and do not provide
+  Windows driver comparisons.
+- **orjson / preshed / thinc / pyodbc:** successful historic platform jobs are
+  admitted as dated baselines without requiring retained artifacts or step details.
+- **XGBoost CPU:** native Arm construction is compared to `windows.yml`'s AMD64
+  minimal CPU builder at the same source. Its script explicitly produces
+  `xgboost-cpu`; the generic GPU-distribution test job is not used as a CPU test
+  comparator. This channel is build-only.
+- **Triton Windows:** the reviewed older input is `release/3.8.x-windows`, not
+  `main-windows`. Its recorded source-ref rule now agrees with the actual job
+  names; the 3.9 release remains separately isolated.
 
 ## Mandatory failure rule
 
@@ -148,13 +175,20 @@ workflows; they never select an unrelated successful run.
 A selected build/test job failing before its required phase finishes is a
 pipeline failure, even if that phase was skipped after setup failed. Upload-only
 failures after successful build/tests are not automatically build/test failures.
-Stage metadata that has expired remains unknown, not inferred from a green
-workflow icon. Cibuildwheel invocation alone does not establish unit-test coverage.
+An overall green workflow is not enough: the specific platform job conclusion is
+needed. Expired step metadata may be replaced by that successful job conclusion
+for historical baseline initialization only; it cannot establish the cause of a
+failure. Cibuildwheel invocation alone does not establish unit-test coverage.
 
 Healthy describes the observed Arm result, not a guarantee that AMD64 is green.
 The report includes both platform job links/statuses. Unconfigured comparators
-and guarded source-identity cases remain Unknown. In particular, NumPy's release
+are prominently marked as alert-coverage gaps even where an Arm-only baseline
+is known; guarded source-identity cases remain Unknown. In particular, NumPy's release
 workflow SHA is not the SHA of its separately checked-out NumPy source.
+
+The summary and `report.json` group packages by **Broken, Unknown, Healthy,
+Paused**, alphabetically inside each group. The exceptional Attention category,
+if used, appears alongside Unknown before Healthy.
 
 Old single-platform failure state is explicitly rebased under this policy;
 uncompared historical failures cannot remain Broken or create false recoveries.

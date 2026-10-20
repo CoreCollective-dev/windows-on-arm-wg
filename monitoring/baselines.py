@@ -9,7 +9,7 @@ from urllib.parse import quote
 from monitoring.monitor import APIError, HEALTH_ORDER, MonitorError, instant, stamp
 
 
-BASELINE_VERSION = 2
+BASELINE_VERSION = 3
 
 
 def decisive(value):
@@ -25,12 +25,13 @@ def order(value):
 
 def definition(channel):
     fields = ("repository", "workflow", "targets", "required_steps", "source_ref", "aggregate_job",
-              "aggregate_format", "comparison_exception")
+              "aggregate_format", "comparison_exception", "historical_job_success")
     return hashlib.sha256(json.dumps({key: channel.get(key) for key in fields}, sort_keys=True).encode()).hexdigest()
 
 
 def initialization_definition(channel):
-    return {key: channel.get(key) for key in ("baseline_run_id", "baseline_search_days", "baseline_search_limit")}
+    return {key: channel.get(key) for key in ("baseline_run_id", "baseline_search_days",
+                                             "baseline_search_limit", "historical_job_success")}
 
 
 def incorporate(known, observations):
@@ -74,7 +75,8 @@ def bootstrap(api, channel, now):
     candidates = candidates[:limit]
     if seed and not any(run["id"] == seed["id"] for run in candidates):
         candidates.append(seed)
-    fresh = observe_recent(api, channel, {}, now, runs=candidates, retain=False)
+    fresh = observe_recent(api, channel, {}, now, runs=candidates, retain=False,
+                           historical_success=channel.get("historical_job_success", False))
     warnings = seed_warnings + ["Historical candidate contains inconclusive platform evidence: " + item["value"]["url"]
                 for item in fresh["observations"] if not decisive(item["value"])]
     return fresh["observations"], {
@@ -125,7 +127,8 @@ def retain_health(api, channel, prior, fresh, now):
                      and not target.get("comparison_blocker") for target in channel["targets"])
     expected = {target["id"] for target in channel["targets"]}
     established = {key.rsplit("/", 1)[-1] for key in known}
-    if not initialized and comparable and channel.get("baseline_search", True):
+    can_seed = comparable or (channel.get("historical_job_success") and channel.get("baseline_run_id"))
+    if not initialized and can_seed and channel.get("baseline_search", True):
         if not expected.issubset(established) or prior.get("refresh_baseline") or (
             prior.get("baseline_version") and not initialized
         ):
@@ -178,5 +181,7 @@ def retain_health(api, channel, prior, fresh, now):
         health=health, activity=activity, baseline_warnings=missing, errors=errors,
         last_verified_at=max((value["observed_at"] for value in known.values()), default=None),
         history_warnings=metadata.get("warnings", []),
+        coverage_warnings=sorted({value["coverage_warning"] for value in known.values()
+                                  if value.get("coverage_warning")}),
     )
     return fresh
