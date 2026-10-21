@@ -1,9 +1,8 @@
-import copy
 import unittest
 
-from monitoring.monitor import evaluate, report_key, scan, summary
-from test_monitor import CHANNEL, FakeAPI, NOW, config, empty_state, job
-from test_recent import pair, recent_config, recent_run
+from monitoring.monitor import evaluate, report_key, summary
+from test_monitor import CHANNEL, job
+from test_recent import pair
 
 
 class HistoricalSuccessTests(unittest.TestCase):

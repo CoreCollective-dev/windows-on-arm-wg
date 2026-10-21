@@ -171,18 +171,58 @@
       "error": null,
       "comparison_review": {
         "package": "clickhouse-connect",
-        "decision": "unresolved",
-        "explanation": "Old discovery selected clickhouse-connect-core, not clickhouse-connect. Need a verified driver Windows ARM64/AMD64 run; current native publish.yml has both declared jobs but no paired driver run was established.",
-        "paired_targets": 0,
-        "targets": 0,
+        "decision": "paired",
+        "explanation": "Run 38939939945 establishes the actual clickhouse-connect driver pair in publish.yml: both Windows jobs and their Build wheels steps succeeded. Both checkout logs resolve to 7fed155ee1977da56a74350399c9210e5234018f, ref v1.11.0, event workflow_dispatch. Root setup.py names clickhouse-connect; logs show clickhouse_connect-1.11.0 wheels with win_arm64 and win_amd64 tags. Both jobs built ordinary CPython 3.10\u20133.15 plus free-threaded 3.14t/3.15t, with matching interpreter/ABI tags. The AMD64 job additionally builds win32 and PyPy 3.10 wheels; those are extra coverage, not Arm64 comparators. The eight Arm64 configurations all have successful AMD64 counterparts. Compare the named Build wheels stage, not artifact upload/publication or unrelated test stages.\n\nRun 38936133665 is publish_core.yml: supplied job 117092001421 builds clickhouse-connect-core, explicitly named by rust/ch-core-py/pyproject.toml and selected through MATURIN_MANIFEST. Its separate portable driver qualification wheel is py3-none-any on Ubuntu, not a native Windows driver pair. Run 38936051914 is binding_ci.yml, with PR/push/manual triggers; supplied job 117092047810 really builds a driver wheel, but only on ubuntu-26.04, so it cannot establish Windows equivalence. Run 38936051886 is on_push.yml, whose PR/push/manual lint/test jobs are likewise Ubuntu-only. The latter three supplied runs use d5a1d85c8c4ae119d6a65af219533e4cea059af3; their conclusions must not be joined to the driver dispatch at a different source/event. publish.yml has identical workflow blob dc11b22ec65877d48d238573d7625781077ddebd at both inspected commits.\n\nEnroll only the verified Windows driver publisher. It declares workflow_dispatch only, so there is no verified PR Windows-driver channel in these sources. Collect all applicable dispatch refs/runs in the rolling 24-hour window, keeping source/ref/event/run context separate; no latest-success-only filter. The October 16 successful pair is historical initialization evidence, not a new observation inside the October 20 window. Historical successful per-job conclusions remain sufficient if detailed steps/logs expire. Missing detail is not failure. Report a regression only for an actual Arm64 build failure with successful comparable Windows AMD64 interpreter/ABI/build-stage evidence from the same source/ref/event; shared failures, setup/upload failures, skipped jobs and absent comparisons are not proven Arm-specific regressions. No alternative workflow search was necessary after resolving the supplied driver run.",
+        "paired_targets": 1,
+        "targets": 1,
         "evidence": [
           {
-            "url": "https://github.com/ClickHouse/clickhouse-connect/blob/d5a1d85c8c4ae119d6a65af219533e4cea059af3/.github/workflows/publish.yml",
-            "label": "Correct driver workflow"
+            "url": "https://github.com/ClickHouse/clickhouse-connect/actions/runs/38939939945",
+            "label": "Successful actual driver release dispatch; v1.11.0; source 7fed155ee1977da56a74350399c9210e5234018f; created 2026-10-16T17:28:28Z."
+          },
+          {
+            "url": "https://github.com/ClickHouse/clickhouse-connect/actions/runs/38939939945/job/117104749378",
+            "label": "Raw name Build ARM64 wheels on Windows; windows-11-vs2026-arm; successful Build wheels. Logs show eight clickhouse_connect-1.11.0 CPython wheels ending win_arm64.whl, including cp314-cp314t and cp315-cp315t."
+          },
+          {
+            "url": "https://github.com/ClickHouse/clickhouse-connect/actions/runs/38939939945/job/117104749410",
+            "label": "Raw name Build wheels on Windows; windows-latest; successful Build wheels. Logs explicitly show architectures AMD64,x86 and all eight corresponding win_amd64 wheels; additional win32/PyPy wheels are not substituted for AMD64 CPython."
+          },
+          {
+            "url": "https://github.com/ClickHouse/clickhouse-connect/blob/7fed155ee1977da56a74350399c9210e5234018f/.github/workflows/publish.yml#L114-L144",
+            "label": "Native driver jobs use root cibuildwheel@v4.3.1 and default checkout with no ref override; Arm64 explicitly sets CIBW_ARCHS_WINDOWS=ARM64. Workflow lines 3\u201313 declare only workflow_dispatch; lines 15\u201317 select Python >=3.10,<3.16."
+          },
+          {
+            "url": "https://github.com/ClickHouse/clickhouse-connect/blob/7fed155ee1977da56a74350399c9210e5234018f/setup.py",
+            "label": "Root distribution name is clickhouse-connect; its Cython extension configuration is distinct from the nested Rust core distribution."
+          },
+          {
+            "url": "https://github.com/ClickHouse/clickhouse-connect/actions/runs/38936133665/job/117092001421",
+            "label": "Supplied successful job is Build windows arm64 wheels (py3.15) in Build and Publish clickhouse-connect-core, not the selected driver publisher."
           },
           {
             "url": "https://github.com/ClickHouse/clickhouse-connect/blob/d5a1d85c8c4ae119d6a65af219533e4cea059af3/.github/workflows/publish_core.yml",
-            "label": "Wrong sibling distribution identified and removed"
+            "label": "MATURIN_MANIFEST points at rust/ch-core-py/Cargo.toml; separate Ubuntu portable_driver_wheel builds only the universal qualification driver."
+          },
+          {
+            "url": "https://github.com/ClickHouse/clickhouse-connect/blob/d5a1d85c8c4ae119d6a65af219533e4cea059af3/rust/ch-core-py/pyproject.toml#L5-L8",
+            "label": "Nested manifest explicitly names clickhouse-connect-core."
+          },
+          {
+            "url": "https://github.com/ClickHouse/clickhouse-connect/actions/runs/38936051914/job/117092047810",
+            "label": "Supplied Build binding and run unit tests job succeeds on ubuntu-26.04, not Windows."
+          },
+          {
+            "url": "https://github.com/ClickHouse/clickhouse-connect/blob/d5a1d85c8c4ae119d6a65af219533e4cea059af3/.github/workflows/binding_ci.yml#L93-L140",
+            "label": "Linux binding job separately builds core with maturin and actual driver with uv build --wheel; PR/push/manual triggers do not create a Windows-driver pair."
+          },
+          {
+            "url": "https://github.com/ClickHouse/clickhouse-connect/actions/runs/38936051886",
+            "label": "Inspected Lint and Test push run: all 37 jobs use ubuntu-26.04; no Windows wheel comparison."
+          },
+          {
+            "url": "https://github.com/ClickHouse/clickhouse-connect/blob/d5a1d85c8c4ae119d6a65af219533e4cea059af3/.github/workflows/on_push.yml#L1-L31",
+            "label": "Separate PR/push/manual Linux lint/test workflow; do not conflate its trigger or source with driver publication."
           }
         ]
       }
@@ -259,8 +299,8 @@
       "error": null,
       "comparison_review": {
         "package": "cryptography",
-        "decision": "partial",
-        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success. ARM64 3.14 test comparator remains unresolved; 3.15 uses the same test function with extra AMD64 coverage instrumentation.",
+        "decision": "partial-alert-coverage",
+        "explanation": "User's supplied 3.14 WoA job 109937602900 is a successful wheel build already paired with successful AMD64 job109937602987 in the same release run36713008517. The previous Unknown was the separate ordinary-GIL3.14 tests-nocoverage target, not the wheel. CI run39243624070 has AMD64 tests at3.9,3.14t,3.15,3.15t but no equivalent ordinary3.14 test job. Historical ARM success now establishes health; comparative failure alerts remain unavailable only for that unpaired3.14 test target. Do not substitute AMD64 3.14t or3.9.",
         "paired_targets": 3,
         "targets": 4,
         "evidence": [
@@ -301,8 +341,8 @@
       "error": null,
       "comparison_review": {
         "package": "ddtrace",
-        "decision": "unresolved",
-        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "decision": "baseline-known-comparator-missing",
+        "explanation": "WoA wheel discovery was not the problem. Reviewed build_deploy.yml run39315120078 has four successful Arm wheel jobs. Its invoked build_python_3.yml explicitly uses cibuildwheel --platform windows --archs ARM64, emitting only cp311/cp312/cp313/cp314-win_arm64 jobs. No equivalent Windows AMD64 job is in that public workflow graph. Historical job success now supplies the baseline with an explicit AMD64-alert-coverage warning; an arbitrary Linux or older AMD64 success is not substituted.",
         "paired_targets": 0,
         "targets": 4,
         "evidence": [
@@ -1172,12 +1212,12 @@
         "https://github.com/ijl/orjson/actions/runs/31815777144: 68 jobs, 0 explicit Windows Arm64 wheel jobs",
         "https://github.com/ijl/orjson/actions/runs/31814267756: 68 jobs, 0 explicit Windows Arm64 wheel jobs"
       ],
-      "channels": 0,
+      "channels": 1,
       "error": null,
       "comparison_review": {
         "package": "orjson",
         "decision": "paired",
-        "explanation": "Actual master artifact workflow has exact windows_arm64_python3.x and windows_x64_python3.x jobs, which generic 'AMD64' discovery missed. Pair each non-free-threaded CPython 3.11-3.15 separately; ARM has no comparable 3.10 job. Pinned source uses maturin to build/install the named orjson wheel followed by pytest. Do not promote recent try-branch results into master. Historical baseline jobs have no retained steps, so fresh missing-stage data must remain Attention rather than inventing stage results.",
+        "explanation": "Accepted user run36574739590, source6ae706bf0e1234d2478f084b3736ab687566fa92 on try. It has successful matched Windows ARM64/AMD64 jobs for3.11-3.15, including supplied ARM3.14 job109427339253 and AMD3.14 job109427338986. Artifacts are not required for baseline health. The actual try ref remains isolated from master/PR streams.",
         "paired_targets": 5,
         "targets": 5,
         "evidence": [
@@ -1247,12 +1287,12 @@
       "package": "preshed",
       "outcome": "needs-verification",
       "examined": [],
-      "channels": 0,
+      "channels": 1,
       "error": null,
       "comparison_review": {
         "package": "preshed",
         "decision": "paired",
-        "explanation": "User-supplied run validated; both Windows platform selectors recorded without guessing. Release/prerelease tag prefixes are explicitly admitted; old expired step data remains unknown until a fresh run.",
+        "explanation": "Accepted successful historical ARM job68149463975 and AMD job68149463969 in supplied release-v3.0.13 run23428708476. Retained job success is sufficient for the baseline despite empty historical steps/expired artifacts. Missing detail is never evidence of failure.",
         "paired_targets": 1,
         "targets": 1,
         "evidence": [
@@ -1437,7 +1477,7 @@
       "comparison_review": {
         "package": "pyodbc",
         "decision": "paired",
-        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
+        "explanation": "Applied the same approved historical-job-success rule to retained Windows ARM64/AMD64 job conclusions in run18600198971. A dated passing baseline no longer depends on artifacts or step retention; manual inactivity is No changes.",
         "paired_targets": 1,
         "targets": 1,
         "evidence": [
@@ -1797,12 +1837,12 @@
       "package": "thinc",
       "outcome": "needs-verification",
       "examined": [],
-      "channels": 0,
+      "channels": 1,
       "error": null,
       "comparison_review": {
         "package": "thinc",
         "decision": "paired",
-        "explanation": "Actual release-v8.3.13 jobs establish separate native ARM64 and AMD64 compilation in the same upstream release run. Generic recent-run sampling missed the release tags. The package's pinned cibuildwheel configuration has test-command empty, so this is build-only monitoring. Historical job records retain success/name/IDs but have empty steps arrays; missing stage metadata must remain Attention until a fresh run exposes the required build step, never an inferred failure.",
+        "explanation": "Applied the same rule to both retained successful native Windows jobs in release-v8.3.13 run23424966006. Baseline accepted despite expired detailed steps; no unexecuted tests inferred.",
         "paired_targets": 1,
         "targets": 1,
         "evidence": [
@@ -1927,12 +1967,12 @@
       "examined": [
         "https://github.com/triton-lang/triton-windows/actions/runs/35716211357: 3 jobs, 1 explicit Windows Arm64 wheel jobs"
       ],
-      "channels": 1,
+      "channels": 2,
       "error": null,
       "comparison_review": {
         "package": "triton-windows",
         "decision": "paired",
-        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success. Dynamic source hashes are captured and compared on both sides; the reviewed input code ref stays explicit. Current release/3.9.x-windows is a separate reviewed built-source scope; its real ARM failure and AMD64 success must not be hidden by an older main-windows pass.",
+        "explanation": "Corrected the older channel's source_ref from main-windows to release/3.8.x-windows, matching its actual selectors and seed35716211357. The separate3.9 source input remains distinct. Source captures compare actual resolved code SHAs, with latest coherent rerun attempts; no older branch pass can clear another source-ref failure.",
         "paired_targets": 2,
         "targets": 2,
         "evidence": [
@@ -2019,10 +2059,10 @@
       "error": null,
       "comparison_review": {
         "package": "xgboost-cpu",
-        "decision": "unresolved",
-        "explanation": "Reviewed both Windows platform job records. Broken requires an identified ARM64 build/test failure and AMD64 success.",
-        "paired_targets": 0,
-        "targets": 2,
+        "decision": "paired-build-only",
+        "explanation": "Resolved a real same-source CPU-only AMD64 builder in windows.yml run39279943131 job118152122558 versus ARM run39279943209 job118152123680 (source dd59cc41c0d72ac91d225d4638b38bcf8c3b2025). AMD64 minimal job invokes build-win64.ps1 -variant cpu; that script explicitly renames/builds xgboost-cpu. Compare construction only. Removed the ARM generic installed-xgboost test target because its sibling GPU-package test is not a verified CPU-wheel comparator.",
+        "paired_targets": 1,
+        "targets": 1,
         "evidence": [
           {
             "url": "https://github.com/dmlc/xgboost/actions/runs/39279943209",
