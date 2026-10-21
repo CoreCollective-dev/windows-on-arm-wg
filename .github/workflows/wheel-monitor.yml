@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   actions: read
+  issues: write
 
 concurrency:
   group: wheel-monitor-pilot
@@ -16,7 +17,7 @@ concurrency:
 jobs:
   observe:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -26,7 +27,8 @@ jobs:
           python-version: '3.12'
       - name: Test monitor
         run: python -m unittest discover -s monitoring/tests -v
-      - name: Observe all 84 dispositions (read-only; no issue writes)
+      - name: Observe all 84 dispositions (upstream reads only)
+        id: collect
         env:
           GH_TOKEN: ${{ github.token }}
           MONITOR_EVENT: ${{ github.event_name }}
@@ -37,6 +39,11 @@ jobs:
             args+=(--scheduled)
           fi
           python -m monitoring.monitor --restore "${args[@]}"
+      - name: Update enrolled tracker issues and deliver new transitions
+        if: ${{ !cancelled() && steps.collect.outcome != 'skipped' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m monitoring.issues --apply --report monitor-output/report.json --state monitor-output/state.json --mapping monitoring/tracking.json
       - name: Preserve report and next poll state
         if: ${{ always() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

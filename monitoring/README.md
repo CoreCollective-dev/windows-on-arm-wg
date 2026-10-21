@@ -6,22 +6,51 @@ Tracking direction: one master issue and package sub-issues. Projects is deferre
 
 ## Current deployment
 
-This deployment replaces the five-package pilot with the **all-package read-only
-observer**. It includes all 84 audited dispositions, retaining explicit excluded,
+This deployment combines the **all-package observer** with approved issue-based
+tracking. It includes all 84 audited dispositions, retaining explicit excluded,
 universal, inactive and unresolved entries rather than claiming those are healthy
-native monitors. It is not the live issue tracker. The
+native monitors. The [master issue](https://github.com/CoreCollective-dev/windows-on-arm-wg/issues/7)
+links **76 package sub-issues**, excluding the eight paused packages. The
 [daily workflow](../.github/workflows/wheel-monitor.yml) runs at **15:17 UTC every
 day**, and can be started manually. GitHub scheduling can be delayed or disabled;
 this is a 24-hour polling cadence, not a guaranteed notification delivery time.
 
-The workflow grants only `contents: read` and `actions: read`. It has no issue-sync
-job and never invokes the separately tested issue helper. The manual issue-bootstrap
-workflow is not part of this deployment. No new issues, comments, labels, or
-mentions are produced by this observer. The older
+The collector remains read-only upstream. The trusted default-branch workflow has
+`issues: write` only for this repository's mapped tracker issues. It edits one
+status comment and health labels, and posts deduplicated incident/recovery comments.
+The persistent [tracking.json](tracking.json) maps the master and package numbers;
+ordinary runs cannot create missing/replacement issues or silently change parents.
+The manual issue-bootstrap workflow is not deployed. The older
 [cryptography monitor](../.github/workflows/monitoring_cryptography.yml) remains
 active during comparison; it can still create its own per-job issues.
 The operator explicitly chose to leave that legacy workflow active during this
-rollout; it retains its own separate issue-creation behavior.
+earlier rollout; its state is not changed by issue synchronization.
+
+## Live issue behavior
+
+- Healthy packages remain open. Closing a package tracker deliberately pauses it;
+  the monitor does not reopen it. No tracker was created for the eight paused entries.
+- Daily health and activity update the same bot-owned status comment, without
+  repeating incident pings. Long target histories remain in the complete Actions
+  report; the issue shows the most relevant targets and explicit coverage gaps.
+- Initial currently open regressions were announced once. After that, only new
+  incidents, material condition/target changes and recoveries create notification
+  comments. A new failed run for the same ongoing condition does not repost it.
+- Mentions include the human issue author, assignees and commenters, deduplicated
+  by account ID; bots are excluded. The configured owner is a fallback for an
+  otherwise empty human audience. Incidental usernames in logs/text are ignored.
+- Post **`/monitor unsubscribe`** as the entire body of a new comment to opt out
+  of explicit mentions, or **`/monitor subscribe`** to opt back in. A command affects
+  only its authenticated author. Saved opt-outs survive deletion/editing of the
+  command comment; use a newer command comment to change the preference.
+- Transition events persist in `pending_notifications` before delivery. Payload
+  chunks are frozen before posting; bot-authored event markers reconcile ambiguous
+  responses, crashes and state-acknowledgment loss without repeating earlier pings.
+- Participant preferences and delivery acknowledgments are preserved in the same
+  state artifact as monitoring history. Issue/comment writes invalidate local read
+  caches before hierarchy verification. Failed writes are explicit and resumable.
+- Projects remains deferred. These are real issue/sub-issue relationships, not
+  separate draft cards or per-failed-job issue creation.
 
 The original pilot subset exercised these patterns:
 
@@ -264,14 +293,11 @@ Deleted or already-retention-expired evidence
 and polling outages longer than the observation window can still leave gaps;
 the monitor does not promise evidence it cannot retrieve.
 
-## What remains gated
+## Operations and enrollment
 
 The larger [tracker specification](SPEC.md)
-describes the target live system. The first deployment implements observation,
-state persistence, and **notification planning only**. It does not implement
-participant enumeration/opt-outs, permanent issue bootstrap, live comment
-idempotency/chunking, or board synchronization. Do not infer these features from
-the dry-run transition plan.
+documents the monitoring and issue model. The observer and mapped issue
+synchronization are live; Projects is not enabled.
 
 Before live rollout:
 
@@ -279,18 +305,18 @@ Before live rollout:
    and reruns with upstream evidence. Re-run tests after registry changes.
 2. Confirm target Python versions and retirement rules for each package. Do not
    auto-discover/broaden selectors when upstream changes naming or release series.
-3. Finish any separately documented comparison gaps and participant notification
-   implementation. All 31 original investigations now have a scoped configuration
-   or explicit exclusion, including the approved Numba NumPy exception. The
-   bootstrap/status helper is tested but not invoked by any deployed workflow.
+3. Investigate separately documented comparison coverage gaps. All 31 original
+   investigations have a scoped configuration or explicit exclusion, including
+   the approved Numba NumPy exception. Baseline health is not full alert coverage.
 4. Keep Projects deferred; no Project credentials are needed for issue tracking.
-5. Preview and explicitly approve permanent issue creation/adoption.
+5. For any future additions, explicitly approve creation/adoption and update
+   tracking.json. Ordinary daily runs never bootstrap new issues.
 6. Disable the old cryptography issue creator **before** enabling live pings.
 7. Enroll additional candidates in reviewed batches; never create 84 issues from
    an unverified discovery inventory.
 
-No automatic date-based promotion exists. Finishing seven days does not silently
-enable writes.
+The initial 76-package issue creation and live synchronization were explicitly
+approved on 2026-10-21. No date-based automatic enrollment exists.
 
 Rollback: disable the daily pilot workflow. Reports remain in artifacts until
 retention expiry; the existing cryptography workflow is unaffected.

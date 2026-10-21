@@ -1,4 +1,5 @@
 import copy
+import subprocess
 import unittest
 from datetime import timedelta
 from unittest.mock import patch
@@ -130,6 +131,14 @@ class IssueTests(unittest.TestCase):
     def test_mutations_require_apply(self):
         with self.assertRaises(MonitorError):
             IssueAPI().write("POST", "issues", {"title": "test"})
+
+    def test_successful_mutation_invalidates_cached_hierarchy_reads(self):
+        api = IssueAPI(apply=True, interval=0)
+        api._cache["repos/tracker/issues/7/sub_issues"] = []
+        response = subprocess.CompletedProcess([], 0, '{"id": 1}', "")
+        with patch("subprocess.run", return_value=response):
+            api.write("POST", "issues/7/sub_issues", {"sub_issue_id": 1})
+        self.assertEqual(api._cache, {})
 
     def test_cannot_mutate_upstream_or_delete(self):
         with self.assertRaises(MonitorError):

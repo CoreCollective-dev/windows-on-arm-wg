@@ -1,8 +1,22 @@
 # Windows Arm64 wheel monitoring and project issue tracker
 
-Status: approved direction; daily read-only pilot rollout started on 2026-10-19.
+Status: issue-based tracking approved and deployed on 2026-10-21; Projects remains deferred.
 
 Date: 2026-10-19.
+
+### Live issue rollout (2026-10-21)
+
+The user approved creating the master issue and one permanent sub-issue for each
+non-paused package. [Master tracker](https://github.com/CoreCollective-dev/windows-on-arm-wg/issues/7)
+has **76 package sub-issues**; the eight paused entries are excluded.
+[tracking.json](tracking.json) persists the issue mapping. Daily runs edit the
+bot-owned status comment and health labels and deliver deduplicated incident,
+material-change and recovery comments with participant mentions and opt-outs.
+The durable delivery outbox and preferences live in the monitoring state artifact;
+bot-authored issue event markers reconcile ambiguous writes or lost acknowledgments.
+The ordinary workflow has no bootstrap flag and cannot create/reassign issues.
+Historical current regressions are announced once on enrollment. Upstream reads
+remain read-only; Projects is deferred.
 
 ### Historical-success baseline and report ordering update (2026-10-21 UTC)
 

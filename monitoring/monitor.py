@@ -824,6 +824,13 @@ def scan(api, config, state, now, scheduled=False, progress=False):
         if event:
             entry["sequence"] = event["sequence"]
             event["key"] = f"{name}/{event['sequence']}"
+            pending = entry.setdefault("pending_notifications", [])
+            if not any(item["key"] == event["key"] for item in pending):
+                pending.append(copy.deepcopy(event))
+        if errors and recent:
+            # Do not consume events during a partial observation; retry them
+            # when complete evidence is available instead of dropping alerts.
+            entry["seen_observations"] = copy.deepcopy(old.get("seen_observations", {}))
         if not errors or entry["gap_polls"] >= 2:
             if not recent:
                 for key, result in results.items():
@@ -884,7 +891,7 @@ def summary(report):
     lines = ["# Windows Arm64 wheel monitor: read-only pilot", "",
              f"Checked: {report['checked_at']}. Polling: every 24 hours.",
              "Failure rule: Windows Arm64 build/tests failed AND equivalent Windows AMD64 succeeded.",
-             "No issues, comments, mentions, labels or Project items were changed.", ""]
+             "Upstream collection is read-only. Tracker writes, when enabled, are reported by the issue synchronization step.", ""]
     group = None
     for package in sorted(report["packages"], key=report_key):
         if package["health"] != group:
