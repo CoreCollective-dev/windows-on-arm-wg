@@ -166,6 +166,8 @@ def validate(config):
                 raise MonitorError(f"Invalid baseline search flag: {name}")
             if "historical_job_success" in channel and type(channel["historical_job_success"]) is not bool:
                 raise MonitorError(f"Invalid historical job-success flag: {name}")
+            if "recovery_catchup" in channel and type(channel["recovery_catchup"]) is not bool:
+                raise MonitorError(f"Invalid recovery catch-up flag: {name}")
     return config
 
 
@@ -745,6 +747,16 @@ def scan(api, config, state, now, scheduled=False, progress=False):
                     raise MonitorError("Package read budget exhausted; coverage incomplete")
                 fresh = observe_channel(api, channel, prior, now)
                 entry["channels"][identifier] = fresh
+                for before, after in fresh.get("stream_aliases", {}).items():
+                    source, destination = f"{identifier}/{before}", f"{identifier}/{after}"
+                    previous = old.get("notification_results", {}).pop(source, None)
+                    if previous:
+                        previous = {**previous, "stream": after.rsplit("/", 1)[0]}
+                        current = old["notification_results"].get(destination)
+                        if not current or (previous["created_at"], previous["run_id"], previous["attempt"]) >= (
+                            current["created_at"], current["run_id"], current["attempt"]
+                        ):
+                            old["notification_results"][destination] = previous
                 errors.extend(f"{identifier}: {error}" for error in fresh.get("errors", []))
                 activities.append(fresh.get("activity", ""))
                 channel_health.append(fresh.get("health", "Unknown"))
@@ -919,8 +931,8 @@ def summary(report):
                 for observation in package.get("observations", [])
                 if observation["value"].get("arm_specific_failure")]
     if failures:
-        lines.extend(["", "## All qualifying failures observed in the window",
-                      "Includes runs later fixed by another run; latest stream health is shown above."])
+        lines.extend(["", "## Qualifying failures in daily collection and open-regression follow-up",
+                      "Includes runs later fixed by another run; follow-up may include older recovery evidence. Latest stream health is shown above."])
         lines.extend(f"- {name}: [{literal(value['stream'])}]({value['url']})"
                      for name, value in failures)
     lines.extend(["", "No changes means no new applicable build evidence, not a new successful build.",

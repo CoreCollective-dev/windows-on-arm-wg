@@ -62,7 +62,7 @@ class RecentTests(unittest.TestCase):
 
     def test_missing_pr_identity_falls_back_to_immutable_commit(self):
         api = FakeAPI()
-        api.pages = lambda *args: []
+        api.pages = lambda *args, **kwargs: []
         value = recent_run()
         value["pull_requests"] = []
         self.assertEqual(stream_identity(api, CHANNEL, value), "pr/42/commit-abc")

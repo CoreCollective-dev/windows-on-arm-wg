@@ -62,7 +62,8 @@
           "baseline_run_id": 36713008517,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         },
         {
           "id": "tests-win-arm64",
@@ -108,7 +109,8 @@
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
           "historical_job_success": true,
-          "baseline_search": true
+          "baseline_search": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "partial-alert-coverage",
@@ -168,7 +170,8 @@
           "baseline_run_id": 39259020458,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -228,7 +231,8 @@
           "baseline_run_id": 37520710815,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -295,7 +299,8 @@
           "baseline_run_id": 39281902434,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -345,7 +350,8 @@
           "baseline_run_id": 18600198971,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",

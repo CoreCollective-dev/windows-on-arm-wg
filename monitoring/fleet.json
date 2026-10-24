@@ -65,7 +65,8 @@
           "baseline_run_id": 38097142483,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -115,7 +116,8 @@
           "baseline_run_id": 38711816016,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -178,7 +180,8 @@
           "baseline_run_id": 39372420538,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -228,7 +231,8 @@
           "baseline_run_id": 33789167923,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -338,7 +342,8 @@
           "baseline_run_id": 39301876443,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -395,7 +400,8 @@
           "baseline_run_id": 38939939945,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -446,7 +452,8 @@
           "baseline_run_id": 39106689605,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -542,7 +549,8 @@
           "baseline_run_id": 38248667792,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -592,7 +600,8 @@
           "baseline_run_id": 36821129850,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -658,7 +667,8 @@
           "baseline_run_id": 36713008517,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         },
         {
           "id": "tests-win-arm64",
@@ -704,7 +714,8 @@
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
           "historical_job_success": true,
-          "baseline_search": true
+          "baseline_search": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "partial-alert-coverage",
@@ -760,7 +771,8 @@
           "baseline_run_id": 38000198236,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -819,7 +831,8 @@
           "collection": "rolling-24h",
           "baseline_search": true,
           "historical_job_success": true,
-          "baseline_run_id": 39315120078
+          "baseline_run_id": 39315120078,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "baseline-known-comparator-missing",
@@ -920,7 +933,8 @@
           "baseline_run_id": 38997181439,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1024,7 +1038,8 @@
           "baseline_run_id": 39274236658,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1124,7 +1139,8 @@
           "baseline_run_id": 39210216939,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1214,7 +1230,8 @@
           "baseline_run_id": 35110072261,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1327,7 +1344,8 @@
           "baseline_run_id": 30811699991,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1410,7 +1428,8 @@
           "baseline_run_id": 39302097664,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1460,7 +1479,8 @@
           "baseline_run_id": 39209081220,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1510,7 +1530,8 @@
           "baseline_run_id": 38772366767,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1560,7 +1581,8 @@
           "baseline_run_id": 39176932046,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1614,7 +1636,8 @@
           "baseline_run_id": 38724189063,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1664,7 +1687,8 @@
           "baseline_run_id": 31461508173,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1784,7 +1808,8 @@
           "baseline_run_id": 36974484173,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1840,7 +1865,8 @@
           "baseline_run_id": 39134666975,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -1970,7 +1996,8 @@
           "baseline_run_id": 38706693416,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2026,7 +2053,8 @@
           "baseline_run_id": 29778673854,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2076,7 +2104,8 @@
           "baseline_run_id": 37073936755,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2126,7 +2155,8 @@
           "baseline_run_id": 39213176459,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2193,7 +2223,8 @@
           "baseline_run_id": 39342899110,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2243,7 +2274,8 @@
           "baseline_run_id": 39243087087,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2293,7 +2325,8 @@
           "baseline_run_id": 36741097485,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2343,7 +2376,8 @@
           "baseline_run_id": 39198367381,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2393,7 +2427,8 @@
           "baseline_run_id": 39233664695,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2460,7 +2495,8 @@
           "baseline_run_id": 37929221966,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2527,7 +2563,8 @@
           "baseline_run_id": 39281902434,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2577,7 +2614,8 @@
           "baseline_run_id": 38994482488,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2699,7 +2737,8 @@
           "baseline_run_id": 39452429967,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2749,7 +2788,8 @@
           "baseline_run_id": 38373633472,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2805,7 +2845,8 @@
           "baseline_run_id": 39440763314,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2919,7 +2960,8 @@
           "baseline_run_id": 39207153545,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -2999,7 +3041,8 @@
           "baseline_run_id": 39113854466,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -3122,7 +3165,8 @@
           "baseline_run_id": 36574739590,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -3267,7 +3311,8 @@
           "baseline_run_id": 39365271941,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -3323,7 +3368,8 @@
           "baseline_run_id": 23428708476,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -3443,7 +3489,8 @@
           "baseline_run_id": 39211222053,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -3523,7 +3570,8 @@
           "baseline_run_id": 39334531400,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -3599,7 +3647,8 @@
           "baseline_run_id": 37285185980,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -3649,7 +3698,8 @@
           "baseline_run_id": 39231924547,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -3695,7 +3745,8 @@
           "baseline_run_id": 39205437200,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -3771,7 +3822,8 @@
           "baseline_run_id": 18600198971,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -3831,7 +3883,8 @@
           "baseline_run_id": 39259020458,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -3937,7 +3990,8 @@
           "baseline_run_id": 37695338325,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4025,7 +4079,8 @@
           "baseline_run_id": 34397217583,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4085,7 +4140,8 @@
           "baseline_run_id": 37520710815,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4145,7 +4201,8 @@
           "baseline_run_id": 35755530521,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4225,7 +4282,8 @@
           "baseline_run_id": 39123469513,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4331,7 +4389,8 @@
           "baseline_run_id": 39366421259,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4387,7 +4446,8 @@
           "baseline_run_id": 39364529815,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4437,7 +4497,8 @@
           "baseline_run_id": 39282836342,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4488,7 +4549,8 @@
           "baseline_run_id": 39017718154,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4555,7 +4617,8 @@
           "baseline_run_id": 32706299673,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4648,7 +4711,8 @@
           "baseline_run_id": 23424966006,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4698,7 +4762,8 @@
           "baseline_run_id": 33950768644,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4748,7 +4813,8 @@
           "baseline_run_id": 39286932278,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4798,7 +4864,8 @@
           "baseline_run_id": 38274694055,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4848,7 +4915,8 @@
           "baseline_run_id": 38997473342,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4904,7 +4972,8 @@
           "baseline_run_id": 35716211357,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         },
         {
           "id": "release-3-9-windows",
@@ -4948,7 +5017,8 @@
           "baseline_run_id": 39371034114,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -4994,7 +5064,8 @@
           "baseline_run_id": 37362538631,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -5104,7 +5175,8 @@
           "baseline_run_id": 38081098543,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -5154,7 +5226,8 @@
           "baseline_run_id": 39187412375,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -5217,7 +5290,8 @@
           "collection": "rolling-24h",
           "baseline_search": true,
           "historical_job_success": true,
-          "baseline_run_id": 39279943209
+          "baseline_run_id": 39279943209,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired-build-only",
@@ -5284,7 +5358,8 @@
           "baseline_run_id": 35007891886,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -5464,7 +5539,8 @@
           "baseline_run_id": 39138596230,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -5531,7 +5607,8 @@
           "baseline_run_id": 27265017989,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",
@@ -5621,7 +5698,8 @@
           "baseline_run_id": 39310594239,
           "baseline_search_days": 90,
           "baseline_search_limit": 4,
-          "historical_job_success": true
+          "historical_job_success": true,
+          "recovery_catchup": true
         }
       ],
       "comparison_status": "paired",

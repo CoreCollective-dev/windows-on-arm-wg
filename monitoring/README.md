@@ -75,7 +75,10 @@ regardless of the overall success/failure conclusion. It no longer selects
 only the latest mainline/release run. Pending runs remain tracked across polls.
 
 Each PR is isolated by head repository and PR number. When GitHub omits the
-association, an immutable head-commit stream is used rather than guessing the PR.
+association, the observer checks the exact head repository/branch and verifies
+the commit belongs to that PR before using its number. It never identifies a PR
+from a branch name alone. An immutable commit stream is retained if identity is
+still unprovable.
 Forks and refs never recover each other's incidents. Cross-workflow baselines
 must match source SHA, head repository, ref and event; the newest matching
 baseline is used, not an older convenient success.
@@ -89,6 +92,27 @@ An empty window preserves the last verified result and reports **No changes**.
 Only a never-validated baseline stays Unknown/Needs setup. Historical health
 always includes its evidence date; it is not presented as a fresh passing build.
 Public upstream PR code is never downloaded or executed by the monitor.
+
+### Recovery checks for open regressions
+
+`recovery_catchup: true` keeps open regressions under explicit follow-up even when
+their failure or recovery run has left the daily 24-hour window. The monitor
+re-fetches the failed run (including reruns) and inspects subsequent runs for the
+same proven PR or exact non-PR ref/event stream. A different fork, PR or ref
+cannot recover it. Historical follow-up observations are labelled separately
+from the normal daily window.
+
+Old failed commit-only stream keys are migrated to the validated PR identity in
+both last-known health and notification memory. This allows a later commit on
+the same PR to recover the incident without opening another alert or replaying
+its original notification. Incomplete API reads retain the failure and surface
+an operational error.
+
+The motivating msgspec failure was PR #1275 at `fc46893`; that PR's passing run
+39604880849 was created after the failure but missed the next daily window.
+The supplied later PR #1295 was independently healthy, not the proof of recovery.
+Frozenlist's supplied PR pass remains separate from its scheduled `master`
+failure; recovery rules were not broadened across unrelated refs.
 
 ## Baselines and last-known health
 
@@ -285,7 +309,10 @@ be observed after one package fails.
   (the all-PR scan exceeded the old 160-request package cap for pandas). Pagination
   and split time windows avoid silently truncating the GitHub search ceiling.
 
-The daily collector uses a **24-hour** run window, plus persisted pending runs.
+The daily collector uses a **24-hour** run window, plus persisted pending runs
+and open-regression recovery catch-up. Follow-up searches from an open failure
+are paginated and subject to the same explicit read budgets; they do not silently
+truncate or treat missing recovery evidence as success.
 The one-time baseline search may look back 90 days (bounded by candidate/read caps);
 reviewed seed IDs may be older and remain explicitly dated. Ninety days is also
 the deduplication memory horizon, not a time-to-live for last-known failures.

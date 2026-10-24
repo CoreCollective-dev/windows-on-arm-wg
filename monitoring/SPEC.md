@@ -4,6 +4,16 @@ Status: issue-based tracking approved and deployed on 2026-10-21; Projects remai
 
 Date: 2026-10-19.
 
+### Recovery reconciliation update (2026-10-24 UTC)
+
+Open regressions are rechecked beyond the normal 24-hour discovery window so a
+recovery cannot be missed merely because the next daily poll ran late. Follow-up
+must stay within the same proven PR or non-PR ref/event/source scope. If GitHub
+omits the run's PR association, repository/branch lookup plus actual PR commit
+membership establishes identity; branch matching alone is insufficient.
+Legacy failed commit-only keys migrate consistently in retained health and
+notification memory. Different-PR passes do not clear the original failure.
+
 ### Live issue rollout (2026-10-21)
 
 The user approved creating the master issue and one permanent sub-issue for each
