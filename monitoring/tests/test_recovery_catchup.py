@@ -15,6 +15,14 @@ def pull(sha="new", origin=42, number=9, branch="feature"):
 
 
 class IdentityTests(unittest.TestCase):
+    def test_healthy_unassociated_run_can_use_cheap_identity_without_pr_history_reads(self):
+        run = recent_run()
+        run["pull_requests"] = []
+        api = FakeAPI()
+        api.pages = lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("Unexpected PR history read"))
+        self.assertEqual(stream_identity(api, {"repository": "example/package"}, run, resolve=False),
+                         "pr/42/commit-abc")
+
     def test_omitted_association_is_resolved_by_repo_branch_and_commit_membership(self):
         run = recent_run(sha="old")
         run["pull_requests"] = []
@@ -125,3 +133,30 @@ class CatchupTests(unittest.TestCase):
         again, _ = scan(api, config, state, later)
         self.assertEqual(again["packages"][0]["health"], "Healthy")
         self.assertIsNone(again["packages"][0]["planned_notification"])
+
+    def test_unrelated_passing_pr_does_not_enter_original_failure_catchup(self):
+        config, state, api, later = self.fixture(recovered=False)
+        original_get, original_pages = api.get, api.pages
+        unrelated = recent_run(30, age=1, sha="unrelated", branch="feature", number=10)
+
+        def get(path, params=None):
+            result = original_get(path, params)
+            if params and params.get("branch") == "feature":
+                result = copy.deepcopy(result)
+                result["workflow_runs"].append(unrelated)
+                result["total_count"] += 1
+            return result
+
+        def pages(path, key=None, params=None):
+            if path.endswith("/pulls"):
+                return [pull(), pull(sha="unrelated", number=10)]
+            if path.endswith("/10/commits"):
+                return [{"sha": "unrelated"}]
+            if path.endswith("/9/commits"):
+                return [{"sha": "old"}, {"sha": "new"}]
+            return original_pages(path, key, params)
+
+        api.get, api.pages = get, pages
+        report, _ = scan(api, config, state, later)
+        self.assertEqual(report["packages"][0]["health"], "Broken")
+        self.assertFalse(any(o["value"]["run_id"] == 30 for o in report["packages"][0]["observations"]))

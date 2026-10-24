@@ -42,13 +42,18 @@ def resolve_pull_requests(api, channel, run):
     return verified if len(verified) == 1 else []
 
 
-def stream_identity(api, channel, run):
+def stream_identity(api, channel, run, *, resolve=True):
     repository = run.get("head_repository") or {}
     origin = str(repository.get("id") or repository.get("full_name") or "")
     if not origin:
         raise MonitorError(f"Run {run['id']} has no head repository identity")
     if run["event"] == "pull_request":
-        pulls = resolve_pull_requests(api, channel, run)
+        if resolve:
+            pulls = resolve_pull_requests(api, channel, run)
+        else:
+            pulls = [pr for pr in run.get("pull_requests", [])
+                     if pr.get("head", {}).get("sha") == run["head_sha"]
+                     and str((pr.get("head", {}).get("repo") or {}).get("id")) == origin]
         numbers = sorted({pr["number"] for pr in pulls})
         # Keep an immutable fallback when identity cannot be proven.
         suffix = ",".join(map(str, numbers)) if numbers else "commit-" + run["head_sha"]
@@ -82,6 +87,7 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historic
     prior = copy.deepcopy(prior)
     aliases = {}
     failed_runs = {}
+    identified_streams = {}
     stored = list(prior.get("last_known", {}).items()) if channel.get("recovery_catchup") else []
     for key, value in stored:
         if not value.get("arm_specific_failure"):
@@ -96,6 +102,7 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historic
         if channel.get("source_ref"):
             current_stream += "/source-" + quote(channel["source_ref"]["value"], safe="")
         failed_runs[key] = run
+        identified_streams[run["id"]] = current_stream
         if current_stream != value["stream"]:
             canonical = current_stream + "/" + key.rsplit("/", 1)[-1]
             migrated = {**value, "stream": current_stream}
@@ -123,6 +130,7 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historic
                     candidate_stream += "/source-" + quote(channel["source_ref"]["value"], safe="")
                 if candidate_stream == stream:
                     known[candidate["id"]] = candidate
+                    identified_streams[candidate["id"]] = candidate_stream
     for identifier in prior.get("pending_runs", []):
         if identifier not in known:
             candidate = api.get(f"repos/{channel['repository']}/actions/runs/{identifier}")
@@ -135,7 +143,7 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historic
             continue
         if run["conclusion"] == "cancelled":
             continue
-        stream = stream_identity(api, channel, run)
+        stream = identified_streams.get(run["id"]) or stream_identity(api, channel, run, resolve=False)
         for previous in prior.get("last_known", {}).values():
             if (previous.get("run_id") == run["id"] and previous["stream"].startswith("pr/")
                     and "/commit-" not in previous["stream"] and "/commit-" in stream):
@@ -154,7 +162,9 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historic
                     if (match := re.fullmatch(rule["pattern"], job["name"]))]
             if refs and all(value != rule["value"] for value in refs):
                 continue
-            stream += "/source-" + quote(rule["value"], safe="")
+            suffix = "/source-" + quote(rule["value"], safe="")
+            if not stream.endswith(suffix):
+                stream += suffix
         if channel.get("aggregate_job"):
             matches = [job for job in jobs if re.fullmatch(channel["aggregate_job"], job["name"])]
             if len(matches) == 1 and matches[0]["conclusion"] not in ("skipped", "cancelled"):
@@ -186,6 +196,10 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historic
                 observed_target["interpreter_evidence"] = "cibuildwheel-windows-v1"
             value = evaluate(jobs, observed_target, channel.get("required_steps", []), amd_jobs, context,
                              historical_success=historical_success)
+            if value.get("arm_specific_failure") and "/commit-" in stream:
+                stream = stream_identity(api, channel, run)
+                if channel.get("source_ref"):
+                    stream += "/source-" + quote(channel["source_ref"]["value"], safe="")
             if not comparable and not historical_success:
                 value.update(condition="comparison-withheld", not_applicable=False,
                              detail=target.get("comparison_blocker") or "AMD64 comparison mapping is not configured; run discovered but not eligible for a failure verdict")

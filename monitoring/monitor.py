@@ -190,10 +190,10 @@ class GitHub:
         if path in self._cache:
             return copy.deepcopy(self._cache[path])
         for attempt in range(4):
-            if self.requests >= self.limit or (
-                self.package_limit is not None and self.requests >= self.package_limit
-            ):
+            if self.requests >= self.limit:
                 raise MonitorError(f"REST request budget ({self.limit}) exhausted; scan incomplete")
+            if self.package_limit is not None and self.requests >= self.package_limit:
+                raise MonitorError("Package read budget exhausted; scan incomplete")
             self.requests += 1
             try:
                 response = subprocess.run(
