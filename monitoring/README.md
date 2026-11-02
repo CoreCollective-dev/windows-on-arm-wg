@@ -28,8 +28,18 @@ earlier rollout; its state is not changed by issue synchronization.
 
 ## Live issue behavior
 
-- Healthy packages remain open. Closing a package tracker deliberately pauses it;
-  the monitor does not reopen it. No tracker was created for the eight paused entries.
+- Verified Healthy packages have closed trackers; Broken packages have open
+  trackers. A new detected regression reopens the same issue, and recovery closes
+  it with the completed reason. All remain linked to the master as sub-issues.
+  The master stays open. No tracker was created for the eight paused entries.
+- Closed package issues continue being monitored and their status comment is
+  refreshed. Closing an issue manually is no longer a pause mechanism: a known
+  Broken result reopens it at the next synchronization. Pausing is controlled by
+  the monitoring configuration/disposition, independently of GitHub issue state.
+- Unknown, Attention and Paused preserve the existing issue state. A monitoring
+  error cannot close an open issue using a retained Healthy baseline. A quiet
+  day with a verified Healthy baseline keeps the issue closed; a quiet Broken
+  baseline keeps it open.
 - Daily health and activity update the same bot-owned status comment, without
   repeating incident pings. Long target histories remain in the complete Actions
   report; the issue shows the most relevant targets and explicit coverage gaps.
@@ -47,7 +57,9 @@ earlier rollout; its state is not changed by issue synchronization.
   chunks are frozen before posting; bot-authored event markers reconcile ambiguous
   responses, crashes and state-acknowledgment loss without repeating earlier pings.
 - Participant preferences and delivery acknowledgments are preserved in the same
-  state artifact as monitoring history. Issue/comment writes invalidate local read
+  state artifact as monitoring history, including while trackers are closed.
+  Closing/reopening does not reset initialization, discard queued recovery
+  notifications, or resubscribe opted-out participants. Issue/comment writes invalidate local read
   caches before hierarchy verification. Failed writes are explicit and resumable.
 - Projects remains deferred. These are real issue/sub-issue relationships, not
   separate draft cards or per-failed-job issue creation.

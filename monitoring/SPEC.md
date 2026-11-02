@@ -4,6 +4,17 @@ Status: issue-based tracking approved and deployed on 2026-10-21; Projects remai
 
 Date: 2026-10-19.
 
+### Health-driven issue lifecycle (2026-11-02)
+
+Verified Healthy package trackers are closed with reason completed; Broken
+trackers are open and are reactivated on a new detected regression. The master
+remains open and all package issues remain linked as sub-issues in either state.
+Unknown, Attention and Paused do not force a state change. An incomplete/error
+scan cannot close an open tracker from retained passing evidence. Closed issues
+remain monitored; manual closure no longer pauses monitoring or resets
+notification/participant state. Pausing is a monitoring disposition, independent
+of issue state.
+
 ### Recovery reconciliation update (2026-10-24 UTC)
 
 Open regressions are rechecked beyond the normal 24-hour discovery window so a
@@ -261,11 +272,18 @@ filter the package-specific jobs; do not credit one sibling package's success.
 
 Suggested title: `[Wheel monitor] cryptography - Windows Arm64`.
 
-The issue stays open while monitoring is enabled, including when healthy. A
-failure reuses this issue; a recovery never closes it. Maintainers may close it
-to retire monitoring; reconciliation treats a closed issue as Paused and does
-not reopen it automatically. Resuming requires an authorized configuration
-change and reopening/adoption of that issue.
+Issue state follows verified health: Healthy closes it as completed; Broken
+reopens the same issue. Quiet days retain last-known health and therefore keep
+the corresponding open/closed state. Unknown, Attention or Paused preserve the
+existing state; monitoring errors do not close an open tracker using a retained
+green baseline. The master stays open and every package issue remains linked as
+a sub-issue, including when closed.
+
+Closed issues continue to receive monitoring and status reconciliation. Manual
+closure is not a pause: a still-Broken package will be reopened. An intentional
+pause must be represented in monitoring configuration/disposition, not inferred
+from issue state. Closing/reopening preserves preferences and notification
+outbox state.
 
 Before creation, check configured mappings and enumerate tracker-labelled issues,
 including closed issues. Match a stable package marker, not the issue title:
@@ -627,7 +645,10 @@ without deciding how to avoid duplicate notifications.
 | Participant opts out, or later deletes the opt-out comment | No explicit future mention until a later self-authored subscribe command. |
 | Participant enumeration fails | Notification remains pending; do not send a partial audience silently. |
 | Comment body/log contains another username or a forged marker | Does not enroll that username or forge trusted bot state. |
-| Tracker issue is manually closed | Pause rather than reopen or create a duplicate issue. |
+| Healthy tracker is closed | Continue monitoring; retain the master sub-issue link and notification state. |
+| New regression detected on a closed tracker | Reopen the same issue and notify once; do not create a replacement. |
+| Broken tracker is manually closed | Reopen on synchronization; manual closure is not a monitoring pause. |
+| Inconclusive evidence or API error | Do not automatically close an open regression. |
 | Projects write fails after alert succeeds | Preserve alert/state, fail monitor run, retry only board reconciliation. |
 | Dry-run or malformed registry | No GitHub mutations. |
 

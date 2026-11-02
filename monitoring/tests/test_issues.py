@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from monitoring.issues import (
     IssueAPI, MASTER, STATUS, checked_report, identities, marker, reconcile,
-    status_body, sync_health, update_status,
+    status_body, sync_health, sync_issue_lifecycle, update_status, OLD_LIFECYCLE, LIFECYCLE,
 )
 from monitoring.monitor import MonitorError, REPOSITORY, scan
 from test_monitor import FakeAPI, NOW, config, empty_state, job
@@ -48,7 +48,7 @@ class MemoryIssues(FakeIssues):
         if path.endswith("/sub_issues"):
             return self.children
         if path.endswith("/comments"):
-            return self.comments.get(path, [])
+            return copy.deepcopy(self.comments.get(path, []))
         return self.issues
 
     def write(self, method, resource, payload):
@@ -75,9 +75,11 @@ class MemoryIssues(FakeIssues):
                     if comment["id"] == int(resource.rsplit("/", 1)[1]):
                         comment.update(payload)
                         return comment
-        if method == "PATCH" and "labels" in payload:
+        if method == "PATCH" and resource.startswith("issues/") and resource.rsplit("/", 1)[1].isdigit():
             item = next(i for i in self.issues if i["number"] == int(resource.rsplit("/", 1)[1]))
-            item["labels"] = [{"name": name} for name in payload["labels"]]
+            item.update({key: value for key, value in payload.items() if key != "labels"})
+            if "labels" in payload:
+                item["labels"] = [{"name": name} for name in payload["labels"]]
             return item
         raise AssertionError((method, resource, payload))
 
@@ -205,7 +207,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(len(api.issues), 2)
         self.assertEqual(len(api.children), 1)
 
-    def test_closed_tracker_is_paused_not_reopened(self):
+    def test_closed_healthy_tracker_stays_closed_without_a_paused_label(self):
         report, _ = scan(FakeAPI(), config(), empty_state(), NOW)
         api = MemoryIssues()
         with patch("monitoring.issues.utcnow", return_value=NOW):
@@ -214,4 +216,23 @@ class IssueTests(unittest.TestCase):
             child["state"] = "closed"
             reconcile(api, config(), report)
         self.assertEqual(child["state"], "closed")
-        self.assertIn({"name": "health:paused"}, child["labels"])
+        self.assertIn({"name": "health:healthy"}, child["labels"])
+        self.assertNotIn({"name": "health:paused"}, child["labels"])
+
+    def test_only_generated_lifecycle_sentence_is_migrated(self):
+        api = FakeIssues(apply=True)
+        calls = []
+        api.write = lambda *args: calls.append(args)
+        item = issue()
+        item["body"] = "Human introduction\n" + OLD_LIFECYCLE + "\nHuman edits @someone\n"
+        sync_issue_lifecycle(api, item, {"health": "Healthy", "errors": []})
+        self.assertEqual(calls[0][2]["body"], "Human introduction\n" + LIFECYCLE + "\nHuman edits @someone\n")
+        self.assertEqual(calls[0][2]["state"], "closed")
+        self.assertEqual(calls[0][2]["state_reason"], "completed")
+
+    def test_human_modified_lifecycle_text_is_not_rewritten(self):
+        api = FakeIssues(apply=True)
+        item = issue(state="closed")
+        item["body"] = "Human modified: " + OLD_LIFECYCLE
+        sync_issue_lifecycle(api, item, {"health": "Healthy", "errors": []})
+        self.assertEqual(api.writes, 0)

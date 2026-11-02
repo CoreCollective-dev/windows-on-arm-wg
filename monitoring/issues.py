@@ -27,6 +27,9 @@ HEALTH = {
     "Healthy": "2da44e", "Broken": "cf222e", "Attention": "bf8700",
     "Unknown": "6e7781", "Paused": "8250df",
 }
+OLD_LIFECYCLE = "- Remains open when healthy; close deliberately to pause monitoring."
+LIFECYCLE = ("- Healthy closes this tracker; Broken reopens it. Closed issues remain monitored "
+             "and linked to the master. Unknown, Attention or Paused does not force a state change.")
 
 
 def marker(package):
@@ -122,7 +125,7 @@ def package_body(package):
     if not package.get("channels"):
         lines.append(literal(package["setup_reason"]))
     lines.extend(["", "## Lifecycle",
-                  "- Remains open when healthy; close deliberately to pause monitoring.",
+                  LIFECYCLE,
                   "- The bot-owned status comment is refreshed daily; this body is not rewritten.",
                   "- New incidents, material changes and recoveries produce deduplicated notification comments.",
                   "- Participants are the human author, assignees and commenters; bots are excluded.",
@@ -137,6 +140,8 @@ def status_body(package, checked_at):
              f"Last checked: {checked_at}. Daily monitoring with transition-only incident notifications.", "",
              "Daily activity: " + package.get("activity", "Not recorded") + ".",
              "Health is last verified evidence, not an assertion that a new build ran today.", "",
+             "Issue state follows verified health: Healthy closes, Broken reopens. Closing does not pause monitoring.",
+             "Inconclusive health or a monitoring error does not close an open regression.", "",
              "| Target | Health | Evidence |", "| --- | --- | --- |"]
     evidence = package.get("last_known") or package["results"]
     ordered = sorted(evidence.items(), key=lambda item: (item[1]["health"] != "Broken", item[0]))
@@ -166,7 +171,8 @@ def status_body(package, checked_at):
 def master_status(report, mapping):
     counts = Counter(p["health"] for p in report["packages"])
     lines = [STATUS, "", "## Fleet health", "", f"Last checked: {report['checked_at']}.",
-             "Permanent tracking issues stay open when healthy; sub-issue completion is not build health.",
+             "Healthy package issues are closed; Broken issues are open. All remain linked as sub-issues.",
+             "Detailed health labels remain authoritative for Unknown, Attention or Paused entries.",
              "", "; ".join(f"**{health}: {counts[health]}**" for health in HEALTH), "",
              "| Package | Health | Tracker |", "| --- | --- | --- |"]
     for package in sorted(report["packages"], key=report_key):
@@ -201,6 +207,21 @@ def sync_health(api, issue, health):
     desired = (labels - owned) | {"wheel-monitor", "health:" + health.lower()}
     if labels != desired:
         api.write("PATCH", f"issues/{issue['number']}", {"labels": sorted(desired)})
+
+
+def sync_issue_lifecycle(api, issue, package):
+    changes = {}
+    if package["health"] == "Broken" and issue["state"] != "open":
+        changes["state"] = "open"
+    elif package["health"] == "Healthy" and not package["errors"] and issue["state"] != "closed":
+        changes.update(state="closed", state_reason="completed")
+    body = issue.get("body") or ""
+    # Replace only our previous exact guidance, preserving all other human content.
+    if OLD_LIFECYCLE in body.splitlines():
+        changes["body"] = "\n".join(LIFECYCLE if line == OLD_LIFECYCLE else line for line in body.split("\n"))
+    if changes:
+        api.write("PATCH", f"issues/{issue['number']}", changes)
+        issue.update(changes)
 
 
 def reconcile(api, config, report, bootstrap=False, *, state=None, persist=None, mapping=None):
@@ -266,16 +287,10 @@ def reconcile(api, config, report, bootstrap=False, *, state=None, persist=None,
             # Do not replace an existing parent. GitHub rejects conflicts.
             api.write("POST", f"issues/{parent['number']}/sub_issues", {"sub_issue_id": issue["id"]})
             children.add(issue["id"])
-        if issue["state"] == "closed":
-            sync_health(api, issue, "Paused")
-            if state is not None:
-                state["packages"][name]["pending_notifications"] = []
-                state["packages"][name]["issue_notifications_initialized"] = False
-                persist()
-            continue
         comments = api.pages(f"repos/{REPOSITORY}/issues/{issue['number']}/comments")
         update_status(api, issue, status_body(results[name], report["checked_at"]), comments)
         sync_health(api, issue, results[name]["health"])
+        sync_issue_lifecycle(api, issue, results[name])
         if state is not None:
             from monitoring.notifications import deliver
             if persist is None:
@@ -286,9 +301,6 @@ def reconcile(api, config, report, bootstrap=False, *, state=None, persist=None,
         print(f"Reconciled {name}: {issue['html_url']}", flush=True)
     displayed = copy.deepcopy(report)
     displayed["packages"] = [p for p in displayed["packages"] if "package=" + p["package"] in mapping]
-    for package in displayed["packages"]:
-        if mapping["package=" + package["package"]]["state"] == "closed":
-            package["health"] = "Paused"
     update_status(api, parent, master_status(displayed, mapping))
     expected = {mapping["package=" + p["package"]]["id"] for p in active}
     actual = {issue["id"] for issue in api.pages(
@@ -301,7 +313,8 @@ def reconcile(api, config, report, bootstrap=False, *, state=None, persist=None,
         p["package"]: mapping["package=" + p["package"]]["html_url"] for p in active
     }, "mapping": {"schema": 1, "tracker": REPOSITORY, "master": parent["number"],
                   "packages": {p["package"]: mapping["package=" + p["package"]]["number"] for p in active}},
-        "writes": api.writes}
+        "writes": api.writes,
+        "issue_states": dict(Counter(mapping["package=" + p["package"]]["state"] for p in active))}
 
 
 def main():
@@ -328,7 +341,8 @@ def main():
                        mapping=read_json(args.mapping) if args.mapping else None)
     if args.apply:
         report["issue_sync"] = {"master": result["master"], "packages": result["enrolled_packages"],
-                                "writes": result["writes"], "completed_at": utcnow().isoformat()}
+                                "writes": result["writes"], "issue_states": result["issue_states"],
+                                "completed_at": utcnow().isoformat()}
         args.report.write_text(json.dumps(report, indent=2), encoding="utf-8")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
