@@ -802,9 +802,7 @@ def scan(api, config, state, now, scheduled=False, progress=False):
                     if previous:
                         previous = {**previous, "stream": after.rsplit("/", 1)[0]}
                         current = old["notification_results"].get(destination)
-                        if not current or (previous["created_at"], previous["run_id"], previous["attempt"]) >= (
-                            current["created_at"], current["run_id"], current["attempt"]
-                        ):
+                        if not current or order(previous) >= order(current):
                             old["notification_results"][destination] = previous
                 errors.extend(f"{identifier}: {error}" for error in fresh.get("errors", []))
                 activities.append(fresh.get("activity", ""))

@@ -1,6 +1,7 @@
 import copy
 import unittest
 from datetime import timedelta
+from unittest.mock import patch
 
 from monitoring.baselines import definition, retain_health, supersedes_failure
 from monitoring.monitor import APIError, MonitorError, scan
@@ -99,6 +100,28 @@ class BaselineTests(unittest.TestCase):
                 shared["amd64"]["jobs"][0].update(run_id=run_id, run_attempt=attempt)
                 self.assertTrue(supersedes_failure(previous, shared))
                 self.assertFalse(supersedes_failure(shared, previous))
+
+    def test_notification_alias_does_not_replace_newer_control_version(self):
+        _, state = self.initial("failure")
+        package = state["packages"]["package"]
+        canonical, previous = next(iter(package["notification_results"].items()))
+        previous = copy.deepcopy(previous)
+        shared = copy.deepcopy(previous)
+        shared.update(health="Unknown", condition="shared-failure", arm_specific_failure=False, shared_failure=True)
+        shared["amd64"]["jobs"][0]["run_attempt"] = 2
+        shared["amd64"].update(status="failed", stage="build", successful_stages=[])
+        fallback = canonical.replace("/pr/42/1/", "/pr/42/commit-abc/")
+        package["notification_results"] = {canonical: shared, fallback: previous}
+        fresh = copy.deepcopy(package["channels"]["wheel"])
+        target = canonical.split("/", 1)[1]
+        fresh.update(last_known={target: shared}, results={target: shared}, observations=[],
+                     stream_aliases={fallback.split("/", 1)[1]: target})
+        with patch("monitoring.monitor.observe_channel", return_value=fresh):
+            _, saved = scan(FakeAPI(runs=[]), self.config(), state, NOW)
+        announced = saved["packages"]["package"]["notification_results"]
+        self.assertNotIn(fallback, announced)
+        self.assertTrue(announced[canonical]["shared_failure"])
+        self.assertEqual(announced[canonical]["amd64"]["jobs"][0]["run_attempt"], 2)
 
     def test_skipped_pending_missing_and_incomparable_controls_preserve_failure(self):
         variants = [pair(20, "failure", status) for status in ("skipped", "cancelled", None)]
