@@ -743,6 +743,7 @@ def scan(api, config, state, now, scheduled=False, progress=False):
         name = package["package"]
         old = packages.get(name, {})
         entry = copy.deepcopy(old)
+        entry.pop("participant_preferences", None)
         entry.setdefault("channels", {})
         results = {}
         last_known = {}

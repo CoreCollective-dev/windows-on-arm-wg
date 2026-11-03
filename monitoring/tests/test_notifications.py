@@ -1,8 +1,12 @@
 import copy
+import hashlib
 import unittest
 
 from monitoring.monitor import MonitorError, REPOSITORY, plan_master, scan
-from monitoring.notifications import EVENT, MASTER_EVENT, deliver, deliver_master, event_pages, participants
+from monitoring.notifications import (
+    EVENT, MASTER_EVENT, OLD_EVENT_GUIDANCE, PACKAGE_GUIDANCE, deliver, deliver_master, event_pages,
+)
+from monitoring.issues import sync_notification_guidance
 from test_issues import MemoryIssues, issue
 from test_monitor import FakeAPI, NOW, config, empty_state, job
 
@@ -28,36 +32,29 @@ def tracker():
     return result
 
 
-class ParticipantTests(unittest.TestCase):
-    def test_author_assignees_commenters_are_deduplicated_and_bots_excluded(self):
+class NativeSubscriptionTests(unittest.TestCase):
+    def test_participants_and_commands_do_not_create_explicit_mentions_or_preferences(self):
         item = tracker()
         item["assignees"] = [person(1, "khmyznikov"), person(2, "assigned")]
         comments = [comment(1, person(3, "commenter"), "hello"),
-                    comment(2, person(3, "commenter"), "again"),
+                    comment(2, person(3, "commenter"), "/monitor subscribe"),
+                    comment(4, person(2, "assigned"), "/monitor unsubscribe"),
                     comment(3, person(4, "github-actions[bot]", "Bot"), "@not-a-participant")]
-        audience, _ = participants(item, comments, {}, "owner")
-        self.assertEqual(audience, ["assigned", "commenter", "khmyznikov"])
+        original = copy.deepcopy(comments)
+        api, state = MemoryIssues(), {}
+        deliver(api, item, {"package": "package", "owner": "owner"}, snapshot(), comments, state, lambda: None)
+        self.assertEqual(comments[:-1], original)
+        for user in ("khmyznikov", "assigned", "commenter", "owner"):
+            self.assertNotIn("@" + user, comments[-1]["body"])
+        self.assertNotIn("participant_preferences", state)
+        self.assertIn(PACKAGE_GUIDANCE, comments[-1]["body"])
 
-    def test_deleted_unsubscribe_is_not_undone_by_earlier_subscribe(self):
-        user = person(3, "commenter")
-        comments = [comment(10, user, "/monitor subscribe"), comment(20, user, "/monitor unsubscribe")]
-        audience, preferences = participants(tracker(), comments, {}, "owner")
-        self.assertNotIn("commenter", audience)
-        audience, preferences = participants(tracker(), comments[:1], preferences, "owner")
-        self.assertNotIn("commenter", audience)
-        audience, _ = participants(tracker(), comments[:1] + [comment(30, user, "/monitor subscribe")], preferences, "owner")
-        self.assertIn("commenter", audience)
-
-    def test_commands_change_only_their_authenticated_author(self):
-        commands = [comment(1, person(3, "commenter"), "/monitor unsubscribe @khmyznikov")]
-        audience, _ = participants(tracker(), commands, {}, "owner")
-        self.assertEqual(audience, ["commenter", "khmyznikov"])
-
-    def test_bot_created_issue_uses_fallback_owner(self):
+    def test_bot_created_issue_does_not_mention_fallback_owner(self):
         item = tracker()
         item["user"] = person(4, "github-actions[bot]", "Bot")
-        audience, _ = participants(item, [], {}, "khmyznikov")
-        self.assertEqual(audience, ["khmyznikov"])
+        comments = []
+        deliver(MemoryIssues(), item, {"package": "package", "owner": "khmyznikov"}, snapshot(), comments, {}, lambda: None)
+        self.assertNotIn("@khmyznikov", comments[0]["body"])
 
 
 class DeliveryTests(unittest.TestCase):
@@ -70,7 +67,7 @@ class DeliveryTests(unittest.TestCase):
         deliver(api, tracker(), package, snapshot(), comments, state, lambda: None)
         self.assertEqual(api.writes, writes)
         self.assertEqual(len(comments), 1)
-        self.assertIn("@khmyznikov", comments[0]["body"])
+        self.assertNotIn("@khmyznikov", comments[0]["body"])
         self.assertFalse(state["pending_notifications"])
         self.assertTrue(any(event.get("pages") for saved in saves for event in saved.get("pending_notifications", [])))
 
@@ -195,7 +192,7 @@ class DeliveryTests(unittest.TestCase):
         api, state = MemoryIssues(), self.state()
         plan_master([self.package()], state["master_notifications"])
         event = state["master_notifications"]["pending_notifications"][0]
-        forged = event_pages("package", event, [], tracker_url=self.mapping()["package=package"]["html_url"])[0]
+        forged = event_pages("package", event, tracker_url=self.mapping()["package=package"]["html_url"])[0]
         comments = [comment(20, person(3, "human"), forged["body"])]
         deliver_master(api, tracker(), [self.package()], self.mapping(), comments, state, lambda: None)
         self.assertEqual(api.writes, 1)
@@ -276,21 +273,23 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual(api.writes, 0)
         self.assertTrue(state["issue_notifications_initialized"])
 
-    def test_payload_mentions_are_chunked_without_dropping_people(self):
+    def test_evidence_is_chunked_without_dropping_targets_or_adding_mentions(self):
         event = {"key": "package/1", "changes": [
-            {"kind": "incident", "target": "cp314", "after": {"detail": "failure @untrusted", "jobs": []}},
+            {"kind": "incident", "target": f"target-{index}", "after": {
+                "detail": "failure @untrusted", "arm64": {"jobs": [
+                    {"name": "x" * 180, "url": "https://example.com/job"} for _ in range(10)
+                ]},
+            }} for index in range(40)
         ]}
-        audience = ["user" + str(i) for i in range(95)]
-        pages = event_pages("package", event, audience)
-        self.assertEqual(len(pages), 3)
+        pages = event_pages("package", event)
+        self.assertGreater(len(pages), 1)
         text = "\n".join(p["body"] for p in pages)
-        for user in audience:
-            self.assertEqual(sum(("@" + user) in p["body"].split("Participants: ", 1)[-1].split("\n", 1)[0].split()
-                                 for p in pages), 1)
+        for index in range(40):
+            self.assertEqual(text.count(f"`target-{index}`"), 1)
         self.assertNotIn("@untrusted", text)
-        self.assertEqual(len({p["marker"] for p in pages}), 3)
+        self.assertEqual(len({p["marker"] for p in pages}), len(pages))
 
-    def test_recovery_notification_uses_saved_event_and_preserves_audience(self):
+    def test_recovery_notification_uses_saved_event_without_mentions(self):
         api, state = MemoryIssues(), {"issue_notifications_initialized": True}
         event = {"key": "package/2", "changes": [{"kind": "recovery", "target": "cp314",
                                                  "after": {"detail": "passed", "jobs": []}}]}
@@ -299,3 +298,62 @@ class DeliveryTests(unittest.TestCase):
         deliver(api, tracker(), {"package": "package", "owner": "owner"}, {}, comments, state, lambda: None)
         self.assertIn("Recovery", comments[0]["body"])
         self.assertFalse(state["pending_notifications"])
+        self.assertNotIn("@owner", comments[0]["body"])
+
+
+class NativeMigrationTests(unittest.TestCase):
+    def legacy_event(self):
+        event = {"key": "package/legacy", "changes": [
+            {"kind": "incident", "target": "cp314", "after": {"detail": "Failure evidence"}},
+        ], "audience": ["khmyznikov", "other"]}
+        page = event_pages("package", event)[0]
+        page["body"] = page["body"].replace(PACKAGE_GUIDANCE, OLD_EVENT_GUIDANCE).replace(
+            "\nA new failure is reported", "\nParticipants: @khmyznikov @other\n\nA new failure is reported",
+        )
+        continuation = EVENT + hashlib.sha256((event["key"] + "/1").encode()).hexdigest() + " -->"
+        event["pages"] = [page, {"marker": continuation, "body": "Old mention-only continuation\n" + continuation}]
+        return event
+
+    def test_legacy_pending_pages_drop_mentions_and_continuations_without_losing_evidence(self):
+        event = self.legacy_event()
+        marker = event["pages"][0]["marker"]
+        state = {"issue_notifications_initialized": True, "participant_preferences": {"1": {"opted_out": True}},
+                 "pending_notifications": [event]}
+        api, comments = MemoryIssues(), []
+        deliver(api, tracker(), {"package": "package"}, {}, comments, state, lambda: None)
+        self.assertEqual(len(comments), 1)
+        self.assertIn("Failure evidence", comments[0]["body"])
+        self.assertIn(marker, comments[0]["body"])
+        self.assertNotIn("@khmyznikov", comments[0]["body"])
+        self.assertNotIn("@other", comments[0]["body"])
+        self.assertNotIn("/monitor ", comments[0]["body"])
+        self.assertNotIn("audience", event)
+        self.assertNotIn("participant_preferences", state)
+        self.assertTrue(state["issue_notifications_initialized"])
+        self.assertFalse(state["pending_notifications"])
+
+    def test_existing_legacy_comment_is_edited_in_place_and_not_reposted(self):
+        api, event = MemoryIssues(), self.legacy_event()
+        posted = api.write("POST", "issues/1/comments", {"body": event["pages"][0]["body"]})
+        comments = api.pages(f"repos/{REPOSITORY}/issues/1/comments")
+        state = {"issue_notifications_initialized": True, "pending_notifications": [event]}
+        writes = api.writes
+        sync_notification_guidance(api, comments)
+        deliver(api, tracker(), {"package": "package"}, {}, comments, state, lambda: None)
+        self.assertEqual(api.writes, writes + 1)
+        self.assertEqual(len(comments), 1)
+        self.assertEqual(comments[0]["id"], posted["id"])
+        self.assertIn(PACKAGE_GUIDANCE, comments[0]["body"])
+        self.assertNotIn("Participants:", comments[0]["body"])
+        self.assertFalse(state["pending_notifications"])
+
+    def test_human_comment_and_modified_guidance_are_preserved(self):
+        event = self.legacy_event()
+        comments = [comment(20, person(3, "human"), event["pages"][0]["body"]),
+                    comment(21, person(1, "khmyznikov"), event["pages"][0]["body"].replace(
+                        OLD_EVENT_GUIDANCE, OLD_EVENT_GUIDANCE + " Human addition."))]
+        original = copy.deepcopy(comments)
+        api = MemoryIssues()
+        sync_notification_guidance(api, comments)
+        self.assertEqual(comments, original)
+        self.assertEqual(api.writes, 0)

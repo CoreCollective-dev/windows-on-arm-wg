@@ -7,6 +7,7 @@ from unittest.mock import patch
 from monitoring.issues import (
     IssueAPI, MASTER, STATUS, checked_report, identities, marker, reconcile,
     status_body, sync_health, sync_issue_lifecycle, update_status, OLD_LIFECYCLE, LIFECYCLE,
+    OLD_COMMANDS, OLD_PARTICIPANTS, NATIVE_SUBSCRIPTIONS,
 )
 from monitoring.monitor import MonitorError, REPOSITORY, scan
 from test_monitor import FakeAPI, NOW, config, empty_state, job
@@ -229,6 +230,25 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(calls[0][2]["body"], "Human introduction\n" + LIFECYCLE + "\nHuman edits @someone\n")
         self.assertEqual(calls[0][2]["state"], "closed")
         self.assertEqual(calls[0][2]["state_reason"], "completed")
+
+    def test_generated_subscription_guidance_is_migrated_without_touching_human_content(self):
+        api = MemoryIssues()
+        item = issue(state="closed")
+        item["body"] = "Human introduction\n" + OLD_PARTICIPANTS + "\n" + OLD_COMMANDS + "\nHuman notes\n"
+        api.issues.append(item)
+        sync_issue_lifecycle(api, item, {"health": "Healthy", "errors": []})
+        self.assertEqual(item["body"], "Human introduction\n" + NATIVE_SUBSCRIPTIONS + "\nHuman notes\n")
+        self.assertEqual(api.writes, 1)
+        sync_issue_lifecycle(api, item, {"health": "Healthy", "errors": []})
+        self.assertEqual(api.writes, 1)
+
+    def test_human_modified_subscription_guidance_is_preserved(self):
+        api = FakeIssues(apply=True)
+        item = issue(state="closed")
+        item["body"] = "Human note: " + OLD_COMMANDS
+        sync_issue_lifecycle(api, item, {"health": "Healthy", "errors": []})
+        self.assertEqual(item["body"], "Human note: " + OLD_COMMANDS)
+        self.assertEqual(api.writes, 0)
 
     def test_human_modified_lifecycle_text_is_not_rewritten(self):
         api = FakeIssues(apply=True)

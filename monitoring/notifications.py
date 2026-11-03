@@ -1,6 +1,5 @@
-"""Durable, participant-aware incident delivery for existing tracker issues."""
+"""Durable native GitHub incident notifications for existing tracker issues."""
 
-import copy
 import hashlib
 import re
 
@@ -10,40 +9,22 @@ from monitoring.monitor import MonitorError, literal, plan_master
 EVENT = "<!-- wheel-monitor:event="
 MASTER_EVENT = "<!-- wheel-monitor:master-event="
 TRUSTED = {"khmyznikov", "github-actions[bot]"}
+OLD_EVENT_GUIDANCE = "The same ongoing regression is not reposted daily. Use `/monitor unsubscribe` in a new comment to opt out."
+PACKAGE_GUIDANCE = ("The same ongoing regression is not reposted daily. Use GitHub's Subscribe/Unsubscribe "
+                    "button on this package issue to manage notifications.")
 
 
-def human(user):
-    return bool(user and user.get("login") and user.get("type") != "Bot"
-                and not user["login"].endswith("[bot]") and user["login"] not in ("ghost", "github-actions"))
+def native_event_body(body):
+    if OLD_EVENT_GUIDANCE not in body.splitlines():
+        return body
+    body = "\n".join(PACKAGE_GUIDANCE if line == OLD_EVENT_GUIDANCE else line for line in body.split("\n"))
+    return re.sub(
+        r"\nParticipants: [^\n]+\n\n(?=A new failure is reported only when Windows Arm64 fails "
+        r"and equivalent Windows AMD64 succeeds\.\n)", "\n", body,
+    )
 
 
-def participants(issue, comments, preferences, owner):
-    preferences = copy.deepcopy(preferences)
-    people = {}
-    for user in [issue.get("user"), *issue.get("assignees", []), *[c.get("user") for c in comments]]:
-        if human(user):
-            people[str(user.get("id") or user["login"].lower())] = user["login"]
-    for comment in sorted(comments, key=lambda value: value["id"]):
-        user = comment.get("user")
-        if not human(user):
-            continue
-        command = re.fullmatch(r"/monitor (unsubscribe|subscribe)", (comment.get("body") or "").strip())
-        if not command:
-            continue
-        identifier = str(user.get("id") or user["login"].lower())
-        if comment["id"] > preferences.get(identifier, {}).get("comment_id", -1):
-            preferences[identifier] = {
-                "login": user["login"], "comment_id": comment["id"], "opted_out": command[1] == "unsubscribe",
-            }
-    audience = sorted({login for identifier, login in people.items()
-                       if not preferences.get(identifier, {}).get("opted_out")}, key=str.lower)
-    opted_out = {value["login"].lower() for value in preferences.values() if value["opted_out"]}
-    if not audience and not people and owner.lower() not in opted_out:
-        audience = [owner]
-    return audience, preferences
-
-
-def event_pages(package, event, audience, *, tracker_url=None):
+def event_pages(package, event, *, tracker_url=None):
     changes = event.get("changes", [])
     if not changes:
         raise MonitorError("Cannot deliver an empty incident event")
@@ -71,21 +52,17 @@ def event_pages(package, event, audience, *, tracker_url=None):
         page += section + "\n"
     if page:
         content.append(page)
-    mention_pages = [audience[i:i + 40] for i in range(0, len(audience), 40)] or [[]]
-    count = max(len(content), len(mention_pages))
     pages = []
-    for index in range(count):
+    for index, section in enumerate(content):
         digest = hashlib.sha256((event["key"] + "/" + str(index)).encode()).hexdigest()
         marker = (MASTER_EVENT if tracker_url else EVENT) + digest + " -->"
-        mentions = " ".join("@" + login for login in mention_pages[index]) if index < len(mention_pages) else ""
         body = (f"## {title}: {package}\n\n"
                 + (f"[Package tracker]({tracker_url}) - full incident history and current status.\n\n" if tracker_url else "")
-                + (content[index] if index < len(content) else "Participant notification continuation.\n")
-                + "\n" + ("Participants: " + mentions + "\n\n" if mentions else "")
+                + section + "\n"
                 + "A new failure is reported only when Windows Arm64 fails and equivalent Windows AMD64 succeeds.\n"
                 + ("The same ongoing regression is not reposted daily. Use GitHub's Subscribe/Unsubscribe "
                    "button on this master issue to manage fleet-wide notifications.\n\n" if tracker_url else
-                   "The same ongoing regression is not reposted daily. Use `/monitor unsubscribe` in a new comment to opt out.\n\n")
+                   PACKAGE_GUIDANCE + "\n\n")
                 + marker)
         if len(body) > 60000:
             raise MonitorError("Incident notification exceeds safe comment size")
@@ -114,7 +91,7 @@ def deliver_master(api, issue, packages, mapping, comments, state, persist):
             tracker = mapping.get("package=" + event["package"])
             if tracker is None:
                 raise MonitorError(f"Master alert package is not enrolled: {event['package']}")
-            event["pages"] = event_pages(event["package"], event, [], tracker_url=tracker["html_url"])
+            event["pages"] = event_pages(event["package"], event, tracker_url=tracker["html_url"])
             persist()
         post_event(api, issue, event, comments)
         pending.remove(event)
@@ -123,10 +100,7 @@ def deliver_master(api, issue, packages, mapping, comments, state, persist):
 
 def deliver(api, issue, package, snapshot, comments, state, persist):
     """Persist frozen payloads before posting; markers reconcile ambiguous writes."""
-    preference_audience, preferences = participants(
-        issue, comments, state.get("participant_preferences", {}), package["owner"],
-    )
-    state["participant_preferences"] = preferences
+    state.pop("participant_preferences", None)
     if not state.get("issue_notifications_initialized"):
         initial_key = package["package"] + "/initial"
         initial_marker = EVENT + hashlib.sha256((initial_key + "/0").encode()).hexdigest() + " -->"
@@ -148,17 +122,10 @@ def deliver(api, issue, package, snapshot, comments, state, persist):
     pending = state.setdefault("pending_notifications", [])
     persist()
     for event in list(pending):
-        if "pages" not in event:
-            event["audience"] = preference_audience
-            event["pages"] = event_pages(package["package"], event, preference_audience)
+        if "pages" not in event or "audience" in event:
+            event.pop("audience", None)
+            event["pages"] = event_pages(package["package"], event)
             persist()
-        # An opt-out arriving after a partial delivery still applies to unsent chunks.
-        opted_out = {value["login"] for value in preferences.values() if value["opted_out"]}
-        for page in event["pages"]:
-            for login in opted_out:
-                page["body"] = re.sub(r"(?<!\w)@" + re.escape(login) + r"(?![A-Za-z0-9-])",
-                                      login, page["body"], flags=re.I)
-        persist()
         post_event(api, issue, event, comments)
         pending.remove(event)
         persist()

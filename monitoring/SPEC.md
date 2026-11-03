@@ -4,6 +4,20 @@ Status: issue-based tracking approved and deployed on 2026-10-21; Projects remai
 
 Date: 2026-10-19.
 
+### Native GitHub subscriptions only (2026-11-03 UTC)
+
+The custom comment-command and automatic participant-mention system is removed.
+Use GitHub's Subscribe/Unsubscribe button on the master for fleet-wide new-Broken
+alerts, or on an individual package issue for its incident/recovery comments and
+other issue activity. GitHub owns subscription preferences and notification
+delivery; the monitor does not enumerate subscribers or generate explicit pings.
+
+Legacy preferences are discarded without resetting alert initialization,
+incident history, master baselines or outboxes. Pending legacy pages are rebuilt
+without mentions, preserving evidence and event/chunk markers for retry safety.
+Exact obsolete generated guidance is migrated in issue bodies/trusted bot
+comments; historical human command comments are preserved but are not processed.
+
 ### Fleet-wide subscriptions (2026-11-03 UTC)
 
 GitHub's Subscribe button on the master subscribes to new package-level Broken
@@ -131,8 +145,9 @@ upstream **Windows Arm64 wheel builds and related tests**, updates each
 package's health, and comments on its existing issue when something needs
 attention or recovers.
 
-For actionable notifications, explicitly mention the issue author, assignees,
-and people who commented, excluding bots and people who opted out.
+Actionable comments use native GitHub issue notifications. Subscribe to the
+master for fleet alerts or to a package issue for its own updates; no automatic
+participant mentions or custom subscription commands are used.
 
 This spec is stored here for review. The future monitor, configuration, issues,
 and board belong in the agreed tracker repository, not this repository.
@@ -202,7 +217,7 @@ uses the same general approach.
 | Log retrieval failure can become a broken build | Preserve known job failures, but classify missing evidence as a monitoring gap, not proof that compilation failed. |
 | Fixed last-25-run scan | Paginated, checkpointed collection with explicit catch-up and incomplete-scan reporting. |
 | Title-search-based deduplication | Stable package identity and machine event markers, reconciled before retrying writes. |
-| Assignee notification | Explicit mentions of the agreed participant set, with opt-outs and notification deduplication. |
+| Issue notification | Native GitHub subscriptions, with deduplicated incident comments and no explicit participant mentions. |
 
 Retain useful ideas: public upstream polling, workflow-specific selectors,
 bounded concurrency, retries, log evidence when needed, and an Actions summary.
@@ -233,7 +248,7 @@ Synchronize issue labels and GitHub Projects health fields
 | Registry | Package identity, sources, concrete workflow callers, expected targets, evidence rules, cadence and pause settings. |
 | Collector | Paginated GitHub reads, run-attempt reconciliation, retries, and bounded optional log downloads. |
 | Evaluator | Deterministic channel health, matrix coverage, and failure/monitoring-gap classification. |
-| Issue reconciler | Exactly one tracker issue per package; durable snapshot, participant discovery, and idempotent incident comments. |
+| Issue reconciler | Exactly one tracker issue per package; durable snapshot and idempotent native notification comments. |
 | Board reconciler | Add issue items and update automation-owned health fields. |
 
 Start with one process and a bounded read pool of five workers. Keep all issue,
@@ -268,7 +283,6 @@ Validate the entire registry before any mutations.
 | `channel.expectation` | Always expected, conditional on an explicit event/ref rule, or manual/release-only. |
 | `channel.max_silence` | Required for regularly scheduled channels; disabled for irregular release/manual channels unless a specific build is expected. |
 | `channel.baseline` | Why these selectors are correct, verified source/run links, and verification date. |
-| `notification_owners` | Optional fallback human maintainers when the bot created the issue and no human participants exist. |
 
 A channel can cover multiple targets, but each target has separate observations
 and an independent incident identity. A successful CPython 3.14 job must not
@@ -321,12 +335,12 @@ require manual resolution. Existing unrelated human issues are never overwritten
 ### Issue content and ownership
 
 - Human-editable body: purpose, PyPI/source links, upstream discussions,
-  responsible people, monitoring coverage, and opt-out instructions.
+  responsible people, monitoring coverage, and native subscription instructions.
 - One **bot-owned status comment**: current channel/target table, last checked,
   last success/failure, freshness, current incidents, and a versioned machine
   state block. Update this comment rather than rewriting human discussions.
-- Bot-authored transition comments: durable, append-only incident history and
-  participant mentions.
+- Bot-authored transition comments: durable incident history and native GitHub
+  notifications, without participant mentions.
 - Labels: `wheel-monitor` plus exactly one of `health:healthy`, `health:broken`,
   `health:attention`, `health:unknown`, or `health:paused`.
 
@@ -441,15 +455,15 @@ Optional log evidence must not downgrade a conclusively successful required job.
   starts a new numbered episode. Aggregate multiple target changes into one
   package notification per scan.
 - Subsequent equivalent failures update the status comment and occurrence count.
-  Do not post a new mention for every run.
+  Do not post a new notification comment for every run.
 - Material changes are a newly affected required target, a new condition family,
   or a required-stage change such as build failure becoming test failure.
   A new SHA, different error wording, or another occurrence is not enough.
 - Recover each incident only on newer valid evidence for the same target and
   scope, or a successful latest attempt of the same run. Full recovery requires
   all affected targets to pass. A removed target cannot silently count as fixed.
-- Comment once on partial recovery and once on full recovery; mention
-  participants for these transitions. No periodic reminder pings in version one.
+- Comment once on partial recovery and once on full recovery. Native subscribers
+  receive these transitions; there are no automatic mentions or periodic reminders.
 - Report new coverage gaps on an otherwise eligible run immediately after
   settlement; report transient observation/API gaps only after two consecutive
   scheduled checks. A regularly scheduled channel defaults to 72 hours of allowed
@@ -462,36 +476,18 @@ These timings are proposed configuration defaults, not commitments to exact
 delivery times. Do not label a package "flaky" merely because a success-looking
 line appeared in an otherwise failed job.
 
-## 9. Participants and notification comments
+## 9. Native subscriptions and notification comments
 
-At notification time, compute the union of:
+GitHub's Subscribe/Unsubscribe button is the only subscription control. Follow
+the master for fleet-wide new-Broken comments or a package issue for its own
+incident/recovery comments and discussion. Notification delivery follows each
+user's GitHub settings. Authors, assignees and commenters are not automatically
+mentioned by the monitor; custom command comments are ignored.
 
-1. Current issue author, if human.
-2. Current assignees.
-3. Human authors of all currently visible issue comments, across all pages.
-4. Optional configured fallback owners when there are no human participants.
-
-Exclude bot accounts, the monitor identity, deleted/unresolvable accounts, and
-persisted opt-outs. Deduplicate by GitHub user ID, using the current login for
-mentions. Do not add people merely because their usernames appear in quoted
-text, logs, upstream discussions, or another participant's comment.
-
-Provide exact self-service commands as standalone comment lines:
-`/monitor unsubscribe` and `/monitor subscribe`. A command affects only its
-authenticated author. The latest command wins; persist the preference so deleting
-an opt-out comment does not silently resubscribe someone. Edits/deletions must not
-erase a previously saved opt-out without a later explicit subscribe.
-
-Read issue participants only when posting a notification or processing preference
-changes. If participant/comment enumeration fails, leave that notification pending
-and surface an operational error rather than posting an incomplete mention list.
-People joining later receive future notifications, not retroactive re-pings.
-
-GitHub has no general `@all` for issue participants. Watchers and silent
-subscribers are not the agreed explicit-mention audience. Mentions request
-notifications but cannot override a user's own GitHub notification settings.
-When the bot is the issue author, configured human assignees/owners supply the
-initial audience; enrollment must warn if none exist.
+Read comments to reconcile trusted event markers, not to compute an audience.
+If comment enumeration fails, leave delivery pending and surface the error.
+Do not change GitHub subscriptions, reconstruct historical recipients, or replay
+old incidents when removing the legacy preference system.
 
 ### Example incident comment
 
@@ -509,16 +505,15 @@ Commit / ref: <SHA> / <ref>
 Evidence: <failed required step; short sanitized diagnostic if available>
 Other monitored targets: <summary>
 
-Participants: <computed @mentions>
+Notifications: native GitHub issue subscriptions
 This incident remains on this tracker issue; no upstream issue was created.
 
 <!-- wheel-monitor:event=<deterministic-event-key> -->
 ```
 
-Notification comments include all opted-in participants. If size requires
-multiple comments, create deterministic numbered chunks and reconcile each
-chunk before retrying. Do not silently truncate the mention list or repeatedly
-notify earlier chunks after a partial failure.
+If evidence requires multiple comments, create deterministic numbered chunks
+and reconcile each chunk before retrying. Do not truncate evidence or repost
+earlier chunks after a partial failure.
 
 ## 10. Durable state and safe reconciliation
 
@@ -528,7 +523,7 @@ caches/artifacts. Human-readable state and a compact versioned JSON block coexis
 
 Store channel/target results, run IDs/attempts, last successful scan windows,
 pending observations, recent-run rerun index, incident IDs and transitions,
-notification event/chunk markers, opt-outs, and the last successfully applied
+notification event/chunk markers and the last successfully applied
 registry revision. Store timestamps in UTC. Full logs and an unbounded run history
 do not belong in issue comments.
 
@@ -662,9 +657,9 @@ without deciding how to avoid duplicate notifications.
 | API budget or history search ceiling reached | Visible partial-scan error, saved catch-up cursor, and no success-shaped truncation. |
 | Crash after posting a comment but before updating state | Next run finds event marker; no duplicate participant ping. |
 | Ambiguous create/write timeout | Reconcile the existing resource before any retry. |
-| One user comments repeatedly or has multiple roles | Mention that user once per notification. |
-| Participant opts out, or later deletes the opt-out comment | No explicit future mention until a later self-authored subscribe command. |
-| Participant enumeration fails | Notification remains pending; do not send a partial audience silently. |
+| Author, assignee or commenter participates repeatedly | No automatic mentions; native GitHub subscriptions control updates. |
+| User posts an old custom subscription command | Preserve the comment but do not process it or store preferences. |
+| Legacy queued notification contains mentions | Rebuild without mentions while preserving evidence, event markers and retry deduplication. |
 | Comment body/log contains another username or a forged marker | Does not enroll that username or forge trusted bot state. |
 | Healthy tracker is closed | Continue monitoring; retain the master sub-issue link and notification state. |
 | New regression detected on a closed tracker | Reopen the same issue and notify once; do not create a replacement. |

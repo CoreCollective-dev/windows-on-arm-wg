@@ -55,15 +55,11 @@ earlier rollout; its state is not changed by issue synchronization.
   the alert for the next regression; Unknown, Attention, Paused or read errors
   do not clear the previous health. Only current package-level Broken verdicts
   are announced; already-recovered transient incidents remain in package history.
-  GitHub's **Unsubscribe** button controls this native subscription; package
-  `/monitor subscribe` and `/monitor unsubscribe` commands do not change it.
-- Mentions include the human issue author, assignees and commenters, deduplicated
-  by account ID; bots are excluded. The configured owner is a fallback for an
-  otherwise empty human audience. Incidental usernames in logs/text are ignored.
-- Post **`/monitor unsubscribe`** as the entire body of a new comment to opt out
-  of explicit mentions, or **`/monitor subscribe`** to opt back in. A command affects
-  only its authenticated author. Saved opt-outs survive deletion/editing of the
-  command comment; use a newer command comment to change the preference.
+  GitHub's **Unsubscribe** button controls this native subscription.
+- Use GitHub's **Subscribe/Unsubscribe** button on a package issue to follow
+  that package's incident/recovery comments and other issue activity. The monitor
+  no longer generates participant @mentions or processes custom subscription
+  commands. Existing human command comments are preserved but have no effect.
 - Transition events persist in `pending_notifications` before delivery. Payload
   chunks are frozen before posting; bot-authored event markers reconcile ambiguous
   responses, crashes and state-acknowledgment loss without repeating earlier pings.
@@ -71,11 +67,16 @@ earlier rollout; its state is not changed by issue synchronization.
   After initial adoption, the collector queues master regressions before issue
   synchronization. Master payloads are frozen before posting, with distinct
   bot-authored markers preventing duplicates on partial delivery or lost replies.
-- Participant preferences and delivery acknowledgments are preserved in the same
-  state artifact as monitoring history, including while trackers are closed.
+- Delivery acknowledgments are preserved in the same state artifact as
+  monitoring history, including while trackers are closed.
   Closing/reopening does not reset initialization, discard queued recovery
-  notifications, or resubscribe opted-out participants. Issue/comment writes invalidate local read
+  notifications, or change GitHub subscriptions. Issue/comment writes invalidate local read
   caches before hierarchy verification. Failed writes are explicit and resumable.
+- Legacy participant preferences are removed. Pending legacy payloads are
+  rebuilt without mentions or mention-only continuation pages, preserving
+  incident evidence and deterministic markers. Only exact obsolete generated
+  guidance in issue bodies/trusted bot comments is migrated; human content and
+  historical event IDs remain intact.
 - Projects remains deferred. These are real issue/sub-issue relationships, not
   separate draft cards or per-failed-job issue creation.
 

@@ -18,6 +18,7 @@ from monitoring.monitor import (
     APIError, GitHub, MonitorError, REPOSITORY, ROOT, instant, literal,
     read_json, report_key, utcnow, validate,
 )
+from monitoring.notifications import EVENT, TRUSTED, native_event_body
 
 
 MASTER = "<!-- wheel-monitor:master -->"
@@ -30,6 +31,9 @@ HEALTH = {
 OLD_LIFECYCLE = "- Remains open when healthy; close deliberately to pause monitoring."
 LIFECYCLE = ("- Healthy closes this tracker; Broken reopens it. Closed issues remain monitored "
              "and linked to the master. Unknown, Attention or Paused does not force a state change.")
+OLD_PARTICIPANTS = "- Participants are the human author, assignees and commenters; bots are excluded."
+OLD_COMMANDS = "- Post `/monitor unsubscribe` or `/monitor subscribe` in a new standalone comment to change your own explicit mentions."
+NATIVE_SUBSCRIPTIONS = "- Use GitHub's Subscribe/Unsubscribe button on this issue to manage notifications."
 
 
 def marker(package):
@@ -128,8 +132,7 @@ def package_body(package):
                   LIFECYCLE,
                   "- The bot-owned status comment is refreshed daily; this body is not rewritten.",
                   "- New incidents, material changes and recoveries produce deduplicated notification comments.",
-                  "- Participants are the human author, assignees and commenters; bots are excluded.",
-                  "- Post `/monitor unsubscribe` or `/monitor subscribe` in a new standalone comment to change your own explicit mentions.",
+                  NATIVE_SUBSCRIPTIONS,
                   "- PyPI publication is not inferred from build success.",
                   f"- Monitoring owner: {package['owner']} (not automatically assigned during bootstrap)."])
     return "\n".join(lines)
@@ -218,12 +221,25 @@ def sync_issue_lifecycle(api, issue, package):
     elif package["health"] == "Healthy" and not package["errors"] and issue["state"] != "closed":
         changes.update(state="closed", state_reason="completed")
     body = issue.get("body") or ""
-    # Replace only our previous exact guidance, preserving all other human content.
-    if OLD_LIFECYCLE in body.splitlines():
-        changes["body"] = "\n".join(LIFECYCLE if line == OLD_LIFECYCLE else line for line in body.split("\n"))
+    # Migrate only exact generated guidance, preserving all other human content.
+    replacements = {OLD_LIFECYCLE: LIFECYCLE, OLD_COMMANDS: NATIVE_SUBSCRIPTIONS, OLD_PARTICIPANTS: None}
+    if any(line in replacements for line in body.splitlines()):
+        changes["body"] = "\n".join(replacements.get(line, line) for line in body.split("\n")
+                                    if replacements.get(line, line) is not None)
     if changes:
         api.write("PATCH", f"issues/{issue['number']}", changes)
         issue.update(changes)
+
+
+def sync_notification_guidance(api, comments):
+    for comment in comments:
+        body = comment.get("body") or ""
+        if comment.get("user", {}).get("login") not in TRUSTED or EVENT not in body:
+            continue
+        native = native_event_body(body)
+        if native != body:
+            api.write("PATCH", f"issues/comments/{comment['id']}", {"body": native})
+            comment["body"] = native
 
 
 def reconcile(api, config, report, bootstrap=False, *, state=None, persist=None, mapping=None):
@@ -291,6 +307,7 @@ def reconcile(api, config, report, bootstrap=False, *, state=None, persist=None,
             api.write("POST", f"issues/{parent['number']}/sub_issues", {"sub_issue_id": issue["id"]})
             children.add(issue["id"])
         comments = api.pages(f"repos/{REPOSITORY}/issues/{issue['number']}/comments")
+        sync_notification_guidance(api, comments)
         update_status(api, issue, status_body(results[name], report["checked_at"]), comments)
         sync_health(api, issue, results[name]["health"])
         sync_issue_lifecycle(api, issue, results[name])

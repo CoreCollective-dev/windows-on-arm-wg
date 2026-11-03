@@ -99,7 +99,7 @@ class LiveTrackingTests(unittest.TestCase):
             reconcile(api, config, report, mapping=bootstrap["mapping"], state=state, persist=lambda: None)
         self.assertEqual(child["state"], "open")
         self.assertTrue(state["packages"]["package"]["issue_notifications_initialized"])
-        self.assertTrue(state["packages"]["package"]["participant_preferences"]["123"]["opted_out"])
+        self.assertNotIn("participant_preferences", state["packages"]["package"])
         notifications = [c for comments in api.comments.values() for c in comments if "wheel-monitor:event=" in c["body"]]
         self.assertEqual(len(notifications), 1)
         report, state = scan(FakeAPI(runs=[recent_run(30, "failure")], jobs=pair(30, arm="failure")),
