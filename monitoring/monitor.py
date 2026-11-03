@@ -436,6 +436,12 @@ def baseline_result(jobs, target, required_steps, historical_success=False):
             "detail": "AMD64 aggregate requires every configured equivalent job to succeed"}
 
 
+def comparable_stage(stage, stages):
+    return stage in stages or "build-test" in stages or (
+        stage == "build-test" and {"build", "test"}.issubset(stages)
+    )
+
+
 def evaluate(jobs, target, required_steps, amd64_jobs=None, comparison_context=None, *,
              historical_success=False):
     arm_jobs = jobs
@@ -535,15 +541,28 @@ def evaluate(jobs, target, required_steps, amd64_jobs=None, comparison_context=N
     elif arm["status"] == "failed" and amd["status"] == "passed" and arm_verified and amd_verified:
         stage = arm.get("stage", "build-test")
         successful = set(amd.get("successful_stages", []))
-        comparable = stage in successful or "build-test" in successful or (
-            stage == "build-test" and {"build", "test"}.issubset(successful)
-        )
-        if comparable:
+        if comparable_stage(stage, successful):
             result.update(health="Broken", condition=stage + "-failure",
                           arm_specific_failure=True, notify=True,
                           detail=arm["detail"] + "; equivalent Windows AMD64 build/tests succeeded")
         else:
             result["detail"] = "AMD64 succeeded, but equivalent failed build/test stage is not evidenced"
+    elif arm["status"] == amd["status"] == "failed" and arm_verified and amd_verified:
+        stage = arm["stage"]
+        parts = amd.get("parts", [amd])
+        if all(
+            part["status"] in ("passed", "failed") and comparable_stage(
+                stage, set(part.get("successful_stages", [])) if part["status"] == "passed"
+                else {part.get("stage")},
+            ) for part in parts
+        ):
+            result.update(
+                condition="shared-failure", shared_failure=True,
+                detail=f"Equivalent Windows Arm64 and AMD64 {stage} stages both failed; "
+                       "shared failure, not a confirmed Arm-specific failure",
+            )
+        else:
+            result["detail"] = "Both platform jobs failed, but equivalent failed stages are not evidenced"
     else:
         result["detail"] = (f"Windows Arm64={arm['status']}, AMD64={amd['status']}; "
                             "not a confirmed Arm-specific failure")
@@ -685,7 +704,7 @@ def plan(previous, current, sequence):
             or (old or {}).get("quality") != new.get("quality")
         ):
             if new["health"] == "Healthy":
-                if old and old.get("arm_specific_failure") and new.get("arm64", {}).get("status") == "passed":
+                if old and (old.get("arm_specific_failure") or old.get("shared_failure")) and new.get("arm64", {}).get("status") == "passed":
                     changes.append({"target": key, "kind": "recovery", "before": old, "after": new})
             elif new.get("arm_specific_failure"):
                 changes.append({"target": key, "kind": "incident", "before": old, "after": new})
@@ -697,7 +716,12 @@ def plan(previous, current, sequence):
 def plan_master(packages, feed, *, initial=False):
     for package in packages:
         health, name = package["health"], package["package"]
-        if health not in ("Healthy", "Broken") or package["errors"] and not (initial and health == "Broken"):
+        shared = health == "Unknown" and any(
+            value.get("shared_failure") for value in package.get("last_known", {}).values()
+        )
+        if (health not in ("Healthy", "Broken") and not shared) or (
+            package["errors"] and not (initial and health == "Broken")
+        ):
             continue
         if health == "Broken":
             evidence = package["last_known"] or package["results"]
@@ -716,6 +740,8 @@ def plan_master(packages, feed, *, initial=False):
 
 
 def scan(api, config, state, now, scheduled=False, progress=False):
+    from monitoring.baselines import order, supersedes_failure
+
     validate(config)
     if state.get("schema") != SCHEMA or state.get("tracker") != config["tracker"]:
         raise MonitorError("State schema/tracker mismatch; explicit reviewed reset required")
@@ -748,6 +774,7 @@ def scan(api, config, state, now, scheduled=False, progress=False):
         results = {}
         last_known = {}
         retired = {}
+        superseded = {}
         activities = []
         channel_health = []
         baseline_warnings = []
@@ -787,6 +814,7 @@ def scan(api, config, state, now, scheduled=False, progress=False):
                 coverage_warnings.extend(f"{identifier}: {warning}" for warning in fresh.get("coverage_warnings", []))
                 last_known.update({f"{identifier}/{key}": value for key, value in fresh.get("last_known", {}).items()})
                 retired.update({f"{identifier}/{key}": value for key, value in fresh.get("retired", {}).items()})
+                superseded.update({f"{identifier}/{key}": value for key, value in fresh.get("superseded", {}).items()})
                 for key, value in fresh["results"].items():
                     results[f"{identifier}/{key}"] = value
                 observations.extend({"key": f"{identifier}/{observation['key']}", "value": observation["value"]}
@@ -795,6 +823,7 @@ def scan(api, config, state, now, scheduled=False, progress=False):
                 errors.append(f"{identifier}: {error}")
                 activities.append("Monitoring warning")
                 last_known.update({f"{identifier}/{key}": value for key, value in prior.get("last_known", {}).items()})
+                superseded.update({f"{identifier}/{key}": value for key, value in prior.get("superseded", {}).items()})
                 baseline_warnings.extend(f"{identifier}: {warning}" for warning in prior.get("baseline_warnings", []))
                 for key, value in prior.get("results", {}).items():
                     retained = copy.deepcopy(value)
@@ -836,13 +865,14 @@ def scan(api, config, state, now, scheduled=False, progress=False):
                 if seen.get(identity, {}).get("fingerprint") == fingerprint:
                     continue
                 previous = announced.get(key)
-                older = previous and (value["created_at"], value["run_id"]) < (
-                    previous["created_at"], previous["run_id"]
-                )
+                older = previous and order(value) < order(previous)
                 update = None if older else plan({key: previous} if previous else {}, {key: value}, 0)
                 if update:
                     changes.extend(update["changes"])
-                if not older and (value.get("arm_specific_failure") or value.get("arm64", {}).get("status") == "passed"):
+                if not older and (
+                    value.get("arm_specific_failure") or value.get("arm64", {}).get("status") == "passed"
+                    or not errors and supersedes_failure(previous, value)
+                ):
                     announced[key] = copy.deepcopy(value)
                 seen[identity] = {"fingerprint": fingerprint, "observed_at": value["observed_at"]}
             entry["seen_observations"] = {
@@ -868,7 +898,8 @@ def scan(api, config, state, now, scheduled=False, progress=False):
         if not errors or entry["gap_polls"] >= 2:
             if not recent:
                 for key, result in results.items():
-                    if result.get("arm_specific_failure") or result.get("arm64", {}).get("status") == "passed":
+                    if (result.get("arm_specific_failure") or result.get("arm64", {}).get("status") == "passed"
+                            or not errors and supersedes_failure(announced.get(key), result)):
                         announced[key] = copy.deepcopy(result)
             if recent:
                 announced = {key: value for key, value in announced.items()
@@ -902,7 +933,8 @@ def scan(api, config, state, now, scheduled=False, progress=False):
         packages[name] = entry
         report["packages"].append({"package": name, "health": health, "owner": package["owner"],
                                    "results": results, "observations": observations,
-                                   "last_known": last_known, "retired": retired, "activity": activity,
+                                   "last_known": last_known, "retired": retired, "superseded": superseded,
+                                   "activity": activity,
                                    "last_verified_at": max((v["observed_at"] for v in last_known.values()), default=None),
                                    "baseline_warnings": baseline_warnings,
                                    "history_warnings": history_warnings,
@@ -950,6 +982,8 @@ def summary(report):
             descriptions.append(f"{len(package['history_warnings'])} historical evidence notes in report.json")
         if package.get("coverage_warnings"):
             descriptions.append("Alert coverage: " + literal("; ".join(package["coverage_warnings"])))
+        if package.get("superseded"):
+            descriptions.append(f"{len(package['superseded'])} superseded Arm-specific incident(s) preserved as history")
         lines.append(f"| {package['package']} | {package['health']} | "
                      f"{package.get('activity', 'Not evaluated')} | {'<br>'.join(descriptions)} |")
     failures = [(package["package"], observation["value"]) for package in report["packages"]
@@ -957,13 +991,14 @@ def summary(report):
                 if observation["value"].get("arm_specific_failure")]
     if failures:
         lines.extend(["", "## Qualifying failures in daily collection and open-regression follow-up",
-                      "Includes runs later fixed by another run; follow-up may include older recovery evidence. Latest stream health is shown above."])
+                      "Includes runs later fixed or superseded by shared failures; follow-up may include older evidence. Latest stream health is shown above."])
         lines.extend(f"- {name}: [{literal(value['stream'])}]({value['url']})"
                      for name, value in failures)
     lines.extend(["", "No changes means no new applicable build evidence, not a new successful build.",
-                  "Last-known failures remain open through silence and inconclusive comparisons.",
+                  "Silence, skipped/pending/missing controls and API errors do not clear last-known failures.",
+                  "A newer equivalent shared failure can supersede an Arm-specific failure as Unknown, never as recovery.",
                   "Historical baseline initialization is evidence-only and does not emit regression pings.",
-                  "Unknown now means no validated baseline/required target evidence; daily API errors are reported separately."])
+                  "Unknown means missing validated evidence or a verified shared failure superseding an older Arm-specific incident; API errors are separate."])
     if report["errors"]:
         lines.extend(["", "## Incomplete observations", *["- " + literal(e) for e in report["errors"]]])
     lines.extend(["", f"REST requests: {report['requests']}; last reported quota remaining: {report['rate_remaining']}.",

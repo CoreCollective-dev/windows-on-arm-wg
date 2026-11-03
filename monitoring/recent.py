@@ -80,6 +80,8 @@ def same_request(candidate, run):
 
 
 def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historical_success=False):
+    from monitoring.baselines import order
+
     if runs is None:
         runs = discover(api, channel, now - timedelta(hours=24), now)
     daily_ids = {run["id"] for run in runs}
@@ -90,7 +92,7 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historic
     identified_streams = {}
     stored = list(prior.get("last_known", {}).items()) if channel.get("recovery_catchup") else []
     for key, value in stored:
-        if not value.get("arm_specific_failure"):
+        if not (value.get("arm_specific_failure") or value.get("shared_failure")):
             continue
         run = api.get(f"repos/{channel['repository']}/actions/runs/{value['run_id']}")
         current_stream = stream_identity(api, channel, run)
@@ -107,11 +109,14 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historic
             canonical = current_stream + "/" + key.rsplit("/", 1)[-1]
             migrated = {**value, "stream": current_stream}
             existing = prior["last_known"].get(canonical)
-            if not existing or (value["created_at"], value["run_id"], value["attempt"]) >= (
-                existing["created_at"], existing["run_id"], existing["attempt"]
-            ):
+            if not existing or order(value) >= order(existing):
                 prior["last_known"][canonical] = migrated
             del prior["last_known"][key]
+            history = prior.get("superseded", {}).pop(key, None)
+            if history:
+                existing_history = prior.setdefault("superseded", {}).get(canonical)
+                if not existing_history or order(history) >= order(existing_history):
+                    prior["superseded"][canonical] = {**history, "stream": current_stream}
             aliases[key] = canonical
     catchup_streams = set()
     if retain and channel.get("recovery_catchup"):
@@ -196,7 +201,7 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historic
                 observed_target["interpreter_evidence"] = "cibuildwheel-windows-v1"
             value = evaluate(jobs, observed_target, channel.get("required_steps", []), amd_jobs, context,
                              historical_success=historical_success)
-            if value.get("arm_specific_failure") and "/commit-" in stream:
+            if (value.get("arm_specific_failure") or value.get("shared_failure")) and "/commit-" in stream:
                 stream = stream_identity(api, channel, run)
                 if channel.get("source_ref"):
                     stream += "/source-" + quote(channel["source_ref"]["value"], safe="")

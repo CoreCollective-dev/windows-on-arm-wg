@@ -55,7 +55,7 @@ class IdentityTests(unittest.TestCase):
 
 
 class CatchupTests(unittest.TestCase):
-    def fixture(self, recovered=True):
+    def fixture(self, recovered=True, shared=False):
         config = recent_config()
         channel = config["packages"][0]["channels"][0]
         channel.update(baseline_search=False)
@@ -68,7 +68,7 @@ class CatchupTests(unittest.TestCase):
         _, state = scan(first, config, empty_state(), NOW)
         state["packages"]["package"]["pending_notifications"] = []
         channel["recovery_catchup"] = True
-        passed = recent_run(20, age=2, sha="new")
+        passed = recent_run(20, "failure" if shared or not recovered else "success", age=2, sha="new")
         passed["pull_requests"] = []
         later = NOW + timedelta(days=2)
         api = FakeAPI(runs=[])
@@ -79,6 +79,8 @@ class CatchupTests(unittest.TestCase):
                 return pull()
             if "/runs/10" in path:
                 return failed
+            if "/runs/20" in path:
+                return passed
             if params and params.get("branch") == "feature":
                 return {"total_count": 2, "workflow_runs": [passed, failed]}
             return {"total_count": 0, "workflow_runs": []}
@@ -92,11 +94,30 @@ class CatchupTests(unittest.TestCase):
             if "/runs/10/" in path:
                 return pair(10, arm="failure", sha="old")
             if "/runs/20/" in path:
-                return pair(20, arm="success" if recovered else "failure", sha="new")
+                return pair(20, arm="failure" if shared or not recovered else "success",
+                            amd="failure" if shared else "success", sha="new")
             raise AssertionError(path)
 
         api.get, api.pages = get, pages
         return config, state, api, later
+
+    def test_shared_failure_outside_window_supersedes_proven_pr_and_replay_stays_quiet(self):
+        config, state, api, later = self.fixture(shared=True)
+        report, state = scan(api, config, state, later)
+        package = report["packages"][0]
+        self.assertEqual(package["health"], "Unknown")
+        self.assertFalse(report["errors"])
+        self.assertTrue(all("/pr/42/9/" in key for key in package["superseded"]))
+        self.assertEqual(next(iter(package["superseded"].values()))["run_id"], 10)
+        self.assertTrue(next(iter(package["last_known"].values()))["shared_failure"])
+        self.assertIsNone(package["planned_notification"])
+        again, saved = scan(api, config, state, later)
+        self.assertEqual(again["packages"][0]["health"], "Unknown")
+        self.assertFalse(again["errors"])
+        self.assertIsNone(again["packages"][0]["planned_notification"])
+        self.assertEqual(saved["packages"]["package"]["channels"]["wheel"]["superseded"],
+                         state["packages"]["package"]["channels"]["wheel"]["superseded"])
+        self.assertTrue(saved["packages"]["package"]["channels"]["wheel"]["recovery_catchup_streams"])
 
     def test_same_pr_recovery_outside_daily_window_migrates_baseline_and_alert_identity(self):
         config, state, api, later = self.fixture()

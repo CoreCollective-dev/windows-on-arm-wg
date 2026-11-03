@@ -20,7 +20,33 @@ def decisive(value):
 
 
 def order(value):
-    return value["created_at"], value["run_id"], value["attempt"]
+    controls = tuple(sorted({
+        (job.get("run_id") or 0, job.get("run_attempt") or 1)
+        for job in value.get("amd64", {}).get("jobs", [])
+    }))
+    return value["created_at"], value["run_id"], value["attempt"], controls
+
+
+def supersedes_failure(previous, value):
+    return bool(
+        previous and value.get("shared_failure")
+        and (previous.get("arm_specific_failure") or previous.get("shared_failure"))
+        and previous.get("stream") == value.get("stream") and order(value) > order(previous)
+    )
+
+
+def supersede_shared_failures(known, observations, superseded):
+    for observation in sorted(observations, key=lambda item: order(item["value"])):
+        key, value = observation["key"], observation["value"]
+        previous = known.get(key)
+        if not supersedes_failure(previous, value):
+            continue
+        if previous.get("arm_specific_failure"):
+            archived = copy.deepcopy(previous)
+            archived["superseded_at"] = value["observed_at"]
+            archived["superseded_by"] = copy.deepcopy(value)
+            superseded[key] = archived
+        known[key] = copy.deepcopy(value)
 
 
 def definition(channel):
@@ -115,6 +141,8 @@ def retain_health(api, channel, prior, fresh, now):
     signature = definition(channel)
     compatible = prior.get("baseline_definition") in (None, signature)
     known = copy.deepcopy(prior.get("last_known", {})) if compatible else {}
+    superseded = copy.deepcopy(prior.get("superseded", {})) if compatible else {}
+    shared_observations = list(fresh["observations"])
     if compatible and not prior.get("baseline_version"):
         incorporate(known, [{"key": key, "value": value} for key, value in prior.get("results", {}).items()
                             if decisive(value)])
@@ -134,6 +162,7 @@ def retain_health(api, channel, prior, fresh, now):
         ):
             try:
                 historical, metadata = bootstrap(api, channel, now)
+                shared_observations.extend(historical)
                 incorporate(known, historical)
                 incorporate(known, fresh["observations"])
                 fresh["pending_runs"] = sorted(set(fresh["pending_runs"] + metadata.get("pending_runs", [])))
@@ -150,6 +179,8 @@ def retain_health(api, channel, prior, fresh, now):
         retired = retire_closed_prs(api, channel, known, retired, now)
     except MonitorError as error:
         errors.append("PR lifecycle check: " + str(error))
+    if not errors:
+        supersede_shared_failures(known, shared_observations, superseded)
     inconclusive = any(not decisive(item["value"]) for item in fresh["observations"])
     if errors:
         activity = "Monitoring warning"
@@ -175,7 +206,7 @@ def retain_health(api, channel, prior, fresh, now):
     if missing and health != "Broken":
         health = "Unknown"
     fresh.update(
-        last_known=known, retired=retired, baseline_definition=signature, baseline=metadata,
+        last_known=known, retired=retired, superseded=superseded, baseline_definition=signature, baseline=metadata,
         baseline_initialization=initialization_definition(channel),
         baseline_version=BASELINE_VERSION if initialized else None,
         health=health, activity=activity, baseline_warnings=missing, errors=errors,

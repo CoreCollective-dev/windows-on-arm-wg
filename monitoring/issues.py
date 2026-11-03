@@ -15,7 +15,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from monitoring.monitor import (
-    APIError, GitHub, MonitorError, REPOSITORY, ROOT, instant, literal,
+    APIError, GitHub, HEALTH_ORDER, MonitorError, REPOSITORY, ROOT, instant, literal,
     read_json, report_key, utcnow, validate,
 )
 from monitoring.notifications import EVENT, TRUSTED, native_event_body
@@ -147,7 +147,7 @@ def status_body(package, checked_at):
              "Inconclusive health or a monitoring error does not close an open regression.", "",
              "| Target | Health | Evidence |", "| --- | --- | --- |"]
     evidence = package.get("last_known") or package["results"]
-    ordered = sorted(evidence.items(), key=lambda item: (item[1]["health"] != "Broken", item[0]))
+    ordered = sorted(evidence.items(), key=lambda item: (HEALTH_ORDER.index(item[1]["health"]), item[0]))
     for key, result in ordered[:20]:
         detail = literal(result["detail"])
         if result.get("url"):
@@ -161,6 +161,18 @@ def status_body(package, checked_at):
     if len(ordered) > 20:
         lines.extend(["", f"{len(ordered) - 20} additional target/stream results are preserved in the "
                       "[complete Actions report](https://github.com/CoreCollective-dev/windows-on-arm-wg/actions/workflows/wheel-monitor.yml)."])
+    if package.get("superseded"):
+        lines.extend(["", "### Superseded Arm-specific incidents",
+                      "Newer equivalent Windows Arm64 and AMD64 stages both failed. "
+                      "These older incidents are history, not active Arm-specific failures or verified recoveries."])
+        history = sorted(package["superseded"].items())
+        for key, previous in history[:20]:
+            shared = previous["superseded_by"]
+            lines.append(f"- `{literal(key)}`: [previous failure]({previous['url']}) "
+                         f"superseded by [shared failure]({shared['url']}).")
+        if len(history) > 20:
+            lines.append(f"{len(history) - 20} additional superseded incidents are preserved in the "
+                         "[complete Actions report](https://github.com/CoreCollective-dev/windows-on-arm-wg/actions/workflows/wheel-monitor.yml).")
     if package.get("coverage_warnings"):
         lines.extend(["", "### Alert coverage", *["- " + literal(value) for value in package["coverage_warnings"]]])
     if package["errors"]:

@@ -53,7 +53,9 @@ earlier rollout; its state is not changed by issue synchronization.
   Repeated failures, target changes while still Broken, recoveries and quiet days
   do not post master comments. A verified error-free Healthy verdict re-arms
   the alert for the next regression; Unknown, Attention, Paused or read errors
-  do not clear the previous health. Only current package-level Broken verdicts
+  do not normally clear the previous health. A verified shared failure that
+  supersedes an older Arm-specific incident re-arms alerts without claiming a
+  successful recovery. Only current package-level Broken verdicts
   are announced; already-recovered transient incidents remain in package history.
   GitHub's **Unsubscribe** button controls this native subscription.
 - Use GitHub's **Subscribe/Unsubscribe** button on a package issue to follow
@@ -147,7 +149,17 @@ failure; recovery rules were not broadened across unrelated refs.
 The report separates **Last verified health**, **Today's activity** and
 **Last verified evidence**. Silence preserves both passing and failing results:
 an open Arm-specific failure does not disappear after 24 hours. A new shared
-failure, skipped AMD64 job or unavailable comparison does not clear it either.
+failure can supersede an older Broken verdict only for the same proven
+PR/fork/ref/target and a newer run or platform attempt, with both equivalent
+Windows stages verifiably failed. The replacement is **Unknown/shared failure**,
+not Healthy, and it does not send a recovery notification. The full previous
+failure and superseding comparison are retained in `superseded` history and
+linked from the status comment. Existing Healthy baselines remain unchanged.
+
+Skipped/pending/missing AMD64 controls, incomparable stages/sources and read
+errors cannot supersede a failure. Shared/inconclusive streams keep recovery
+catch-up beyond the daily window. A later real Arm pass may report recovery;
+a later qualifying Arm-only failure is a new incident and can alert again.
 API errors retain known health but show **Monitoring warning** and fail the poll.
 
 Each reviewed channel can provide:

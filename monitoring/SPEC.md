@@ -4,6 +4,23 @@ Status: issue-based tracking approved and deployed on 2026-10-21; Projects remai
 
 Date: 2026-10-19.
 
+### Shared-failure supersedence (2026-11-03 UTC)
+
+A newer verified shared failure on the same proven PR/fork/ref/target replaces
+an active Arm-specific Broken verdict with Unknown/shared failure. Both Windows
+platforms must fail equivalent required stages, using the existing source,
+platform, ABI/role and comparator guards. Older/equal comparisons, skipped,
+pending or missing controls, unavailable stages and API errors do not clear
+failures. Newer approved control-workflow runs/retries also count as newer
+comparisons; an unrelated PR or fork cannot supersede an incident.
+
+Keep the original failure and complete superseding comparison in `superseded`
+history. Do not mark Healthy, close an Unknown tracker or emit recovery for the
+shared failure. Existing Healthy baselines are unchanged. Shared streams retain
+beyond-window catch-up; a later real Arm pass can recover and a later qualifying
+Arm-only failure can create a fresh package/master alert. Ordinary Unknown
+results without this verified supersession do not re-arm master alerts.
+
 ### Native GitHub subscriptions only (2026-11-03 UTC)
 
 The custom comment-command and automatic participant-mention system is removed.
@@ -30,7 +47,7 @@ package-specific.
 Initial adoption quietly records current health without re-announcing existing
 failures. Repeated failures or target changes while the package remains Broken
 are not reposted. Error-free Healthy evidence silently re-arms future alerts;
-Unknown, Attention, Paused and monitoring errors do not clear retained health.
+Other Unknown, Attention, Paused and monitoring errors do not clear retained health.
 Recoveries and incidents already recovered within the daily window stay in
 package history rather than triggering fleet comments.
 

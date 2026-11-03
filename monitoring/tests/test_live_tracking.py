@@ -17,6 +17,39 @@ class LiveTrackingTests(unittest.TestCase):
         data["packages"][0]["channels"][0]["baseline_search"] = False
         return data
 
+    def test_shared_failure_changes_label_without_recovery_and_next_failure_notifies_again(self):
+        config, api = self.config(), MemoryIssues()
+        report, state = scan(FakeAPI(runs=[recent_run(10, "failure")], jobs=pair(10, arm="failure")),
+                             config, empty_state(), NOW)
+        with patch("monitoring.issues.utcnow", return_value=NOW):
+            bootstrap = reconcile(api, config, report, bootstrap=True, state=state, persist=lambda: None)
+        before = sum("wheel-monitor:event=" in c["body"] for comments in api.comments.values() for c in comments)
+        report, state = scan(FakeAPI(runs=[recent_run(20, "failure")], jobs=pair(20, "failure", "failure")),
+                             config, state, NOW)
+        self.assertEqual(report["packages"][0]["health"], "Unknown")
+        self.assertIsNone(report["packages"][0]["planned_notification"])
+        self.assertEqual(state["master_notifications"]["health"]["package"], "Unknown")
+        with patch("monitoring.issues.utcnow", return_value=NOW):
+            reconcile(api, config, report, mapping=bootstrap["mapping"], state=state, persist=lambda: None)
+            writes = api.writes
+            reconcile(api, config, report, mapping=bootstrap["mapping"], state=state, persist=lambda: None)
+        self.assertEqual(api.writes, writes)
+        child = api.children[0]
+        self.assertEqual(child["state"], "open")
+        self.assertIn("health:unknown", [label["name"] for label in child["labels"]])
+        comments = [c for values in api.comments.values() for c in values]
+        self.assertEqual(sum("wheel-monitor:event=" in c["body"] for c in comments), before)
+        self.assertFalse(any(MASTER_EVENT in c["body"] for c in comments))
+        self.assertTrue(any("Superseded Arm-specific incidents" in c["body"] for c in comments))
+        report, state = scan(FakeAPI(runs=[recent_run(30, "failure")], jobs=pair(30, arm="failure")),
+                             config, state, NOW)
+        with patch("monitoring.issues.utcnow", return_value=NOW):
+            reconcile(api, config, report, mapping=bootstrap["mapping"], state=state, persist=lambda: None)
+        comments = [c for values in api.comments.values() for c in values]
+        self.assertEqual(sum("wheel-monitor:event=" in c["body"] for c in comments), before + 1)
+        self.assertEqual(sum(MASTER_EVENT in c["body"] for c in comments), 1)
+        self.assertEqual(len(api.children), 1)
+
     def test_master_queue_survives_collection_and_rearms_only_after_verified_recovery(self):
         config, api = self.config(), MemoryIssues()
         report, state = scan(FakeAPI(runs=[recent_run()], jobs=pair()), config, empty_state(), NOW)
@@ -41,7 +74,7 @@ class LiveTrackingTests(unittest.TestCase):
         self.assertFalse(state["master_notifications"]["pending_notifications"])
         for identifier, arm, amd, health, count in (
             (30, "failure", "success", "Broken", 1),
-            (40, "failure", "failure", "Broken", 1),
+            (40, "failure", "failure", "Unknown", 1),
             (50, "success", "success", "Healthy", 1),
             (60, "failure", "success", "Broken", 2),
         ):

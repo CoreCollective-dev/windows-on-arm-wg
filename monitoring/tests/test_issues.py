@@ -155,6 +155,23 @@ class IssueTests(unittest.TestCase):
         list(package["results"].values())[0]["detail"] = "failed @someone"
         self.assertNotIn("@someone", status_body(package, report["checked_at"]))
 
+    def test_inconclusive_shared_target_is_visible_before_truncated_healthy_history(self):
+        evidence = {f"healthy-{index}": {"health": "Healthy", "detail": "Passed"} for index in range(25)}
+        evidence["z-shared"] = {"health": "Unknown", "detail": "Both equivalent stages failed", "shared_failure": True}
+        body = status_body({"package": "package", "health": "Unknown", "last_known": evidence,
+                            "results": {}, "errors": []}, "2026-11-03T19:00:00Z")
+        self.assertIn("| z-shared | Unknown | Both equivalent stages failed |", body)
+        self.assertIn("6 additional target/stream results", body)
+
+    def test_superseded_history_display_is_bounded_with_explicit_report_link(self):
+        history = {f"target-{index}": {"url": "https://example.com/previous",
+                                     "superseded_by": {"url": "https://example.com/shared"}} for index in range(25)}
+        body = status_body({"package": "package", "health": "Unknown", "results": {},
+                            "superseded": history, "errors": []}, "2026-11-03T19:00:00Z")
+        self.assertEqual(body.count("[previous failure]"), 20)
+        self.assertIn("5 additional superseded incidents", body)
+        self.assertIn("[complete Actions report]", body)
+
     def test_status_updates_existing_comment_not_human_discussion(self):
         api = FakeIssues(apply=True)
         api.pages = lambda path: [

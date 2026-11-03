@@ -28,6 +28,36 @@ class PlatformComparisonTests(unittest.TestCase):
                     self.assertEqual(result["health"] == "Broken", expected)
                     self.assertEqual(result["arm_specific_failure"], expected)
                     self.assertEqual(result["notify"], expected)
+                    self.assertEqual(bool(result.get("shared_failure")),
+                                     arm in ("failure", "timed_out") and amd in ("failure", "timed_out"))
+
+    def test_shared_failure_requires_same_run_sha_platform_and_stage(self):
+        for field, value in (("head_sha", "other"), ("run_id", 99), ("name", "Linux AMD64 cp314")):
+            with self.subTest(field=field):
+                jobs = platform_jobs("failure", "failure")
+                jobs[1][field] = value
+                self.assertFalse(self.assess(jobs).get("shared_failure"))
+        jobs = platform_jobs("failure", "failure")
+        jobs[0]["steps"] = [{"name": "Build wheel", "conclusion": "success"},
+                            {"name": "Test", "conclusion": "failure"}]
+        self.assertFalse(self.assess(jobs).get("shared_failure"))
+
+    def test_shared_failure_rejects_upload_only_errors_and_blocked_comparisons(self):
+        jobs = platform_jobs("failure", "failure")
+        jobs[1]["steps"] = [{"name": "Build wheel", "conclusion": "success"},
+                            {"name": "Upload artifact", "conclusion": "failure"}]
+        self.assertFalse(self.assess(jobs).get("shared_failure"))
+        target = {**CHANNEL["targets"][0], "comparison_blocker": "Source cannot be verified"}
+        self.assertFalse(self.assess(platform_jobs("failure", "failure"), target).get("shared_failure"))
+
+    def test_shared_failure_with_aggregate_control_requires_complete_equivalent_evidence(self):
+        target = {**CHANNEL["targets"][0], "amd64_jobs": ["^Windows AMD64 one$", "^Windows AMD64 two$"]}
+        target.pop("amd64_job")
+        for second, expected in (("success", True), ("failure", True), ("skipped", False), (None, False)):
+            with self.subTest(second=second):
+                jobs = [job("failure"), job("failure", name="Windows AMD64 one"),
+                        job(second, name="Windows AMD64 two")]
+                self.assertEqual(bool(self.assess(jobs, target).get("shared_failure")), expected)
 
     def test_utf8_job_identifiers_survive_registry_import(self):
         name = "\U0001f4e6 Build wheels / windows-11-arm"
