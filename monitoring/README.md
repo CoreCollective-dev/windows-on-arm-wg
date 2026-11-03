@@ -46,6 +46,17 @@ earlier rollout; its state is not changed by issue synchronization.
 - Initial currently open regressions were announced once. After that, only new
   incidents, material condition/target changes and recoveries create notification
   comments. A new failed run for the same ongoing condition does not repost it.
+- Use GitHub's **Subscribe** button on the [master issue](https://github.com/CoreCollective-dev/windows-on-arm-wg/issues/7)
+  for fleet-wide alerts, including future approved package enrollments. A newly
+  Broken package gets a new master comment linking its sub-issue and comparative
+  evidence. Existing failures are adopted silently when enabling this feed.
+  Repeated failures, target changes while still Broken, recoveries and quiet days
+  do not post master comments. A verified error-free Healthy verdict re-arms
+  the alert for the next regression; Unknown, Attention, Paused or read errors
+  do not clear the previous health. Only current package-level Broken verdicts
+  are announced; already-recovered transient incidents remain in package history.
+  GitHub's **Unsubscribe** button controls this native subscription; package
+  `/monitor subscribe` and `/monitor unsubscribe` commands do not change it.
 - Mentions include the human issue author, assignees and commenters, deduplicated
   by account ID; bots are excluded. The configured owner is a fallback for an
   otherwise empty human audience. Incidental usernames in logs/text are ignored.
@@ -56,6 +67,10 @@ earlier rollout; its state is not changed by issue synchronization.
 - Transition events persist in `pending_notifications` before delivery. Payload
   chunks are frozen before posting; bot-authored event markers reconcile ambiguous
   responses, crashes and state-acknowledgment loss without repeating earlier pings.
+- Fleet health, sequence and outbox persist separately in `master_notifications`.
+  After initial adoption, the collector queues master regressions before issue
+  synchronization. Master payloads are frozen before posting, with distinct
+  bot-authored markers preventing duplicates on partial delivery or lost replies.
 - Participant preferences and delivery acknowledgments are preserved in the same
   state artifact as monitoring history, including while trackers are closed.
   Closing/reopening does not reset initialization, discard queued recovery

@@ -4,10 +4,11 @@ import copy
 import hashlib
 import re
 
-from monitoring.monitor import MonitorError, literal
+from monitoring.monitor import MonitorError, literal, plan_master
 
 
 EVENT = "<!-- wheel-monitor:event="
+MASTER_EVENT = "<!-- wheel-monitor:master-event="
 TRUSTED = {"khmyznikov", "github-actions[bot]"}
 
 
@@ -42,12 +43,14 @@ def participants(issue, comments, preferences, owner):
     return audience, preferences
 
 
-def event_pages(package, event, audience):
+def event_pages(package, event, audience, *, tracker_url=None):
     changes = event.get("changes", [])
     if not changes:
         raise MonitorError("Cannot deliver an empty incident event")
     kinds = {change["kind"] for change in changes}
     title = "Recovery" if kinds == {"recovery"} else "Initial tracked regression" if event.get("initial") else "Regression update"
+    if tracker_url:
+        title = "Newly Broken"
     sections = []
     for change in changes:
         value = change.get("after") or change.get("before") or {}
@@ -73,18 +76,49 @@ def event_pages(package, event, audience):
     pages = []
     for index in range(count):
         digest = hashlib.sha256((event["key"] + "/" + str(index)).encode()).hexdigest()
-        marker = EVENT + digest + " -->"
+        marker = (MASTER_EVENT if tracker_url else EVENT) + digest + " -->"
         mentions = " ".join("@" + login for login in mention_pages[index]) if index < len(mention_pages) else ""
         body = (f"## {title}: {package}\n\n"
+                + (f"[Package tracker]({tracker_url}) - full incident history and current status.\n\n" if tracker_url else "")
                 + (content[index] if index < len(content) else "Participant notification continuation.\n")
                 + "\n" + ("Participants: " + mentions + "\n\n" if mentions else "")
                 + "A new failure is reported only when Windows Arm64 fails and equivalent Windows AMD64 succeeds.\n"
-                + "The same ongoing regression is not reposted daily. Use `/monitor unsubscribe` in a new comment to opt out.\n\n"
+                + ("The same ongoing regression is not reposted daily. Use GitHub's Subscribe/Unsubscribe "
+                   "button on this master issue to manage fleet-wide notifications.\n\n" if tracker_url else
+                   "The same ongoing regression is not reposted daily. Use `/monitor unsubscribe` in a new comment to opt out.\n\n")
                 + marker)
         if len(body) > 60000:
             raise MonitorError("Incident notification exceeds safe comment size")
         pages.append({"marker": marker, "body": body})
     return pages
+
+
+def post_event(api, issue, event, comments):
+    existing = [c for c in comments if c.get("user", {}).get("login") in TRUSTED]
+    for page in event["pages"]:
+        if any(page["marker"] in (c.get("body") or "") for c in existing):
+            continue
+        created = api.write("POST", f"issues/{issue['number']}/comments", {"body": page["body"]})
+        comments.append(created)
+        existing.append(created)
+
+
+def deliver_master(api, issue, packages, mapping, comments, state, persist):
+    if "master_notifications" not in state:
+        state["master_notifications"] = {"health": {}, "sequence": 0, "pending_notifications": []}
+        plan_master(packages, state["master_notifications"], initial=True)
+        persist()
+    pending = state["master_notifications"]["pending_notifications"]
+    for event in list(pending):
+        if "pages" not in event:
+            tracker = mapping.get("package=" + event["package"])
+            if tracker is None:
+                raise MonitorError(f"Master alert package is not enrolled: {event['package']}")
+            event["pages"] = event_pages(event["package"], event, [], tracker_url=tracker["html_url"])
+            persist()
+        post_event(api, issue, event, comments)
+        pending.remove(event)
+        persist()
 
 
 def deliver(api, issue, package, snapshot, comments, state, persist):
@@ -125,12 +159,6 @@ def deliver(api, issue, package, snapshot, comments, state, persist):
                 page["body"] = re.sub(r"(?<!\w)@" + re.escape(login) + r"(?![A-Za-z0-9-])",
                                       login, page["body"], flags=re.I)
         persist()
-        existing = [c for c in comments if c.get("user", {}).get("login") in TRUSTED]
-        for page in event["pages"]:
-            if any(page["marker"] in (c.get("body") or "") for c in existing):
-                continue
-            created = api.write("POST", f"issues/{issue['number']}/comments", {"body": page["body"]})
-            comments.append(created)
-            existing.append(created)
+        post_event(api, issue, event, comments)
         pending.remove(event)
         persist()

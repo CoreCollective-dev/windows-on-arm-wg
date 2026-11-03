@@ -173,6 +173,8 @@ def master_status(report, mapping):
     lines = [STATUS, "", "## Fleet health", "", f"Last checked: {report['checked_at']}.",
              "Healthy package issues are closed; Broken issues are open. All remain linked as sub-issues.",
              "Detailed health labels remain authoritative for Unknown, Attention or Paused entries.",
+             "Use GitHub's **Subscribe** button on this master issue for new Broken-package alerts "
+             "across the fleet, including future enrolled packages. Unchanged failures are not reposted.",
              "", "; ".join(f"**{health}: {counts[health]}**" for health in HEALTH), "",
              "| Package | Health | Tracker |", "| --- | --- | --- |"]
     for package in sorted(report["packages"], key=report_key):
@@ -267,7 +269,8 @@ def reconcile(api, config, report, bootstrap=False, *, state=None, persist=None,
             "body": MASTER + "\n\nPermanent package trackers are linked as sub-issues.\n"
                     "The status comment summarizes daily build/test health, not completion percentage.\n"
                     "Projects is deferred. Package health and daily activity are separate. "
-                    "Notification comments are posted only for new incidents, material changes and recoveries.",
+                    "Subscribe to this master issue for new Broken-package alerts across all enrolled packages. "
+                    "Detailed incidents, material changes and recoveries are posted on the package sub-issues.",
             "labels": ["wheel-monitor"],
         })
     parent = mapping["master"]
@@ -301,13 +304,17 @@ def reconcile(api, config, report, bootstrap=False, *, state=None, persist=None,
         print(f"Reconciled {name}: {issue['html_url']}", flush=True)
     displayed = copy.deepcopy(report)
     displayed["packages"] = [p for p in displayed["packages"] if "package=" + p["package"] in mapping]
-    update_status(api, parent, master_status(displayed, mapping))
+    parent_comments = api.pages(f"repos/{REPOSITORY}/issues/{parent['number']}/comments")
+    update_status(api, parent, master_status(displayed, mapping), parent_comments)
     expected = {mapping["package=" + p["package"]]["id"] for p in active}
     actual = {issue["id"] for issue in api.pages(
         f"repos/{REPOSITORY}/issues/{parent['number']}/sub_issues"
     )}
     if not expected.issubset(actual):
         raise MonitorError("Hierarchy verification failed; some package issues are not linked")
+    if state is not None:
+        from monitoring.notifications import deliver_master
+        deliver_master(api, parent, displayed["packages"], mapping, parent_comments, state, persist)
     print(f"Verified {len(expected)} package sub-issues under {parent['html_url']}; writes={api.writes}", flush=True)
     return {**preview, "master": parent["html_url"], "issues": {
         p["package"]: mapping["package=" + p["package"]]["html_url"] for p in active
@@ -356,7 +363,8 @@ def main():
             with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as file:
                 file.write(f"\n## Issue tracking synchronized\n\n[Master tracker]({result['master']}): "
                            f"{result['enrolled_packages']} package issues. Paused packages are not newly enrolled.\n"
-                           "One status comment per issue is edited; incident comments are deduplicated.\n")
+                           "One status comment per issue is edited; incident comments are deduplicated. "
+                           "Subscribe to the master for new Broken-package alerts across the fleet.\n")
 
 
 if __name__ == "__main__":

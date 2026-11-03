@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from monitoring.issues import reconcile, sync_issue_lifecycle
 from monitoring.monitor import MonitorError, REPOSITORY, scan
+from monitoring.notifications import MASTER_EVENT
 from test_issues import FakeIssues, MemoryIssues, issue
 from test_monitor import FakeAPI, NOW, config, empty_state
 from test_recent import pair, recent_config, recent_run
@@ -15,6 +16,61 @@ class LiveTrackingTests(unittest.TestCase):
         data = recent_config()
         data["packages"][0]["channels"][0]["baseline_search"] = False
         return data
+
+    def test_master_queue_survives_collection_and_rearms_only_after_verified_recovery(self):
+        config, api = self.config(), MemoryIssues()
+        report, state = scan(FakeAPI(runs=[recent_run()], jobs=pair()), config, empty_state(), NOW)
+        with patch("monitoring.issues.utcnow", return_value=NOW):
+            bootstrap = reconcile(api, config, report, bootstrap=True, state=state, persist=lambda: None)
+        self.assertEqual(state["master_notifications"]["health"], {"package": "Healthy"})
+        report, state = scan(FakeAPI(runs=[recent_run(20, "failure")], jobs=pair(20, arm="failure")),
+                             config, state, NOW)
+        queued = copy.deepcopy(state["master_notifications"])
+        self.assertEqual(len(queued["pending_notifications"]), 1)
+        self.assertNotIn("pages", queued["pending_notifications"][0])
+        report, state = scan(FakeAPI(runs=[recent_run(20, "failure")], jobs=pair(20, arm="failure")),
+                             config, state, NOW)
+        self.assertEqual(state["master_notifications"], queued)
+        with patch("monitoring.issues.utcnow", return_value=NOW):
+            reconcile(api, config, report, mapping=bootstrap["mapping"], state=state, persist=lambda: None)
+            writes = api.writes
+            reconcile(api, config, report, mapping=bootstrap["mapping"], state=state, persist=lambda: None)
+        self.assertEqual(api.writes, writes)
+        master_comments = api.comments[f"repos/{REPOSITORY}/issues/{bootstrap['mapping']['master']}/comments"]
+        self.assertEqual(sum(MASTER_EVENT in c["body"] for c in master_comments), 1)
+        self.assertFalse(state["master_notifications"]["pending_notifications"])
+        for identifier, arm, amd, health, count in (
+            (30, "failure", "success", "Broken", 1),
+            (40, "failure", "failure", "Broken", 1),
+            (50, "success", "success", "Healthy", 1),
+            (60, "failure", "success", "Broken", 2),
+        ):
+            report, state = scan(FakeAPI(runs=[recent_run(identifier, arm)], jobs=pair(identifier, arm=arm, amd=amd)),
+                                 config, state, NOW)
+            with patch("monitoring.issues.utcnow", return_value=NOW):
+                reconcile(api, config, report, mapping=bootstrap["mapping"], state=state, persist=lambda: None)
+            self.assertEqual(state["master_notifications"]["health"]["package"], health)
+            self.assertEqual(sum(MASTER_EVENT in c["body"] for c in master_comments), count)
+        self.assertEqual(len(api.children), 1)
+        self.assertEqual(api.children[0]["state"], "open")
+        self.assertEqual(api.issues[0]["state"], "open")
+
+    def test_already_recovered_transient_incident_stays_in_package_history(self):
+        config, api = self.config(), MemoryIssues()
+        report, state = scan(FakeAPI(runs=[recent_run(age=8)], jobs=pair()), config, empty_state(), NOW)
+        with patch("monitoring.issues.utcnow", return_value=NOW):
+            bootstrap = reconcile(api, config, report, bootstrap=True, state=state, persist=lambda: None)
+        upstream = FakeAPI(runs=[recent_run(20, "failure", age=4), recent_run(30, age=2)])
+        upstream.pages = lambda path, key, params=None: pair(20, "failure") if "/runs/20/" in path else pair(30)
+        report, state = scan(upstream, config, state, NOW)
+        self.assertEqual(report["packages"][0]["health"], "Healthy")
+        self.assertEqual([change["kind"] for change in report["packages"][0]["planned_notification"]["changes"]],
+                         ["incident", "recovery"])
+        self.assertFalse(state["master_notifications"]["pending_notifications"])
+        with patch("monitoring.issues.utcnow", return_value=NOW):
+            reconcile(api, config, report, mapping=bootstrap["mapping"], state=state, persist=lambda: None)
+        self.assertFalse(any(MASTER_EVENT in c["body"] for comments in api.comments.values() for c in comments))
+        self.assertEqual(api.children[0]["state"], "closed")
 
     def test_healthy_bootstrap_closes_child_but_keeps_master_and_relationship(self):
         report, _ = scan(FakeAPI(runs=[recent_run()], jobs=pair()), self.config(), empty_state(), NOW)

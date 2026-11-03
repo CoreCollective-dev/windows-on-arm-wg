@@ -694,6 +694,27 @@ def plan(previous, current, sequence):
     return {"sequence": sequence + 1, "changes": changes}
 
 
+def plan_master(packages, feed, *, initial=False):
+    for package in packages:
+        health, name = package["health"], package["package"]
+        if health not in ("Healthy", "Broken") or package["errors"] and not (initial and health == "Broken"):
+            continue
+        if health == "Broken":
+            evidence = package["last_known"] or package["results"]
+            failure = next(((key, value) for key, value in sorted(evidence.items())
+                            if value.get("arm_specific_failure")), None)
+            if failure is None:
+                raise MonitorError(f"Broken master alert lacks verified comparative evidence: {name}")
+            if not initial and feed["health"].get(name) != "Broken":
+                feed["sequence"] += 1
+                target, value = failure
+                feed["pending_notifications"].append({
+                    "key": f"master/{name}/{feed['sequence']}", "package": name,
+                    "changes": [{"kind": "incident", "target": target, "after": copy.deepcopy(value)}],
+                })
+        feed["health"][name] = health
+
+
 def scan(api, config, state, now, scheduled=False, progress=False):
     validate(config)
     if state.get("schema") != SCHEMA or state.get("tracker") != config["tracker"]:
@@ -893,6 +914,9 @@ def scan(api, config, state, now, scheduled=False, progress=False):
               "checked_at": stamp(now), "registry_revision": revision, "failure_policy": FAILURE_POLICY,
               "collection_policy": config.get("collection_policy")}
     report["packages"].sort(key=report_key)
+    if "master_notifications" in state:
+        output["master_notifications"] = copy.deepcopy(state["master_notifications"])
+        plan_master(report["packages"], output["master_notifications"])
     report["requests"] = api.requests
     api.package_limit = None
     report["rate_remaining"] = getattr(api, "remaining", None)

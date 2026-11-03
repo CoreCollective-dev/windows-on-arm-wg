@@ -4,6 +4,27 @@ Status: issue-based tracking approved and deployed on 2026-10-21; Projects remai
 
 Date: 2026-10-19.
 
+### Fleet-wide subscriptions (2026-11-03 UTC)
+
+GitHub's Subscribe button on the master subscribes to new package-level Broken
+alerts across all enrolled packages, including future approved additions. A
+new master comment links the package sub-issue and verified Arm64/AMD64 evidence.
+It uses native issue notifications, not explicit participant mentions. GitHub's
+Unsubscribe button controls this subscription; package opt-out commands remain
+package-specific.
+
+Initial adoption quietly records current health without re-announcing existing
+failures. Repeated failures or target changes while the package remains Broken
+are not reposted. Error-free Healthy evidence silently re-arms future alerts;
+Unknown, Attention, Paused and monitoring errors do not clear retained health.
+Recoveries and incidents already recovered within the daily window stay in
+package history rather than triggering fleet comments.
+
+Fleet baseline, sequence and pending events live in `master_notifications` in
+the retained state artifact. Collection queues new transitions before issue
+writes; frozen pages and distinct trusted master-event markers make delivery
+resumable without duplicate comments on retries or lost acknowledgments.
+
 ### Health-driven issue lifecycle (2026-11-02)
 
 Verified Healthy package trackers are closed with reason completed; Broken
