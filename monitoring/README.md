@@ -103,6 +103,13 @@ The observer evaluates **all relevant runs of each configured
 workflow from the last 24 hours**, including PRs and feature-branch pushes,
 regardless of the overall success/failure conclusion. It no longer selects
 only the latest mainline/release run. Pending runs remain tracked across polls.
+If an individual pending run later returns HTTP 404, it is removed from active
+pending follow-up so it cannot block subsequent observations indefinitely.
+Its run ID and detection time persist in `unavailable_pending_runs`, and the
+report and tracker status retain an explicit alert-coverage warning. This is
+missing evidence, not a passing build or recovery; last-known health is preserved.
+Other API failures remain operational errors, as do unavailable runs required
+for open-regression recovery checks.
 
 Each PR is isolated by head repository and PR number. When GitHub omits the
 association, the observer checks the exact head repository/branch and verifies

@@ -212,7 +212,8 @@ def retain_health(api, channel, prior, fresh, now):
         health=health, activity=activity, baseline_warnings=missing, errors=errors,
         last_verified_at=max((value["observed_at"] for value in known.values()), default=None),
         history_warnings=metadata.get("warnings", []),
-        coverage_warnings=sorted({value["coverage_warning"] for value in known.values()
+        coverage_warnings=sorted(set(fresh.get("coverage_warnings", [])) |
+                                 {value["coverage_warning"] for value in known.values()
                                   if value.get("coverage_warning")}),
     )
     return fresh

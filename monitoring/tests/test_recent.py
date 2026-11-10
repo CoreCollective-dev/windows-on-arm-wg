@@ -1,8 +1,9 @@
 import copy
 import unittest
 from datetime import timedelta
+from unittest.mock import patch
 
-from monitoring.monitor import COLLECTION_POLICY, evaluate, scan, stamp
+from monitoring.monitor import APIError, COLLECTION_POLICY, evaluate, scan, stamp, summary
 from monitoring.recent import observe_recent, same_request, stream_identity
 from monitoring.wheel_log import cibuildwheel_jobs
 from test_monitor import CHANNEL, FakeAPI, NOW, config, empty_state, job, run
@@ -77,6 +78,82 @@ class RecentTests(unittest.TestCase):
         api.pages = lambda *args: pair()
         result = observe_recent(api, CHANNEL, {"pending_runs": [10]}, NOW)
         self.assertEqual(len(result["observations"]), 1)
+
+    def test_missing_pending_run_is_recorded_and_other_runs_are_assessed(self):
+        api = FakeAPI(runs=[recent_run(20)], jobs=pair(20))
+        get = api.get
+
+        def missing_run(path, params=None):
+            if path.endswith("/runs/10"):
+                raise APIError(path, 404)
+            return get(path, params)
+
+        with patch.object(api, "get", side_effect=missing_run):
+            result = observe_recent(api, CHANNEL, {"pending_runs": [10]}, NOW)
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["pending_runs"], [])
+        self.assertEqual(result["unavailable_pending_runs"], {"10": stamp(NOW)})
+        self.assertEqual([item["value"]["run_id"] for item in result["observations"]], [20])
+        self.assertIn("HTTP 404", result["coverage_warnings"][0])
+        self.assertIn("https://github.com/example/package/actions/runs/10", result["coverage_warnings"][0])
+
+    def test_missing_pending_run_warning_persists_without_retry_or_recovery(self):
+        data = recent_config()
+        api = FakeAPI(runs=[recent_run(10, "failure")], jobs=pair(10, "failure"))
+        _, state = scan(api, data, empty_state(), NOW)
+        prior = state["packages"]["package"]["channels"]["wheel"]
+        prior["pending_runs"] = [99]
+        api = FakeAPI(runs=[])
+        get = api.get
+
+        def missing_run(path, params=None):
+            if path.endswith("/runs/99"):
+                raise APIError(path, 404)
+            return get(path, params)
+
+        with patch.object(api, "get", side_effect=missing_run):
+            report, state = scan(api, data, state, NOW)
+        package = report["packages"][0]
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(package["health"], "Broken")
+        self.assertEqual(package["last_known"], {
+            "wheel/" + key: value for key, value in prior["last_known"].items()
+        })
+        self.assertEqual(package["observations"], [])
+        self.assertIsNone(package["planned_notification"])
+        self.assertIn("HTTP 404", summary(report))
+        warnings = package["coverage_warnings"]
+
+        api = FakeAPI(runs=[])
+        report, state = scan(api, data, state, NOW + timedelta(days=1))
+        self.assertFalse(any(path.endswith("/runs/99") for path, _ in api.paths))
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(report["packages"][0]["health"], "Broken")
+        self.assertEqual(report["packages"][0]["coverage_warnings"], warnings)
+        self.assertIsNone(report["packages"][0]["planned_notification"])
+        channel = state["packages"]["package"]["channels"]["wheel"]
+        self.assertEqual(channel["pending_runs"], [])
+        self.assertEqual(channel["unavailable_pending_runs"], {"99": stamp(NOW)})
+
+    def test_missing_pending_run_does_not_establish_health(self):
+        channel = {**CHANNEL, "baseline_search": False}
+        api = FakeAPI(runs=[])
+        with patch.object(api, "get", side_effect=APIError("missing", 404)):
+            result = observe_recent(api, channel, {"pending_runs": [10]}, NOW, runs=[])
+        self.assertEqual(result["health"], "Unknown")
+        self.assertEqual(result["last_known"], {})
+        self.assertEqual(result["observations"], [])
+        self.assertEqual(result["errors"], [])
+        self.assertTrue(result["coverage_warnings"])
+
+    def test_other_pending_run_api_errors_remain_fatal(self):
+        for status in (401, 403, 429, 500, 502, 503, 504):
+            with self.subTest(status=status):
+                api = FakeAPI(runs=[])
+                with patch.object(api, "get", side_effect=APIError("unavailable", status)):
+                    with self.assertRaises(APIError) as raised:
+                        observe_recent(api, CHANNEL, {"pending_runs": [10]}, NOW, runs=[])
+                self.assertEqual(raised.exception.status, status)
 
     def test_empty_window_not_healthy_or_broken(self):
         result = observe_recent(FakeAPI(runs=[]), CHANNEL, {}, NOW)
