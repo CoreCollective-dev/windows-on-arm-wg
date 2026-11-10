@@ -5,7 +5,7 @@ import re
 from datetime import timedelta
 from urllib.parse import quote
 
-from monitoring.monitor import MonitorError, attempt_jobs, discover, evaluate, instant, stamp
+from monitoring.monitor import APIError, MonitorError, attempt_jobs, discover, evaluate, instant, stamp
 from monitoring.wheel_log import cibuildwheel_jobs
 
 
@@ -136,9 +136,16 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historic
                 if candidate_stream == stream:
                     known[candidate["id"]] = candidate
                     identified_streams[candidate["id"]] = candidate_stream
+    unavailable_pending_runs = copy.deepcopy(prior.get("unavailable_pending_runs", {}))
     for identifier in prior.get("pending_runs", []):
         if identifier not in known:
-            candidate = api.get(f"repos/{channel['repository']}/actions/runs/{identifier}")
+            try:
+                candidate = api.get(f"repos/{channel['repository']}/actions/runs/{identifier}")
+            except APIError as error:
+                if error.status != 404:
+                    raise
+                unavailable_pending_runs[str(identifier)] = stamp(now)
+                continue
             known[identifier] = candidate
     eligible = [run for run in known.values() if run["event"] in EVENTS]
     results, observations, pending = {}, [], []
@@ -225,7 +232,13 @@ def observe_recent(api, channel, prior, now, *, runs=None, retain=True, historic
         }
     fresh = {"results": results, "observations": observations, "pending_runs": pending,
              "last_complete_scan": stamp(now), "window_hours": 24, "runs_in_window": len(runs),
-             "stream_aliases": aliases, "recovery_catchup_streams": sorted(catchup_streams)}
+             "stream_aliases": aliases, "recovery_catchup_streams": sorted(catchup_streams),
+             "unavailable_pending_runs": unavailable_pending_runs,
+             "coverage_warnings": [
+                 f"Pending run https://github.com/{channel['repository']}/actions/runs/{identifier} "
+                 f"returned HTTP 404 on {checked_at}; removed from pending follow-up without a build verdict"
+                 for identifier, checked_at in sorted(unavailable_pending_runs.items())
+             ]}
     if retain:
         from monitoring.baselines import retain_health
         return retain_health(api, channel, prior, fresh, now)
