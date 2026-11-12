@@ -13,11 +13,17 @@ In this repo, you can find info about our projects &amp; [file issues](https://g
 
 ## Projects
 * Supporting Python packages natively on Windows on Arm
+     * Native-by-default starting in Python 3.15 release
+          * [Arm blog post](https://developer.arm.com/community/arm-community-blogs/b/announcements/posts/python-3-15-advances-the-native-developer-experience-on-windows-on-arm)
+          * [Anaconda blog post](https://www.anaconda.com/blog/python-3-15)
+          * [Microsoft blog post](https://blogs.windows.com/windowsdeveloper/2026/10/14/python-3-15-delivers-native-by-default-experience-on-windows-arm/)
+          * [Qualcomm blog post](https://www.qualcomm.com/developer/blog/2026/10/native-python-windows-on-snapdragon-stronger-foundation-for-developers-ai-workflows)
      * [Status](https://github.com/khmyznikov/PyEnv-WoA-State)
      * [Daily Windows Arm64 wheel monitoring and issue tracking](monitoring/README.md)
      * [Master package tracker](https://github.com/CoreCollective-dev/windows-on-arm-wg/issues/7)
 * LLVM
-* GCC
+* GNU Toolchain
+     * [Experimental weekly builds for Windows Arm64 (MinGW/Cygwin) targets](https://github.com/arm/gnu-toolchain-for-windows-on-arm64)
 * Software product enablement
      * [What works on Windows on Arm?](https://worksonwoa.com/)
      * [Windows on Arm Software Ecosystem Dashboard](https://developer.arm.com/ecosystem-dashboard/windows)
@@ -30,9 +36,10 @@ In this repo, you can find info about our projects &amp; [file issues](https://g
 If you are looking for status or build instructions for Windows on Arm on a specific project, [here is a list](https://linaro.atlassian.net/wiki/spaces/WOAR/pages/28682879341/Detailed+How-To+and+Status+sub+pages) of the historic status and work carried out up to end of 2025.
  
 ## WG Members
+* Anaconda
 * Arm
 * CIX
 * Linaro
 * Microsoft
-* NVidia
+* NVIDIA
 * Qualcomm 
