@@ -22,7 +22,8 @@ In this repo, you can find info about our projects &amp; [file issues](https://g
      * [Daily Windows Arm64 wheel monitoring and issue tracking](monitoring/README.md)
      * [Master package tracker](https://github.com/CoreCollective-dev/windows-on-arm-wg/issues/7)
 * LLVM
-* GCC
+* GNU Toolchain
+     * [Experimental weekly builds for Windows Arm64 (MinGW/Cygwin) targets](https://github.com/arm/gnu-toolchain-for-windows-on-arm64)
 * Software product enablement
      * [What works on Windows on Arm?](https://worksonwoa.com/)
      * [Windows on Arm Software Ecosystem Dashboard](https://developer.arm.com/ecosystem-dashboard/windows)
