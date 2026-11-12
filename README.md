@@ -30,9 +30,10 @@ In this repo, you can find info about our projects &amp; [file issues](https://g
 If you are looking for status or build instructions for Windows on Arm on a specific project, [here is a list](https://linaro.atlassian.net/wiki/spaces/WOAR/pages/28682879341/Detailed+How-To+and+Status+sub+pages) of the historic status and work carried out up to end of 2025.
  
 ## WG Members
+* Anaconda
 * Arm
 * CIX
 * Linaro
 * Microsoft
-* NVidia
+* NVIDIA
 * Qualcomm 
