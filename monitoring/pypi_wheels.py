@@ -2,6 +2,7 @@
 
 import argparse
 import base64
+import gzip
 import json
 import os
 import re
@@ -10,9 +11,11 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from http.client import HTTPException
+from itertools import batched
 from urllib.error import HTTPError
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 from packaging.utils import (
@@ -25,8 +28,9 @@ from monitoring.issues import IssueAPI
 from monitoring.monitor import APIError, MonitorError, REPOSITORY, literal
 
 
-RANKING = "https://hugovk.github.io/top-pypi-packages/top-pypi-packages-30-days.min.json"
+RANKING_INDEX = "https://sql-clickhouse.clickhouse.com/"
 TOP_COUNT = 1000
+DISCOVERY_BATCH = 64
 STATE_BRANCH = "wheel-monitor-pypi-state"
 STATE_FILE = "state.json"
 BOT = "github-actions[bot]"
@@ -39,16 +43,35 @@ class Releases:
     supported: Version | None
 
 
+@dataclass(frozen=True)
+class Discovery:
+    selected: set[str]
+    observations: dict[str, Releases | MonitorError]
+    depth: int
+    unresolved: dict[str, str]
+
+
+class ProjectNotFound(MonitorError):
+    pass
+
+
 def fetch_json(url, accept="application/json"):
-    request = Request(url, headers={"Accept": accept, "User-Agent": "windows-on-arm-wg-wheel-monitor"})
+    request = Request(url, headers={
+        "Accept": accept, "Accept-Encoding": "gzip", "User-Agent": "windows-on-arm-wg-wheel-monitor",
+    })
     for attempt in range(3):
         try:
             with urlopen(request, timeout=20) as response:
+                if response.headers.get("Content-Encoding") == "gzip":
+                    with gzip.GzipFile(fileobj=response) as body:
+                        return json.load(body)
                 return json.load(response)
         except HTTPError as error:
+            if error.code == 404:
+                raise ProjectNotFound(f"HTTP 404 reading {url}") from error
             if attempt == 2 or (error.code != 429 and not 500 <= error.code < 600):
                 raise MonitorError(f"HTTP {error.code} reading {url}") from error
-        except (OSError, HTTPException, ValueError) as error:
+        except (OSError, HTTPException, ValueError, EOFError) as error:
             if attempt == 2:
                 raise MonitorError(f"Cannot read JSON from {url}: {error}") from error
         time.sleep(2 ** attempt)
@@ -63,14 +86,29 @@ def package_name(value):
         raise MonitorError(f"Invalid PyPI package name: {value!r}") from error
 
 
-def top_packages(data):
-    rows = data.get("rows") if isinstance(data, dict) else None
-    if not isinstance(rows, list) or len(rows) < TOP_COUNT:
-        raise MonitorError(f"Expected at least {TOP_COUNT} ranked PyPI projects")
-    names = {package_name(row.get("project") if isinstance(row, dict) else None)
-             for row in rows[:TOP_COUNT]}
-    if len(names) != TOP_COUNT:
-        raise MonitorError("Duplicate project names in the PyPI top 1000")
+def ranked_packages(month):
+    # The bulk index narrows discovery; PyPI itself verifies each candidate's release files.
+    query = f"""
+        WITH wheel_projects AS (
+            SELECT DISTINCT lower(replaceRegexpAll(name, '[-_.]+', '-')) AS project
+            FROM pypi.projects
+            WHERE endsWith(filename, '.whl')
+              AND has(splitByChar('.', arrayElement(splitByChar('-', filename), -1)), 'win_arm64')
+        )
+        SELECT project, sum(count) AS download_count
+        FROM pypi.pypi_downloads_per_month
+        WHERE month = '{month.isoformat()}' AND project IN (SELECT project FROM wheel_projects)
+        GROUP BY project
+        ORDER BY download_count DESC, project
+    """
+    params = urlencode({"query": query, "user": "demo", "default_format": "JSON"})
+    data = fetch_json(f"{RANKING_INDEX}?{params}")
+    rows = data.get("data") if isinstance(data, dict) else None
+    if not isinstance(rows, list) or not rows or data.get("rows") != len(rows):
+        raise MonitorError(f"Missing or incomplete ClickPy download ranking for {month:%Y-%m}")
+    names = [package_name(row.get("project") if isinstance(row, dict) else None) for row in rows]
+    if len(set(names)) != len(names):
+        raise MonitorError("Duplicate project names in the ClickPy download ranking")
     return names
 
 
@@ -105,24 +143,56 @@ def release_status(name, data):
 
 
 def observe(name):
-    data = fetch_json(f"https://pypi.org/simple/{name}/", "application/vnd.pypi.simple.v1+json")
+    try:
+        data = fetch_json(f"https://pypi.org/simple/{name}/", "application/vnd.pypi.simple.v1+json")
+    except ProjectNotFound:
+        return Releases(None, None)
     return release_status(name, data)
 
 
-def collect(ranked, remembered, lookup=observe):
+def checked(name, lookup):
+    try:
+        return lookup(name)
+    except MonitorError as error:
+        return error
+
+
+def discover(ranking, remembered, lookup=observe, *, limit=TOP_COUNT):
+    selected, observations, unresolved = set(), {}, {}
+    depth = qualified = 0
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        for batch in batched(ranking, DISCOVERY_BATCH):
+            results = dict(zip(batch, pool.map(lambda name: checked(name, lookup), batch)))
+            observations.update(results)
+            for name, release in results.items():
+                depth += 1
+                if name not in remembered:
+                    if isinstance(release, MonitorError):
+                        unresolved[name] = str(release)
+                        continue
+                    if release.supported is None:
+                        continue
+                qualified += 1
+                # Unread projects above this one could all qualify.
+                if qualified + len(unresolved) <= limit:
+                    selected.add(name)
+                if qualified == limit:
+                    return Discovery(selected, observations, depth, unresolved)
+    return Discovery(selected, observations, depth, unresolved)
+
+
+def collect(ranked, remembered, lookup=observe, *, observations=None):
     names = sorted(ranked | remembered.keys())
     state, missing, supported, unknown, errors = remembered.copy(), {}, {}, [], {}
+    observations = {} if observations is None else observations
 
-    def checked(name):
-        try:
-            return lookup(name), None
-        except MonitorError as error:
-            return None, str(error)
+    def recorded(name):
+        return observations[name] if name in observations else checked(name, lookup)
 
     with ThreadPoolExecutor(max_workers=8) as pool:
-        for name, (release, error) in zip(names, pool.map(checked, names)):
-            if error is not None:
-                errors[name] = error
+        for name, release in zip(names, pool.map(recorded, names)):
+            if isinstance(release, MonitorError):
+                errors[name] = str(release)
                 continue
             if release.latest is None:
                 unknown.append(name)
@@ -247,8 +317,14 @@ def main():
 
     api = IssueAPI(apply=args.apply)
     remembered, sha = load_state(api)
-    ranked = top_packages(fetch_json(RANKING))
-    state, missing, supported, unknown, errors = collect(ranked, remembered)
+    today = datetime.now(timezone.utc).date()
+    month = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+    ranking = ranked_packages(month)
+    discovery = discover(ranking, remembered)
+    ranked = discovery.selected
+    state, missing, supported, unknown, errors = collect(
+        ranked, remembered, observations=discovery.observations,
+    )
     trackers = tracked_issues(api.pages(f"repos/{REPOSITORY}/issues", params={"state": "all"}))
     if trackers.keys() - remembered.keys():
         raise MonitorError(f"Existing tracker issues are missing from {STATE_BRANCH}; recover the monitor state")
@@ -258,11 +334,22 @@ def main():
         "## PyPI Windows ARM64 wheel monitor",
         "",
         f"Mode: {'apply' if args.apply else 'preview (no writes)'}",
-        f"- Projects scanned: {len(ranked | remembered.keys())} "
-        f"({len(ranked)} ranked; {len(remembered.keys() - ranked)} previously tracked outside the ranking)",
+        f"- ClickPy candidates checked: {discovery.depth:,} of {len(ranking):,} ({month:%B %Y} downloads); "
+        f"confirmed in the Windows ARM64 top {TOP_COUNT:,}: {len(ranked):,}",
+        f"- Previously tracked outside this selection: {len(remembered.keys() - ranked):,}",
         f"- Tracked: {len(state)} ({len(additions)} new); latest with Windows ARM64: {len(supported)}",
         f"- Regressions: {len(missing)}; inconclusive: {len(unknown)}; fetch errors: {len(errors)}",
     ]
+    if len(ranked) < TOP_COUNT:
+        lines += ["", f"Could not confirm all {TOP_COUNT:,} places in the Windows ARM64 ranking."]
+        if discovery.unresolved:
+            lines += [
+                f"- {len(discovery.unresolved):,} ranking lookups failed. "
+                "Only projects guaranteed to be in the top cohort can be newly tracked.",
+                *(f"- `{name}`: {literal(error)}" for name, error in sorted(discovery.unresolved.items())),
+            ]
+        if discovery.depth == len(ranking):
+            lines.append("- Reached the end of the ClickPy candidate list.")
     if additions:
         lines += ["", "Newly tracked: " + ", ".join(sorted(additions))]
     if missing:
@@ -298,7 +385,7 @@ def main():
             else:
                 api.write("PATCH", f"issues/{number}", payload)
             print(f"{action.capitalize()} issue for {name}")
-    return int(bool(errors))
+    return int(bool(errors) or len(ranked) < TOP_COUNT)
 
 
 if __name__ == "__main__":

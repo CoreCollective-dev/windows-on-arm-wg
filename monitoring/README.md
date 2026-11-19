@@ -103,9 +103,14 @@ coverage. Excluded, universal, archived and unresolved entries remain explicit.
 ## Weekly PyPI wheel regression monitor
 
 The [weekly workflow](../.github/workflows/wheel-monitor-pypi.yml) runs Wednesdays
-at **15:43 UTC**. It discovers projects from the top 1,000 PyPI packages by
-[downloads over the previous 30 days](https://hugovk.github.io/top-pypi-packages/)
-and keeps checking known projects even if they fall out of the ranking.
+at **15:43 UTC**. It uses [ClickPy's public PyPI dataset](https://clickpy.clickhouse.com/)
+to rank projects with Windows ARM64 wheel history by downloads in the last
+completed calendar month. It verifies candidates against PyPI in rank order
+until it has the top 1,000 with a history of stable, non-yanked Windows ARM64
+wheels. Discovery is limited to projects present in the ClickPy index; new
+wheels may take time to appear there. Previously tracked projects stay on the
+watchlist even when they fall out of the top 1,000. The run summary reports
+the ranking month and flags incomplete selection.
 
 The monitor reads the PyPI file index, including older releases, so an existing
 regression can be found on the first scan. It compares stable releases by version

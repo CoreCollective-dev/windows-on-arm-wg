@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import unittest
+from datetime import date
 from unittest.mock import Mock, patch
 
 from monitoring import pypi_wheels as monitor
@@ -23,14 +24,50 @@ def files(name, *filenames):
 
 
 class PyPIWheelMonitorTests(unittest.TestCase):
-    def test_ranking_only_uses_first_thousand_projects(self):
-        projects = [{"project": "Example_lib"}] + [{"project": f"pkg{i}"} for i in range(1000)]
-        ranked = monitor.top_packages({"rows": projects})
-        self.assertEqual(len(ranked), 1000)
-        self.assertIn("example-lib", ranked)
-        self.assertNotIn("pkg999", ranked)
-        with self.assertRaises(MonitorError):
-            monitor.top_packages({"rows": projects[:999]})
+    def test_ranking_uses_clickpy_order_and_rejects_incomplete_response(self):
+        projects = [{"project": "Zebra_lib"}, {"project": "acorn"}]
+        month = date(2026, 10, 1)
+        with patch.object(monitor, "fetch_json", return_value={"data": projects, "rows": 2}):
+            self.assertEqual(monitor.ranked_packages(month), ["zebra-lib", "acorn"])
+        with patch.object(monitor, "fetch_json", return_value={"data": projects, "rows": 3}):
+            with self.assertRaises(MonitorError):
+                monitor.ranked_packages(month)
+
+    def test_discovery_takes_the_first_thousand_projects_with_wheel_history(self):
+        ranking = [f"pkg{i}" for i in range(2200)]
+        current = monitor.Releases(monitor.Version("2.0"), monitor.Version("1.0"))
+        no_history = monitor.Releases(monitor.Version("2.0"), None)
+        lookup = Mock(side_effect=lambda name: current if int(name[3:]) % 2 else no_history)
+
+        discovery = monitor.discover(ranking, {}, lookup)
+
+        self.assertEqual(discovery.selected, set(ranking[1:2000:2]))
+        self.assertEqual(discovery.depth, 2000)
+        self.assertEqual(discovery.unresolved, {})
+        self.assertLess(lookup.call_count, len(ranking))
+
+    def test_unread_candidate_cannot_be_displaced_by_a_lower_ranked_project(self):
+        def lookup(name):
+            if name == "unread":
+                raise MonitorError("HTTP 503")
+            return monitor.Releases(monitor.Version("2.0"), monitor.Version("1.0") if name == "lower" else None)
+
+        # A remembered package still qualifies even if PyPI no longer lists its old wheels.
+        discovery = monitor.discover(["unread", "remembered", "lower"], {"remembered": "1.0"}, lookup, limit=2)
+        self.assertEqual(discovery.selected, {"remembered"})
+        self.assertEqual(discovery.unresolved, {"unread": "HTTP 503"})
+
+    def test_collection_reuses_discovery_and_checks_previously_tracked_projects(self):
+        arm = monitor.Releases(monitor.Version("2.0"), monitor.Version("2.0"))
+        lookup = Mock(return_value=arm)
+        remembered = {"outside": "1.0"}
+        discovery = monitor.discover(["inside"], remembered, lookup)
+        state, _, supported, _, _ = monitor.collect(
+            discovery.selected, remembered, lookup, observations=discovery.observations,
+        )
+        self.assertEqual(state, {"inside": "2.0", "outside": "2.0"})
+        self.assertEqual(set(supported), {"inside", "outside"})
+        self.assertEqual([call.args[0] for call in lookup.call_args_list], ["inside", "outside"])
 
     def test_latest_stable_only_considers_active_files_and_exact_platform_tags(self):
         status = files(
@@ -158,8 +195,9 @@ class PyPIWheelMonitorTests(unittest.TestCase):
             patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}),
             patch.object(monitor, "IssueAPI", return_value=api),
             patch.object(monitor, "load_state", return_value=({}, None)),
-            patch.object(monitor, "fetch_json"),
-            patch.object(monitor, "top_packages", return_value={"example"}),
+            patch.object(monitor, "TOP_COUNT", 1),
+            patch.object(monitor, "ranked_packages", return_value=["example"]),
+            patch.object(monitor, "discover", return_value=monitor.Discovery({"example"}, {}, 1, {})),
             patch.object(monitor, "collect", return_value=scan),
             patch.object(monitor, "write_state") as save,
             contextlib.redirect_stdout(io.StringIO()) as output,
