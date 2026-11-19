@@ -20,6 +20,7 @@ In this repo, you can find info about our projects &amp; [file issues](https://g
           * [Qualcomm blog post](https://www.qualcomm.com/developer/blog/2026/10/native-python-windows-on-snapdragon-stronger-foundation-for-developers-ai-workflows)
      * [Status](https://github.com/khmyznikov/PyEnv-WoA-State)
      * [Daily Windows Arm64 wheel monitoring and issue tracking](monitoring/README.md)
+     * [Weekly PyPI Windows Arm64 wheel regression monitor](monitoring/README.md#weekly-pypi-wheel-regression-monitor)
      * [Master package tracker](https://github.com/CoreCollective-dev/windows-on-arm-wg/issues/7)
 * LLVM
 * GNU Toolchain

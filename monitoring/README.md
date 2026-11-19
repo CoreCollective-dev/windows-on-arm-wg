@@ -1,5 +1,8 @@
 # Daily Windows Arm64 versus AMD64 wheel monitoring
 
+See also the [weekly PyPI wheel regression monitor](#weekly-pypi-wheel-regression-monitor),
+which checks published files rather than upstream CI.
+
 Deployment home: **CoreCollective-dev/windows-on-arm-wg**.
 Operational owner: **khmyznikov**.
 Tracking direction: one master issue and package sub-issues. Projects is deferred.
@@ -96,6 +99,31 @@ The [fleet.json](fleet.json) registry contains all 84 package dispositions and
 paired-platform selectors; [pilot.json](pilot.json) retains the five-package
 subset. The [inventory](inventory.json) is discovery provenance, not proof of
 coverage. Excluded, universal, archived and unresolved entries remain explicit.
+
+## Weekly PyPI wheel regression monitor
+
+The [weekly workflow](../.github/workflows/wheel-monitor-pypi.yml) runs Wednesdays
+at **15:43 UTC**. It discovers projects from the top 1,000 PyPI packages by
+[downloads over the previous 30 days](https://hugovk.github.io/top-pypi-packages/)
+and keeps checking known projects even if they fall out of the ranking.
+
+The monitor reads the PyPI file index, including older releases, so an existing
+regression can be found on the first scan. It compares stable releases by version
+and looks for a non-yanked wheel tagged `win_arm64`. Universal wheels, wheels
+for other platforms, and prereleases do not count. A newer stable release with
+no such wheel opens a package-named issue if an older release provided one.
+The monitor closes its own issue when the latest stable release has the wheel
+again, even if it was uploaded after the release; a later regression reopens
+the same issue. Failed or inconclusive reads leave issues unchanged. These
+issues are separate from the daily CI trackers.
+
+The workflow stores the highest known Windows ARM64 release for each tracked
+project in `state.json` on the `wheel-monitor-pypi-state` branch, created on the
+first write-enabled run. Keep that branch and the markers in the bot's issues
+intact. The token needs `contents: write` for that branch and `issues: write`
+for the regression issues. Manual runs on `main` preview the scan and proposed
+issue changes without writing unless **apply** is enabled. The Actions summary
+shows new projects, regressions, and any incomplete observations.
 
 ## Current collection strategy: every run in the last 24 hours
 
