@@ -83,6 +83,47 @@ class PyPIWheelMonitorTests(unittest.TestCase):
         )
         self.assertEqual(str(status.latest), "2.10")
         self.assertEqual(str(status.supported), "2.9")
+        self.assertEqual(str(status.prerelease_with_wheel), "3.0rc1")
+
+    def test_newer_prerelease_closes_regression_without_advancing_stable_baseline(self):
+        name = "passagemath-categories"
+        older_arm = "passagemath_categories-10.8.13-cp313-cp313-win_arm64.whl"
+        stable = "passagemath_categories-10.8.14.tar.gz"
+        prerelease_arm = "passagemath_categories-10.8.15rc0-cp313-cp313-win_arm64.whl"
+        newer_prerelease = "passagemath_categories-10.10.1a1.tar.gz"
+        lookup = Mock(return_value=files(name, older_arm, stable, prerelease_arm, newer_prerelease))
+
+        state, missing, supported, _, _ = monitor.collect({name}, {}, lookup)
+        self.assertEqual(state, {name: "10.8.13"})
+        self.assertEqual(missing, {})
+        self.assertEqual(supported, {name: monitor.Version("10.8.15rc0")})
+        tracker = {name: {"number": 42, "state": "open"}}
+        self.assertEqual(list(monitor.issue_changes(tracker, missing, supported)), [
+            ("close", name, 42, {"state": "closed", "state_reason": "completed"}),
+        ])
+
+        lookup.return_value = files(name, stable, prerelease_arm, "passagemath_categories-10.8.15.tar.gz")
+        _, missing, supported, _, _ = monitor.collect(set(), state, lookup)
+        tracker[name]["state"] = "closed"
+        (action, _, number, _), = monitor.issue_changes(tracker, missing, supported)
+        self.assertEqual((action, number), ("reopen", 42))
+
+    def test_yanked_or_incompatible_prerelease_does_not_clear_regression(self):
+        name = "example"
+        release = files(
+            name, "example-1.0-cp313-cp313-win_arm64.whl", "example-2.0.tar.gz",
+            ("example-3.0rc1-cp313-cp313-win_arm64.whl", True),
+            "example-3.0rc1-py3-none-any.whl",
+            "example-3.0rc1-cp313-cp313-win_amd64.whl",
+        )
+        _, missing, supported, _, _ = monitor.collect({name}, {}, Mock(return_value=release))
+        self.assertIn(name, missing)
+        self.assertEqual(supported, {})
+
+    def test_prerelease_wheel_alone_does_not_enroll_package(self):
+        name = "example"
+        release = files(name, "example-1.0.tar.gz", "example-2.0rc1-cp313-cp313-win_arm64.whl")
+        self.assertEqual(monitor.discover([name], {}, Mock(return_value=release)).selected, set())
 
     def test_first_scan_finds_existing_loss_and_later_loss_reuses_tracker(self):
         name = "cryptography"

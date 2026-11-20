@@ -41,6 +41,7 @@ MARKER = re.compile(r"<!-- pypi-arm64-wheel-monitor:package=([a-z0-9-]+) -->")
 class Releases:
     latest: Version | None
     supported: Version | None
+    prerelease_with_wheel: Version | None = None
 
 
 @dataclass(frozen=True)
@@ -116,7 +117,7 @@ def release_status(name, data):
     if (not isinstance(data, dict) or package_name(data.get("name")) != name
             or not isinstance(data.get("files"), list)):
         raise MonitorError(f"Unexpected PyPI file index for {name}")
-    latest = supported = None
+    latest = supported = prerelease_with_wheel = None
     for file in data["files"]:
         if (not isinstance(file, dict) or not isinstance(file.get("filename"), str)
                 or not isinstance(file.get("yanked"), (bool, str))):
@@ -133,13 +134,17 @@ def release_status(name, data):
                 project, version = parse_sdist_filename(filename)
         except (InvalidSdistFilename, InvalidWheelFilename):
             continue  # Some projects still list legacy distribution formats.
-        if project != name or version.is_prerelease:
+        if project != name:
+            continue
+        if version.is_prerelease:
+            if arm64 and (prerelease_with_wheel is None or version > prerelease_with_wheel):
+                prerelease_with_wheel = version
             continue
         if latest is None or version > latest:
             latest = version
         if arm64 and (supported is None or version > supported):
             supported = version
-    return Releases(latest, supported)
+    return Releases(latest, supported, prerelease_with_wheel)
 
 
 def observe(name):
@@ -203,6 +208,8 @@ def collect(ranked, remembered, lookup=observe, *, observations=None):
                 state[name] = str(baseline)
             if release.latest == release.supported:
                 supported[name] = release.latest
+            elif release.prerelease_with_wheel is not None and release.prerelease_with_wheel > release.latest:
+                supported[name] = release.prerelease_with_wheel
             elif baseline is not None and release.latest > baseline:
                 missing[name] = (release.latest, baseline)
             elif baseline is not None:
@@ -292,10 +299,10 @@ def issue_changes(trackers, missing, supported):
         body = (
             f"<!-- pypi-arm64-wheel-monitor:package={name} -->\n\n"
             f"The latest stable PyPI release of `{name}`, {release_link(name, latest)}, "
-            "has no non-yanked `win_arm64` wheel.\n\n"
-            f"The most recent release known to provide one is {release_link(name, baseline)}.\n\n"
+            "has no non-yanked `win_arm64` wheel, and no newer prerelease provides one.\n\n"
+            f"The most recent stable release known to provide one is {release_link(name, baseline)}.\n\n"
             "The weekly PyPI wheel monitor will close this issue when the latest stable "
-            "release provides a `win_arm64` wheel again."
+            "release or a newer prerelease provides a `win_arm64` wheel."
         )
         if issue:
             yield "reopen", name, issue["number"], {"state": "open", "body": body}
@@ -330,6 +337,7 @@ def main():
         raise MonitorError(f"Existing tracker issues are missing from {STATE_BRANCH}; recover the monitor state")
     changes = sorted(issue_changes(trackers, missing, supported))
     additions = state.keys() - remembered.keys()
+    prerelease_heals = {name: version for name, version in supported.items() if version.is_prerelease}
     lines = [
         "## PyPI Windows ARM64 wheel monitor",
         "",
@@ -337,7 +345,8 @@ def main():
         f"- ClickPy candidates checked: {discovery.depth:,} of {len(ranking):,} ({month:%B %Y} downloads); "
         f"confirmed in the Windows ARM64 top {TOP_COUNT:,}: {len(ranked):,}",
         f"- Previously tracked outside this selection: {len(remembered.keys() - ranked):,}",
-        f"- Tracked: {len(state)} ({len(additions)} new); latest with Windows ARM64: {len(supported)}",
+        f"- Tracked: {len(state)} ({len(additions)} new); with Windows ARM64: "
+        f"{len(supported) - len(prerelease_heals)} on latest stable, {len(prerelease_heals)} on a newer prerelease",
         f"- Regressions: {len(missing)}; inconclusive: {len(unknown)}; fetch errors: {len(errors)}",
     ]
     if len(ranked) < TOP_COUNT:
@@ -357,6 +366,11 @@ def main():
             f"- `{name}`: {release_link(name, latest)} (last known good: {release_link(name, baseline)})"
             for name, (latest, baseline) in sorted(missing.items())
         ]]
+    if prerelease_heals:
+        lines += ["", "### Windows ARM64 restored in a prerelease", *[
+            f"- `{name}`: {release_link(name, version)}"
+            for name, version in sorted(prerelease_heals.items())
+        ]]
     if unknown or errors:
         lines += ["", "### Incomplete observations (no issue changes for these packages)"]
         if unknown:
@@ -367,7 +381,8 @@ def main():
         lines.extend(
             f"- {action.capitalize()} `{name}`"
             + (f" ([#{number}](https://github.com/{REPOSITORY}/issues/{number}))" if number else "")
-            + (f": {release_link(name, supported[name])} provides Windows ARM64 again" if action == "close" else "")
+            + (f": {'prerelease ' if name in prerelease_heals else ''}"
+               f"{release_link(name, supported[name])} provides Windows ARM64 again" if action == "close" else "")
             for action, name, number, _ in changes
         )
     text = "\n".join(lines) + "\n"

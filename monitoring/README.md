@@ -114,15 +114,16 @@ the ranking month and flags incomplete selection.
 
 The monitor reads the PyPI file index, including older releases, so an existing
 regression can be found on the first scan. It compares stable releases by version
-and looks for a non-yanked wheel tagged `win_arm64`. Universal wheels, wheels
-for other platforms, and prereleases do not count. A newer stable release with
-no such wheel opens a package-named issue if an older release provided one.
-The monitor closes its own issue when the latest stable release has the wheel
-again, even if it was uploaded after the release; a later regression reopens
-the same issue. Failed or inconclusive reads leave issues unchanged. These
-issues are separate from the daily CI trackers.
+and looks for a non-yanked wheel tagged `win_arm64`. Universal wheels and wheels
+for other platforms do not count. If the latest stable release is missing the
+wheel but a higher-version prerelease provides it, the monitor reports recovery
+in the prerelease and does not open an issue (or closes an existing one).
+Prereleases do not qualify projects for tracking or replace the stable
+baseline. A newer stable release without the wheel can reopen the same issue
+if no prerelease newer than that release provides one. Failed or inconclusive
+reads leave issues unchanged. These issues are separate from the daily CI trackers.
 
-The workflow stores the highest known Windows ARM64 release for each tracked
+The workflow stores the highest known stable Windows ARM64 release for each tracked
 project in `state.json` on the `wheel-monitor-pypi-state` branch, created on the
 first write-enabled run. Keep that branch and the markers in the bot's issues
 intact. The token needs `contents: write` for that branch and `issues: write`
