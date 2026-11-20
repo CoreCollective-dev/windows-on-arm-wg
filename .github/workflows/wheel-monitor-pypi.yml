@@ -1,0 +1,43 @@
+name: PyPI Windows Arm64 wheel monitor (weekly)
+
+on:
+  schedule:
+    - cron: '43 15 * * 3'
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: Save package history and open, reopen, or close issues
+        type: boolean
+        default: false
+
+concurrency:
+  group: wheel-monitor-pypi
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    if: github.repository == 'CoreCollective-dev/windows-on-arm-wg' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r monitoring/pypi-requirements.txt
+      - name: Scan PyPI and reconcile package issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPLY: ${{ github.event_name == 'schedule' || inputs.apply }}
+        shell: bash
+        run: |
+          args=()
+          if [ "$APPLY" = "true" ]; then
+            args+=(--apply)
+          fi
+          python -m monitoring.pypi_wheels "${args[@]}"

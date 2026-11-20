@@ -1,5 +1,8 @@
 # Daily Windows Arm64 versus AMD64 wheel monitoring
 
+See also the [weekly PyPI wheel regression monitor](#weekly-pypi-wheel-regression-monitor),
+which checks published files rather than upstream CI.
+
 Deployment home: **CoreCollective-dev/windows-on-arm-wg**.
 Operational owner: **khmyznikov**.
 Tracking direction: one master issue and package sub-issues. Projects is deferred.
@@ -96,6 +99,49 @@ The [fleet.json](fleet.json) registry contains all 84 package dispositions and
 paired-platform selectors; [pilot.json](pilot.json) retains the five-package
 subset. The [inventory](inventory.json) is discovery provenance, not proof of
 coverage. Excluded, universal, archived and unresolved entries remain explicit.
+
+## Weekly PyPI wheel regression monitor
+
+The [weekly workflow](../.github/workflows/wheel-monitor-pypi.yml) runs Wednesdays
+at **15:43 UTC**. It uses [ClickPy's public PyPI dataset](https://clickpy.clickhouse.com/)
+to rank candidates by downloads in the last completed calendar month. Candidates
+include the top 5,000 projects by downloads regardless of wheel metadata, plus
+any project with a Windows ARM64 wheel in ClickPy's index. This catches popular
+projects even when ClickPy lacks their wheel data; below the top 5,000, projects
+can still be missed if their wheels aren't indexed. The monitor verifies
+candidates against PyPI in download order until it has 1,000 eligible projects
+with a history of stable, non-yanked Windows ARM64 wheels. Previously tracked
+projects stay on the watchlist when they fall out of the ranking.
+
+The monitor reads the PyPI file index, including older releases, so an existing
+regression can be found on the first scan. It compares stable releases by version
+and looks for a non-yanked wheel tagged `win_arm64`. If all non-yanked wheels
+on the latest stable release are platform-independent (`none-any`), the project
+doesn't take a ranking slot or count as monitored, and any open regression is
+closed as not planned. Its stable baseline is retained in case platform-specific
+wheels return. A source-only release or one that ships platform-specific wheels
+alongside a universal wheel remains eligible. If the latest stable release is
+missing the ARM64 wheel but a higher-version prerelease provides it, the monitor reports recovery
+in the prerelease and does not open an issue (or closes an existing one).
+Prereleases do not qualify projects for tracking or replace the stable
+baseline. A newer stable release without the wheel can reopen the same issue
+if no prerelease newer than that release provides one. Failed or inconclusive
+reads leave package issue status unchanged.
+
+The weekly monitor creates its own permanent master issue on the first
+write-enabled run, separate from the daily CI tracker. It links one issue per
+package regression as a GitHub sub-issue, including any existing issues created
+by the weekly monitor. Recovered issues stay linked when closed. The master has
+99 slots for direct package issues; further packages go under numbered groups
+in its overflow sub-issue so the hierarchy stays within GitHub's 100-child limit.
+
+The workflow stores the highest known stable Windows ARM64 release for each tracked
+project in `state.json` on the `wheel-monitor-pypi-state` branch, created on the
+first write-enabled run. Keep that branch and the markers in the bot's issues
+intact. The token needs `contents: write` for that branch and `issues: write`
+for the regression issues. Manual runs on `main` preview the scan and proposed
+issue changes without writing unless **apply** is enabled. The Actions summary
+shows new projects, regressions, and any incomplete observations.
 
 ## Current collection strategy: every run in the last 24 hours
 
