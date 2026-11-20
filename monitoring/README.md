@@ -115,14 +115,15 @@ projects stay on the watchlist when they fall out of the ranking.
 
 The monitor reads the PyPI file index, including older releases, so an existing
 regression can be found on the first scan. It compares stable releases by version
-and looks for a non-yanked wheel tagged `win_arm64`. If all non-yanked wheels
-on the latest stable release are platform-independent (`none-any`), the project
-doesn't take a ranking slot or count as monitored, and any open regression is
-closed as not planned. Its stable baseline is retained in case platform-specific
-wheels return. A source-only release or one that ships platform-specific wheels
-alongside a universal wheel remains eligible. If the latest stable release is
-missing the ARM64 wheel but a higher-version prerelease provides it, the monitor reports recovery
-in the prerelease and does not open an issue (or closes an existing one).
+and looks for a non-yanked wheel tagged `win_arm64`. If the latest stable release
+has no non-yanked platform-specific wheels (for example, it ships only source
+archives or universal wheels), the project doesn't take a ranking slot or count
+as monitored. Any open regression is closed as not planned, and the stable
+baseline is retained in case platform-specific wheels return. A single
+platform-specific wheel is enough to keep the project eligible. If the latest
+stable release ships platform-specific wheels but no ARM64 wheel, and a
+higher-version prerelease provides one, the monitor reports recovery in the
+prerelease and does not open an issue (or closes an existing one).
 Prereleases do not qualify projects for tracking or replace the stable
 baseline. A newer stable release without the wheel can reopen the same issue
 if no prerelease newer than that release provides one. Failed or inconclusive

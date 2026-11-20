@@ -88,7 +88,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
     def test_newer_prerelease_closes_regression_without_advancing_stable_baseline(self):
         name = "passagemath-categories"
         older_arm = "passagemath_categories-10.8.13-cp313-cp313-win_arm64.whl"
-        stable = "passagemath_categories-10.8.14.tar.gz"
+        stable = "passagemath_categories-10.8.14-cp313-cp313-win_amd64.whl"
         prerelease_arm = "passagemath_categories-10.8.15rc0-cp313-cp313-win_arm64.whl"
         newer_prerelease = "passagemath_categories-10.10.1a1.tar.gz"
         lookup = Mock(return_value=files(name, older_arm, stable, prerelease_arm, newer_prerelease))
@@ -102,7 +102,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
             ("close", name, 42, {"state": "closed", "state_reason": "completed"}),
         ])
 
-        lookup.return_value = files(name, stable, prerelease_arm, "passagemath_categories-10.8.15.tar.gz")
+        lookup.return_value = files(name, stable, prerelease_arm, "passagemath_categories-10.8.15-cp313-cp313-win_amd64.whl")
         _, missing, supported, _, _, _ = monitor.collect(set(), state, lookup)
         tracker[name]["state"] = "closed"
         (action, _, number, _), = monitor.issue_changes(tracker, missing, supported)
@@ -111,7 +111,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
     def test_yanked_or_incompatible_prerelease_does_not_clear_regression(self):
         name = "example"
         release = files(
-            name, "example-1.0-cp313-cp313-win_arm64.whl", "example-2.0.tar.gz",
+            name, "example-1.0-cp313-cp313-win_arm64.whl", "example-2.0-cp313-cp313-win_amd64.whl",
             ("example-3.0rc1-cp313-cp313-win_arm64.whl", True),
             "example-3.0rc1-py3-none-any.whl",
             "example-3.0rc1-cp313-cp313-win_amd64.whl",
@@ -151,10 +151,36 @@ class PyPIWheelMonitorTests(unittest.TestCase):
             ("close", "example", 42, {"state": "closed", "state_reason": "not_planned"}),
         ])
 
-    def test_platform_specific_or_source_only_latest_release_can_still_regress(self):
+    def test_source_only_release_is_excluded_but_regression_resumes_if_other_wheels_return(self):
+        name = "benchmarkfcns"
+        history = ("benchmarkfcns-3.1.0-cp313-cp313-win_arm64.whl", "benchmarkfcns-3.3.0.tar.gz")
+        source = "benchmarkfcns-4.1.0.tar.gz"
+        lookup = Mock(return_value=files(name, source, *history))
+        remembered = {name: "3.1.0"}
+        self.assertEqual(monitor.discover([name], {}, lookup).selected, set())
+        self.assertEqual(monitor.discover([name], remembered, lookup).selected, set())
+        state, missing, supported, _, _, excluded = monitor.collect(set(), remembered, lookup)
+        self.assertEqual(state, remembered)
+        self.assertEqual(missing, {})
+        self.assertEqual(supported, {})
+        self.assertEqual(excluded, {name: monitor.Version("4.1.0")})
+        tracker = {name: {"number": 42, "state": "open"}}
+        self.assertEqual(list(monitor.issue_changes(tracker, missing, supported, excluded)), [
+            ("close", name, 42, {"state": "closed", "state_reason": "not_planned"}),
+        ])
+
+        # A late upload for another platform makes the same stable release eligible again.
+        lookup.return_value = files(name, source, *history, "benchmarkfcns-4.1.0-py3-none-win_amd64.whl")
+        _, missing, supported, _, _, excluded = monitor.collect(set(), state, lookup)
+        self.assertEqual(excluded, {})
+        tracker[name]["state"] = "closed"
+        self.assertEqual([change[:3] for change in monitor.issue_changes(tracker, missing, supported, excluded)],
+                         [("reopen", name, 42)])
+
+    def test_one_platform_specific_wheel_is_enough_to_detect_regression(self):
         for latest in (
             ["example-2.0-cp313-cp313-win_amd64.whl", "example-2.0-py3-none-any.whl"],
-            ["example-2.0.tar.gz"],
+            ["example-2.0-py3-none-win_amd64.whl"],
         ):
             with self.subTest(latest=latest):
                 release = files("example", "example-1.0-cp313-cp313-win_arm64.whl", *latest)
@@ -193,7 +219,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
         ])
 
         # Keep the old baseline even if the package removes its older wheels.
-        lookup.return_value = files(name, "cryptography-48.0.0.tar.gz")
+        lookup.return_value = files(name, "cryptography-48.0.0-cp311-abi3-win_amd64.whl")
         state, missing, supported, _, _, _ = monitor.collect(set(), state, lookup_project)
         issue["state"] = "closed"
         (action, _, number, payload), = monitor.issue_changes({name: issue}, missing, supported)
@@ -208,7 +234,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
                 raise MonitorError("HTTP 503")
             if name == "yanked":
                 return files(name, ("yanked-1.0-py3-none-win_arm64.whl", True))
-            return files(name, "same_version-1.0.tar.gz")
+            return files(name, "same_version-1.0-py3-none-win_amd64.whl")
 
         state, missing, supported, unknown, errors, _ = monitor.collect(set(), remembered, lookup)
         self.assertEqual(state, remembered)

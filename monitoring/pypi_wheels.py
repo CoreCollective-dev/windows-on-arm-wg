@@ -45,7 +45,7 @@ class Releases:
     latest: Version | None
     supported: Version | None
     prerelease_with_wheel: Version | None = None
-    latest_universal_only: bool = False
+    latest_has_no_platform_wheels: bool = False
 
 
 @dataclass(frozen=True)
@@ -131,7 +131,7 @@ def release_status(name, data):
             or not isinstance(data.get("files"), list)):
         raise MonitorError(f"Unexpected PyPI file index for {name}")
     latest = supported = prerelease_with_wheel = None
-    latest_has_universal = latest_has_other_wheel = False
+    latest_has_platform_wheel = False
     for file in data["files"]:
         if (not isinstance(file, dict) or not isinstance(file.get("filename"), str)
                 or not isinstance(file.get("yanked"), (bool, str))):
@@ -139,13 +139,12 @@ def release_status(name, data):
         if file["yanked"] is not False:
             continue
         filename = file["filename"]
-        arm64 = False
-        universal = None
+        arm64 = platform_wheel = False
         try:
             if filename.endswith(".whl"):
                 project, version, _, tags = parse_wheel_filename(filename)
                 arm64 = any(tag.platform == "win_arm64" for tag in tags)
-                universal = all(tag.platform == "any" and tag.abi == "none" for tag in tags)
+                platform_wheel = any(tag.platform != "any" for tag in tags)
             else:
                 project, version = parse_sdist_filename(filename)
         except (InvalidSdistFilename, InvalidWheelFilename):
@@ -158,13 +157,12 @@ def release_status(name, data):
             continue
         if latest is None or version > latest:
             latest = version
-            latest_has_universal = latest_has_other_wheel = False
+            latest_has_platform_wheel = False
         if version == latest:
-            latest_has_universal |= universal is True
-            latest_has_other_wheel |= universal is False
+            latest_has_platform_wheel |= platform_wheel
         if arm64 and (supported is None or version > supported):
             supported = version
-    return Releases(latest, supported, prerelease_with_wheel, latest_has_universal and not latest_has_other_wheel)
+    return Releases(latest, supported, prerelease_with_wheel, latest is not None and not latest_has_platform_wheel)
 
 
 def observe(name):
@@ -194,7 +192,7 @@ def discover(ranking, remembered, lookup=observe, *, limit=TOP_COUNT):
                 if isinstance(release, MonitorError):
                     unresolved[name] = str(release)
                     continue
-                if release.latest_universal_only or (name not in remembered and release.supported is None):
+                if release.latest_has_no_platform_wheels or (name not in remembered and release.supported is None):
                     continue
                 qualified += 1
                 # Unread projects above this one could all qualify.
@@ -221,7 +219,7 @@ def collect(ranked, remembered, lookup=observe, *, observations=None):
             if release.latest is None:
                 unknown.append(name)
                 continue
-            if release.latest_universal_only:
+            if release.latest_has_no_platform_wheels:
                 excluded[name] = release.latest
                 continue
             baseline = Version(state[name]) if name in state else None
@@ -366,8 +364,9 @@ def parent_payload(key):
         title = "PyPI Windows ARM64 wheel regressions"
         description = (
             "The weekly PyPI wheel monitor tracks missing Windows ARM64 wheels as sub-issues here.\n\n"
-            "This issue stays open. Package issues close when PyPI publishes a Windows ARM64 wheel "
-            "on the latest stable release or a newer prerelease, and reopen if support drops again.\n\n"
+            "This issue stays open. Package issues close if a Windows ARM64 wheel returns on the latest "
+            "stable release or a newer prerelease, or if the latest stable release stops shipping "
+            "platform-specific wheels altogether.\n\n"
             f"[Weekly workflow](https://github.com/{REPOSITORY}/actions/workflows/wheel-monitor-pypi.yml)"
         )
     elif key == "overflow":
@@ -419,10 +418,12 @@ def issue_changes(trackers, missing, supported, excluded=()):
         body = (
             f"<!-- pypi-arm64-wheel-monitor:package={name} -->\n\n"
             f"The latest stable PyPI release of `{name}`, {release_link(name, latest)}, "
-            "has no non-yanked `win_arm64` wheel, and no newer prerelease provides one.\n\n"
+            "ships platform-specific wheels but has no non-yanked `win_arm64` wheel, "
+            "and no newer prerelease provides one.\n\n"
             f"The most recent stable release known to provide one is {release_link(name, baseline)}.\n\n"
-            "The weekly PyPI wheel monitor will close this issue when the latest stable "
-            "release or a newer prerelease provides a `win_arm64` wheel."
+            "The weekly PyPI wheel monitor will close this issue if a `win_arm64` wheel returns on the "
+            "latest stable release or a newer prerelease, or if the latest stable release stops shipping "
+            "platform-specific wheels altogether."
         )
         if issue:
             yield "reopen", name, issue["number"], {"state": "open", "body": body}
@@ -504,7 +505,7 @@ def main():
             for name, version in sorted(prerelease_heals.items())
         ]]
     if excluded:
-        lines += ["", "### Previously tracked packages now shipping only universal wheels", *[
+        lines += ["", "### Previously tracked packages with no platform-specific wheels on the latest stable release", *[
             f"- `{name}`: {release_link(name, version)} (excluded from monitoring)"
             for name, version in sorted(excluded.items())
         ]]
@@ -521,7 +522,7 @@ def main():
                 line += f" ([#{number}](https://github.com/{REPOSITORY}/issues/{number}))"
             if action == "close":
                 if name in excluded:
-                    line += ": only universal wheels; no longer monitored"
+                    line += ": no platform-specific wheels on the latest stable release; no longer monitored"
                 else:
                     channel = "prerelease " if name in prerelease_heals else ""
                     line += f": {channel}{release_link(name, supported[name])} provides Windows ARM64 again"
