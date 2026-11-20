@@ -121,7 +121,14 @@ in the prerelease and does not open an issue (or closes an existing one).
 Prereleases do not qualify projects for tracking or replace the stable
 baseline. A newer stable release without the wheel can reopen the same issue
 if no prerelease newer than that release provides one. Failed or inconclusive
-reads leave issues unchanged. These issues are separate from the daily CI trackers.
+reads leave package issue status unchanged.
+
+The weekly monitor creates its own permanent master issue on the first
+write-enabled run, separate from the daily CI tracker. It links one issue per
+package regression as a GitHub sub-issue, including any existing issues created
+by the weekly monitor. Recovered issues stay linked when closed. The master has
+99 slots for direct package issues; further packages go under numbered groups
+in its overflow sub-issue so the hierarchy stays within GitHub's 100-child limit.
 
 The workflow stores the highest known stable Windows ARM64 release for each tracked
 project in `state.json` on the `wheel-monitor-pypi-state` branch, created on the

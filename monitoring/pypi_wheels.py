@@ -35,6 +35,8 @@ STATE_BRANCH = "wheel-monitor-pypi-state"
 STATE_FILE = "state.json"
 BOT = "github-actions[bot]"
 MARKER = re.compile(r"<!-- pypi-arm64-wheel-monitor:package=([a-z0-9-]+) -->")
+PARENT_MARKER = re.compile(r"<!-- pypi-arm64-wheel-monitor:(master|overflow|group=[1-9][0-9]*) -->")
+SUB_ISSUE_LIMIT = 100
 
 
 @dataclass(frozen=True)
@@ -272,18 +274,116 @@ def write_state(packages, sha):
 
 
 def tracked_issues(issues):
-    trackers = {}
+    parents, packages = {}, {}
     for issue in issues:
         if "pull_request" in issue or (issue.get("user") or {}).get("login") != BOT:
             continue
-        match = MARKER.fullmatch((issue.get("body") or "").partition("\n")[0].rstrip("\r"))
-        if not match:
-            continue
-        name = match[1]
-        if name in trackers:
-            raise MonitorError(f"Multiple PyPI wheel tracker issues for {name}")
-        trackers[name] = issue
-    return trackers
+        marker = (issue.get("body") or "").partition("\n")[0].rstrip("\r")
+        for pattern, found in ((PARENT_MARKER, parents), (MARKER, packages)):
+            match = pattern.fullmatch(marker)
+            if match:
+                key = match[1]
+                if key in found:
+                    raise MonitorError(f"Multiple PyPI wheel tracker issues for {key}")
+                found[key] = issue
+                break
+    return parents, packages
+
+
+def sub_issue_ids(api, issue):
+    return {child["id"] for child in api.pages(f"repos/{REPOSITORY}/issues/{issue['number']}/sub_issues")}
+
+
+def plan_hierarchy(api, parents, packages, new_packages):
+    master = parents.get("master")
+    if master and master["state"] != "open":
+        raise MonitorError("The PyPI wheel master issue is closed; reopen it before syncing")
+    children = {key: sub_issue_ids(api, issue) for key, issue in parents.items()}
+    sizes = {key: len(ids) for key, ids in children.items()}
+    links = {}
+
+    def link(key, parent, issue=None):
+        if issue and issue["id"] in children.get(parent, ()):
+            return
+        if sizes.get(parent, 0) >= SUB_ISSUE_LIMIT:
+            raise MonitorError(f"PyPI wheel tracker {parent} is out of sub-issue slots")
+        links[key] = parent
+        sizes[parent] = sizes.get(parent, 0) + 1
+
+    groups = sorted(key for key in parents if key.startswith("group="))
+    if "overflow" in parents or groups:
+        link("overflow", "master", parents.get("overflow"))
+    for group in groups:
+        link(group, "overflow", parents[group])
+
+    linked_packages = set().union(*(children.get(key, ()) for key in ["master", *groups]))
+    unlinked = new_packages | {name for name, issue in packages.items() if issue["id"] not in linked_packages}
+    for name in sorted(unlinked):
+        # Reserve one of the master's direct slots for the overflow parent.
+        if sizes.get("master", 0) < SUB_ISSUE_LIMIT - 1 and "overflow" not in parents and "overflow" not in links:
+            parent = "master"
+        else:
+            if "overflow" not in parents and "overflow" not in links:
+                link("overflow", "master")
+            for index in range(1, SUB_ISSUE_LIMIT + 1):
+                group = f"group={index}"
+                if sizes.get(group, 0) >= SUB_ISSUE_LIMIT:
+                    continue
+                if group not in parents and group not in links:
+                    if sizes.get("overflow", 0) >= SUB_ISSUE_LIMIT:
+                        continue
+                    link(group, "overflow")
+                parent = group
+                break
+            else:
+                raise MonitorError("The PyPI wheel overflow tracker is out of sub-issue slots")
+        link(f"package={name}", parent)
+    return links
+
+
+def parent_payload(key):
+    if key == "master":
+        title = "PyPI Windows ARM64 wheel regressions"
+        description = (
+            "The weekly PyPI wheel monitor tracks missing Windows ARM64 wheels as sub-issues here.\n\n"
+            "This issue stays open. Package issues close when PyPI publishes a Windows ARM64 wheel "
+            "on the latest stable release or a newer prerelease, and reopen if support drops again.\n\n"
+            f"[Weekly workflow](https://github.com/{REPOSITORY}/actions/workflows/wheel-monitor-pypi.yml)"
+        )
+    elif key == "overflow":
+        title = "PyPI Windows ARM64 wheel regressions: overflow"
+        description = "Additional package regressions are grouped under this issue to fit GitHub's sub-issue limit."
+    else:
+        title = f"PyPI Windows ARM64 wheel regressions: overflow group {key.partition('=')[2]}"
+        description = "Package regression trackers for the weekly PyPI Windows ARM64 wheel monitor."
+    return {"title": title, "body": f"<!-- pypi-arm64-wheel-monitor:{key} -->\n\n{description}"}
+
+
+def apply_issue_changes(api, parents, packages, links, changes):
+    issues = {**parents, **{f"package={name}": issue for name, issue in packages.items()}}
+    new_packages = {f"package={name}": payload for action, name, _, payload in changes if action == "open"}
+    if "master" not in issues:
+        issues["master"] = api.write("POST", "issues", parent_payload("master"))
+
+    expected = {}
+    for child, parent in links.items():
+        if child not in issues:
+            payload = new_packages[child] if child.startswith("package=") else parent_payload(child)
+            issues[child] = api.write("POST", "issues", payload)
+        child_id = issues[child]["id"]
+        # Never replace another issue's existing parent.
+        api.write("POST", f"issues/{issues[parent]['number']}/sub_issues", {"sub_issue_id": child_id})
+        expected.setdefault(parent, set()).add(child_id)
+
+    for parent, ids in expected.items():
+        if not ids.issubset(sub_issue_ids(api, issues[parent])):
+            raise MonitorError(f"Some sub-issues were not linked under PyPI wheel tracker {parent}")
+
+    for action, name, number, payload in changes:
+        if action != "open":
+            api.write("PATCH", f"issues/{number}", payload)
+        print(f"{action.capitalize()} issue for {name}")
+    print(f"PyPI wheel master issue: https://github.com/{REPOSITORY}/issues/{issues['master']['number']}")
 
 
 def release_link(name, version):
@@ -332,10 +432,11 @@ def main():
     state, missing, supported, unknown, errors = collect(
         ranked, remembered, observations=discovery.observations,
     )
-    trackers = tracked_issues(api.pages(f"repos/{REPOSITORY}/issues", params={"state": "all"}))
+    parents, trackers = tracked_issues(api.pages(f"repos/{REPOSITORY}/issues", params={"state": "all"}))
     if trackers.keys() - remembered.keys():
         raise MonitorError(f"Existing tracker issues are missing from {STATE_BRANCH}; recover the monitor state")
     changes = sorted(issue_changes(trackers, missing, supported))
+    links = plan_hierarchy(api, parents, trackers, {name for action, name, _, _ in changes if action == "open"})
     additions = state.keys() - remembered.keys()
     prerelease_heals = {name: version for name, version in supported.items() if version.is_prerelease}
     lines = [
@@ -349,6 +450,15 @@ def main():
         f"{len(supported) - len(prerelease_heals)} on latest stable, {len(prerelease_heals)} on a newer prerelease",
         f"- Regressions: {len(missing)}; inconclusive: {len(unknown)}; fetch errors: {len(errors)}",
     ]
+    master = parents.get("master")
+    if master:
+        number = master["number"]
+        lines.append(f"- Master issue: [#{number}](https://github.com/{REPOSITORY}/issues/{number})")
+    else:
+        lines.append("- Master issue: create on the first write-enabled run")
+    if links:
+        lines.append(f"- Planned sub-issue links: {sum(key.startswith('package=') for key in links)} packages; "
+                     f"{sum(not key.startswith('package=') for key in links)} overflow trackers")
     if len(ranked) < TOP_COUNT:
         lines += ["", f"Could not confirm all {TOP_COUNT:,} places in the Windows ARM64 ranking."]
         if discovery.unresolved:
@@ -394,12 +504,7 @@ def main():
     if args.apply:
         if state != remembered:
             write_state(state, sha)
-        for action, name, number, payload in changes:
-            if number is None:
-                api.write("POST", "issues", payload)
-            else:
-                api.write("PATCH", f"issues/{number}", payload)
-            print(f"{action.capitalize()} issue for {name}")
+        apply_issue_changes(api, parents, trackers, links, changes)
     return int(bool(errors) or len(ranked) < TOP_COUNT)
 
 

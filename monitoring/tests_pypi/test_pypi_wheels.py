@@ -6,7 +6,7 @@ import os
 import subprocess
 import unittest
 from datetime import date
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 from monitoring import pypi_wheels as monitor
 from monitoring.monitor import APIError, MonitorError
@@ -189,9 +189,67 @@ class PyPIWheelMonitorTests(unittest.TestCase):
             {**tracker, "number": 3, "pull_request": {}},
             tracker,
         ]
-        self.assertEqual(monitor.tracked_issues(issues), {"example": tracker})
+        master = {
+            "number": 5, "body": "<!-- pypi-arm64-wheel-monitor:master -->",
+            "user": {"login": "github-actions[bot]"},
+        }
+        issues.append(master)
+        self.assertEqual(monitor.tracked_issues(issues), ({"master": master}, {"example": tracker}))
         with self.assertRaises(MonitorError):
-            monitor.tracked_issues([tracker, {**tracker, "number": 5}])
+            monitor.tracked_issues([tracker, {**tracker, "number": 6}])
+        with self.assertRaises(MonitorError):
+            monitor.tracked_issues([master, {**master, "number": 6}])
+
+    def test_first_apply_creates_master_links_new_issue_and_adopts_closed_issue(self):
+        api = Mock()
+        packages = {"legacy": {"number": 3, "id": 103, "state": "closed"}}
+        missing = {"new": (monitor.Version("2.0"), monitor.Version("1.0"))}
+        changes = list(monitor.issue_changes(packages, missing, {}))
+        links = monitor.plan_hierarchy(api, {}, packages, {"new"})
+        self.assertEqual(links, {"package=legacy": "master", "package=new": "master"})
+
+        api.write.side_effect = [{"number": 4, "id": 104}, {}, {"number": 5, "id": 105}, {}]
+        api.pages.return_value = [{"id": 103}, {"id": 105}]
+        with contextlib.redirect_stdout(io.StringIO()):
+            monitor.apply_issue_changes(api, {}, packages, links, changes)
+        self.assertEqual(api.write.call_args_list, [
+            call("POST", "issues", monitor.parent_payload("master")),
+            call("POST", "issues/4/sub_issues", {"sub_issue_id": 103}),
+            call("POST", "issues", changes[0][3]),
+            call("POST", "issues/4/sub_issues", {"sub_issue_id": 105}),
+        ])
+
+        master = {"number": 4, "id": 104, "state": "open"}
+        packages["new"] = {"number": 5, "id": 105, "state": "open"}
+        self.assertEqual(monitor.plan_hierarchy(api, {"master": master}, packages, set()), {})
+
+    def test_hierarchy_reserves_overflow_slot_and_splits_groups_at_github_limit(self):
+        master = {"number": 1, "id": 101, "state": "open"}
+        api = Mock()
+        api.pages.return_value = [{"id": i, "state": "closed"} for i in range(102, 200)]
+        names = {f"pkg{i:03}" for i in range(103)}
+        links = monitor.plan_hierarchy(api, {"master": master}, {}, names)
+        self.assertEqual(links["package=pkg000"], "master")
+        self.assertEqual(links["overflow"], "master")
+        self.assertEqual(links["group=1"], "overflow")
+        self.assertEqual(links["group=2"], "overflow")
+        self.assertEqual({name for name, parent in links.items() if parent == "group=1"},
+                         {f"package=pkg{i:03}" for i in range(1, 101)})
+        self.assertEqual({name for name, parent in links.items() if parent == "group=2"},
+                         {"package=pkg101", "package=pkg102"})
+
+    def test_reconciles_detached_overflow_trackers_before_linking_packages(self):
+        api = Mock()
+        api.pages.side_effect = [[{"id": i} for i in range(104, 203)], [], []]
+        parents = {
+            "master": {"number": 1, "id": 101, "state": "open"},
+            "overflow": {"number": 2, "id": 102},
+            "group=1": {"number": 3, "id": 103},
+        }
+        self.assertEqual(
+            list(monitor.plan_hierarchy(api, parents, {}, {"example"}).items()),
+            [("overflow", "master"), ("group=1", "overflow"), ("package=example", "group=1")],
+        )
 
     def test_state_branch_can_be_initialized_then_updated_without_touching_main(self):
         packages = {"example": "1.0"}
@@ -245,5 +303,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
         ):
             self.assertEqual(monitor.main(), 0)
         self.assertIn("Open `example`", output.getvalue())
+        self.assertIn("Master issue: create", output.getvalue())
+        self.assertIn("Planned sub-issue links: 1 packages", output.getvalue())
         save.assert_not_called()
         api.write.assert_not_called()
