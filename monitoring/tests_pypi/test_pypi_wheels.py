@@ -62,7 +62,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
         lookup = Mock(return_value=arm)
         remembered = {"outside": "1.0"}
         discovery = monitor.discover(["inside"], remembered, lookup)
-        state, _, supported, _, _ = monitor.collect(
+        state, _, supported, _, _, _ = monitor.collect(
             discovery.selected, remembered, lookup, observations=discovery.observations,
         )
         self.assertEqual(state, {"inside": "2.0", "outside": "2.0"})
@@ -93,7 +93,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
         newer_prerelease = "passagemath_categories-10.10.1a1.tar.gz"
         lookup = Mock(return_value=files(name, older_arm, stable, prerelease_arm, newer_prerelease))
 
-        state, missing, supported, _, _ = monitor.collect({name}, {}, lookup)
+        state, missing, supported, _, _, _ = monitor.collect({name}, {}, lookup)
         self.assertEqual(state, {name: "10.8.13"})
         self.assertEqual(missing, {})
         self.assertEqual(supported, {name: monitor.Version("10.8.15rc0")})
@@ -103,7 +103,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
         ])
 
         lookup.return_value = files(name, stable, prerelease_arm, "passagemath_categories-10.8.15.tar.gz")
-        _, missing, supported, _, _ = monitor.collect(set(), state, lookup)
+        _, missing, supported, _, _, _ = monitor.collect(set(), state, lookup)
         tracker[name]["state"] = "closed"
         (action, _, number, _), = monitor.issue_changes(tracker, missing, supported)
         self.assertEqual((action, number), ("reopen", 42))
@@ -116,7 +116,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
             "example-3.0rc1-py3-none-any.whl",
             "example-3.0rc1-cp313-cp313-win_amd64.whl",
         )
-        _, missing, supported, _, _ = monitor.collect({name}, {}, Mock(return_value=release))
+        _, missing, supported, _, _, _ = monitor.collect({name}, {}, Mock(return_value=release))
         self.assertIn(name, missing)
         self.assertEqual(supported, {})
 
@@ -125,6 +125,43 @@ class PyPIWheelMonitorTests(unittest.TestCase):
         release = files(name, "example-1.0.tar.gz", "example-2.0rc1-cp313-cp313-win_arm64.whl")
         self.assertEqual(monitor.discover([name], {}, Mock(return_value=release)).selected, set())
 
+    def test_universal_only_release_does_not_count_and_retires_open_regression(self):
+        baseline = "example-1.0-cp313-cp313-win_arm64.whl"
+        release = files(
+            "example", "example-2.0-py3-none-any.whl", baseline, "example-2.0.tar.gz",
+            ("example-2.0-cp313-cp313-win_amd64.whl", True),
+        )
+        next_candidate = files("next", "next-3.0-cp313-cp313-win_arm64.whl")
+
+        def lookup(name):
+            return release if name == "example" else next_candidate
+
+        remembered = {"example": "1.0"}
+        discovery = monitor.discover(["example", "next"], remembered, lookup, limit=1)
+        self.assertEqual(discovery.selected, {"next"})
+        state, missing, supported, _, _, excluded = monitor.collect(
+            discovery.selected, remembered, lookup, observations=discovery.observations,
+        )
+        self.assertEqual(state, {"example": "1.0", "next": "3.0"})
+        self.assertEqual(missing, {})
+        self.assertEqual(supported, {"next": monitor.Version("3.0")})
+        self.assertEqual(excluded, {"example": monitor.Version("2.0")})
+        tracker = {"example": {"number": 42, "state": "open"}}
+        self.assertEqual(list(monitor.issue_changes(tracker, missing, supported, excluded)), [
+            ("close", "example", 42, {"state": "closed", "state_reason": "not_planned"}),
+        ])
+
+    def test_platform_specific_or_source_only_latest_release_can_still_regress(self):
+        for latest in (
+            ["example-2.0-cp313-cp313-win_amd64.whl", "example-2.0-py3-none-any.whl"],
+            ["example-2.0.tar.gz"],
+        ):
+            with self.subTest(latest=latest):
+                release = files("example", "example-1.0-cp313-cp313-win_arm64.whl", *latest)
+                _, missing, _, _, _, excluded = monitor.collect({"example"}, {}, Mock(return_value=release))
+                self.assertIn("example", missing)
+                self.assertEqual(excluded, {})
+
     def test_first_scan_finds_existing_loss_and_later_loss_reuses_tracker(self):
         name = "cryptography"
         v46_arm = "cryptography-46.0.0-cp311-abi3-win_arm64.whl"
@@ -132,7 +169,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
         v47_arm = "cryptography-47.0.0-cp311-abi3-win_arm64.whl"
         lookup = Mock(return_value=files(name, v46_arm, v47_x64))
 
-        state, missing, supported, _, _ = monitor.collect({name}, {}, lookup)
+        state, missing, supported, _, _, _ = monitor.collect({name}, {}, lookup)
         self.assertEqual(state, {name: "46.0.0"})
         (action, _, number, payload), = monitor.issue_changes({}, missing, supported)
         self.assertEqual((action, number), ("open", None))
@@ -149,7 +186,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
         def lookup_project(project):
             return lookup(project) if project == name else newcomer
 
-        state, missing, supported, _, _ = monitor.collect({"newcomer"}, state, lookup_project)
+        state, missing, supported, _, _, _ = monitor.collect({"newcomer"}, state, lookup_project)
         self.assertEqual(state, {name: "47.0.0", "newcomer": "1.0"})
         self.assertEqual(list(monitor.issue_changes({name: issue}, missing, supported)), [
             ("close", name, 42, {"state": "closed", "state_reason": "completed"}),
@@ -157,7 +194,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
 
         # Keep the old baseline even if the package removes its older wheels.
         lookup.return_value = files(name, "cryptography-48.0.0.tar.gz")
-        state, missing, supported, _, _ = monitor.collect(set(), state, lookup_project)
+        state, missing, supported, _, _, _ = monitor.collect(set(), state, lookup_project)
         issue["state"] = "closed"
         (action, _, number, payload), = monitor.issue_changes({name: issue}, missing, supported)
         self.assertEqual((action, number), ("reopen", 42))
@@ -173,7 +210,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
                 return files(name, ("yanked-1.0-py3-none-win_arm64.whl", True))
             return files(name, "same_version-1.0.tar.gz")
 
-        state, missing, supported, unknown, errors = monitor.collect(set(), remembered, lookup)
+        state, missing, supported, unknown, errors, _ = monitor.collect(set(), remembered, lookup)
         self.assertEqual(state, remembered)
         self.assertEqual(set(unknown), {"yanked", "same-version"})
         self.assertEqual(errors, {"unavailable": "HTTP 503"})
@@ -288,7 +325,7 @@ class PyPIWheelMonitorTests(unittest.TestCase):
         api = Mock()
         api.pages.return_value = []
         latest, baseline = monitor.Version("2.0"), monitor.Version("1.0")
-        scan = ({"example": "1.0"}, {"example": (latest, baseline)}, {}, [], {})
+        scan = ({"example": "1.0"}, {"example": (latest, baseline)}, {}, [], {}, {})
         with (
             patch("sys.argv", ["pypi_wheels"]),
             patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": ""}),

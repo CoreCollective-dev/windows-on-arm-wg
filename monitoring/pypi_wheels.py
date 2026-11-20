@@ -30,6 +30,7 @@ from monitoring.monitor import APIError, MonitorError, REPOSITORY, literal
 
 RANKING_INDEX = "https://sql-clickhouse.clickhouse.com/"
 TOP_COUNT = 1000
+UNFILTERED_RANK_DEPTH = 5000
 DISCOVERY_BATCH = 64
 STATE_BRANCH = "wheel-monitor-pypi-state"
 STATE_FILE = "state.json"
@@ -44,6 +45,7 @@ class Releases:
     latest: Version | None
     supported: Version | None
     prerelease_with_wheel: Version | None = None
+    latest_universal_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -90,18 +92,27 @@ def package_name(value):
 
 
 def ranked_packages(month):
-    # The bulk index narrows discovery; PyPI itself verifies each candidate's release files.
+    # ClickPy's wheel metadata can be incomplete, even for popular projects.
     query = f"""
-        WITH wheel_projects AS (
+        WITH downloads AS (
+            SELECT project, sum(count) AS download_count
+            FROM pypi.pypi_downloads_per_month
+            WHERE month = '{month.isoformat()}'
+            GROUP BY project
+        ), popular_projects AS (
+            SELECT project FROM downloads
+            ORDER BY download_count DESC, project
+            LIMIT {UNFILTERED_RANK_DEPTH}
+        ), wheel_projects AS (
             SELECT DISTINCT lower(replaceRegexpAll(name, '[-_.]+', '-')) AS project
             FROM pypi.projects
             WHERE endsWith(filename, '.whl')
               AND has(splitByChar('.', arrayElement(splitByChar('-', filename), -1)), 'win_arm64')
         )
-        SELECT project, sum(count) AS download_count
-        FROM pypi.pypi_downloads_per_month
-        WHERE month = '{month.isoformat()}' AND project IN (SELECT project FROM wheel_projects)
-        GROUP BY project
+        SELECT project, download_count
+        FROM downloads
+        WHERE project IN (SELECT project FROM popular_projects)
+           OR project IN (SELECT project FROM wheel_projects)
         ORDER BY download_count DESC, project
     """
     params = urlencode({"query": query, "user": "demo", "default_format": "JSON"})
@@ -120,6 +131,7 @@ def release_status(name, data):
             or not isinstance(data.get("files"), list)):
         raise MonitorError(f"Unexpected PyPI file index for {name}")
     latest = supported = prerelease_with_wheel = None
+    latest_has_universal = latest_has_other_wheel = False
     for file in data["files"]:
         if (not isinstance(file, dict) or not isinstance(file.get("filename"), str)
                 or not isinstance(file.get("yanked"), (bool, str))):
@@ -128,10 +140,12 @@ def release_status(name, data):
             continue
         filename = file["filename"]
         arm64 = False
+        universal = None
         try:
             if filename.endswith(".whl"):
                 project, version, _, tags = parse_wheel_filename(filename)
                 arm64 = any(tag.platform == "win_arm64" for tag in tags)
+                universal = all(tag.platform == "any" and tag.abi == "none" for tag in tags)
             else:
                 project, version = parse_sdist_filename(filename)
         except (InvalidSdistFilename, InvalidWheelFilename):
@@ -144,9 +158,13 @@ def release_status(name, data):
             continue
         if latest is None or version > latest:
             latest = version
+            latest_has_universal = latest_has_other_wheel = False
+        if version == latest:
+            latest_has_universal |= universal is True
+            latest_has_other_wheel |= universal is False
         if arm64 and (supported is None or version > supported):
             supported = version
-    return Releases(latest, supported, prerelease_with_wheel)
+    return Releases(latest, supported, prerelease_with_wheel, latest_has_universal and not latest_has_other_wheel)
 
 
 def observe(name):
@@ -173,12 +191,11 @@ def discover(ranking, remembered, lookup=observe, *, limit=TOP_COUNT):
             observations.update(results)
             for name, release in results.items():
                 depth += 1
-                if name not in remembered:
-                    if isinstance(release, MonitorError):
-                        unresolved[name] = str(release)
-                        continue
-                    if release.supported is None:
-                        continue
+                if isinstance(release, MonitorError):
+                    unresolved[name] = str(release)
+                    continue
+                if release.latest_universal_only or (name not in remembered and release.supported is None):
+                    continue
                 qualified += 1
                 # Unread projects above this one could all qualify.
                 if qualified + len(unresolved) <= limit:
@@ -190,7 +207,7 @@ def discover(ranking, remembered, lookup=observe, *, limit=TOP_COUNT):
 
 def collect(ranked, remembered, lookup=observe, *, observations=None):
     names = sorted(ranked | remembered.keys())
-    state, missing, supported, unknown, errors = remembered.copy(), {}, {}, [], {}
+    state, missing, supported, unknown, errors, excluded = remembered.copy(), {}, {}, [], {}, {}
     observations = {} if observations is None else observations
 
     def recorded(name):
@@ -204,6 +221,9 @@ def collect(ranked, remembered, lookup=observe, *, observations=None):
             if release.latest is None:
                 unknown.append(name)
                 continue
+            if release.latest_universal_only:
+                excluded[name] = release.latest
+                continue
             baseline = Version(state[name]) if name in state else None
             if release.supported is not None and (baseline is None or release.supported > baseline):
                 baseline = release.supported
@@ -216,7 +236,7 @@ def collect(ranked, remembered, lookup=observe, *, observations=None):
                 missing[name] = (release.latest, baseline)
             elif baseline is not None:
                 unknown.append(name)
-    return state, missing, supported, unknown, errors
+    return state, missing, supported, unknown, errors, excluded
 
 
 def load_state(api):
@@ -391,7 +411,7 @@ def release_link(name, version):
     return f"[{version}](https://pypi.org/project/{name}/{url_version}/#files)"
 
 
-def issue_changes(trackers, missing, supported):
+def issue_changes(trackers, missing, supported, excluded=()):
     for name, (latest, baseline) in missing.items():
         issue = trackers.get(name)
         if issue and issue["state"] == "open":
@@ -408,10 +428,11 @@ def issue_changes(trackers, missing, supported):
             yield "reopen", name, issue["number"], {"state": "open", "body": body}
         else:
             yield "open", name, None, {"title": f"{name}: PyPI Windows ARM64 wheel missing", "body": body}
-    for name in supported.keys() & trackers.keys():
+    for name in (supported.keys() | excluded) & trackers.keys():
         issue = trackers[name]
         if issue["state"] == "open":
-            yield "close", name, issue["number"], {"state": "closed", "state_reason": "completed"}
+            reason = "not_planned" if name in excluded else "completed"
+            yield "close", name, issue["number"], {"state": "closed", "state_reason": reason}
 
 
 def main():
@@ -429,13 +450,13 @@ def main():
     ranking = ranked_packages(month)
     discovery = discover(ranking, remembered)
     ranked = discovery.selected
-    state, missing, supported, unknown, errors = collect(
+    state, missing, supported, unknown, errors, excluded = collect(
         ranked, remembered, observations=discovery.observations,
     )
     parents, trackers = tracked_issues(api.pages(f"repos/{REPOSITORY}/issues", params={"state": "all"}))
     if trackers.keys() - remembered.keys():
         raise MonitorError(f"Existing tracker issues are missing from {STATE_BRANCH}; recover the monitor state")
-    changes = sorted(issue_changes(trackers, missing, supported))
+    changes = sorted(issue_changes(trackers, missing, supported, excluded))
     links = plan_hierarchy(api, parents, trackers, {name for action, name, _, _ in changes if action == "open"})
     additions = state.keys() - remembered.keys()
     prerelease_heals = {name: version for name, version in supported.items() if version.is_prerelease}
@@ -443,10 +464,11 @@ def main():
         "## PyPI Windows ARM64 wheel monitor",
         "",
         f"Mode: {'apply' if args.apply else 'preview (no writes)'}",
-        f"- ClickPy candidates checked: {discovery.depth:,} of {len(ranking):,} ({month:%B %Y} downloads); "
-        f"confirmed in the Windows ARM64 top {TOP_COUNT:,}: {len(ranked):,}",
-        f"- Previously tracked outside this selection: {len(remembered.keys() - ranked):,}",
-        f"- Tracked: {len(state)} ({len(additions)} new); with Windows ARM64: "
+        f"- Selected {len(ranked):,} of {TOP_COUNT:,} eligible projects after checking "
+        f"{discovery.depth:,} of {len(ranking):,} candidates ({month:%B %Y} downloads). "
+        f"Candidates include the top {UNFILTERED_RANK_DEPTH:,} overall and projects with indexed Windows ARM64 wheels.",
+        f"- Previously tracked outside this selection: {len(remembered.keys() - ranked - excluded.keys()):,}",
+        f"- Tracked: {len(state) - len(excluded)} ({len(additions)} new); with Windows ARM64: "
         f"{len(supported) - len(prerelease_heals)} on latest stable, {len(prerelease_heals)} on a newer prerelease",
         f"- Regressions: {len(missing)}; inconclusive: {len(unknown)}; fetch errors: {len(errors)}",
     ]
@@ -460,7 +482,7 @@ def main():
         lines.append(f"- Planned sub-issue links: {sum(key.startswith('package=') for key in links)} packages; "
                      f"{sum(not key.startswith('package=') for key in links)} overflow trackers")
     if len(ranked) < TOP_COUNT:
-        lines += ["", f"Could not confirm all {TOP_COUNT:,} places in the Windows ARM64 ranking."]
+        lines += ["", f"Could not confirm {TOP_COUNT:,} eligible projects from the ranking candidates."]
         if discovery.unresolved:
             lines += [
                 f"- {len(discovery.unresolved):,} ranking lookups failed. "
@@ -481,6 +503,11 @@ def main():
             f"- `{name}`: {release_link(name, version)}"
             for name, version in sorted(prerelease_heals.items())
         ]]
+    if excluded:
+        lines += ["", "### Previously tracked packages now shipping only universal wheels", *[
+            f"- `{name}`: {release_link(name, version)} (excluded from monitoring)"
+            for name, version in sorted(excluded.items())
+        ]]
     if unknown or errors:
         lines += ["", "### Incomplete observations (no issue changes for these packages)"]
         if unknown:
@@ -488,13 +515,17 @@ def main():
         lines.extend(f"- `{name}`: {literal(error)}" for name, error in sorted(errors.items()))
     if changes:
         lines += ["", "### Planned issue changes"]
-        lines.extend(
-            f"- {action.capitalize()} `{name}`"
-            + (f" ([#{number}](https://github.com/{REPOSITORY}/issues/{number}))" if number else "")
-            + (f": {'prerelease ' if name in prerelease_heals else ''}"
-               f"{release_link(name, supported[name])} provides Windows ARM64 again" if action == "close" else "")
-            for action, name, number, _ in changes
-        )
+        for action, name, number, _ in changes:
+            line = f"- {action.capitalize()} `{name}`"
+            if number:
+                line += f" ([#{number}](https://github.com/{REPOSITORY}/issues/{number}))"
+            if action == "close":
+                if name in excluded:
+                    line += ": only universal wheels; no longer monitored"
+                else:
+                    channel = "prerelease " if name in prerelease_heals else ""
+                    line += f": {channel}{release_link(name, supported[name])} provides Windows ARM64 again"
+            lines.append(line)
     text = "\n".join(lines) + "\n"
     print(text)
     if os.environ.get("GITHUB_STEP_SUMMARY"):

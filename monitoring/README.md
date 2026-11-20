@@ -104,19 +104,24 @@ coverage. Excluded, universal, archived and unresolved entries remain explicit.
 
 The [weekly workflow](../.github/workflows/wheel-monitor-pypi.yml) runs Wednesdays
 at **15:43 UTC**. It uses [ClickPy's public PyPI dataset](https://clickpy.clickhouse.com/)
-to rank projects with Windows ARM64 wheel history by downloads in the last
-completed calendar month. It verifies candidates against PyPI in rank order
-until it has the top 1,000 with a history of stable, non-yanked Windows ARM64
-wheels. Discovery is limited to projects present in the ClickPy index; new
-wheels may take time to appear there. Previously tracked projects stay on the
-watchlist even when they fall out of the top 1,000. The run summary reports
-the ranking month and flags incomplete selection.
+to rank candidates by downloads in the last completed calendar month. Candidates
+include the top 5,000 projects by downloads regardless of wheel metadata, plus
+any project with a Windows ARM64 wheel in ClickPy's index. This catches popular
+projects even when ClickPy lacks their wheel data; below the top 5,000, projects
+can still be missed if their wheels aren't indexed. The monitor verifies
+candidates against PyPI in download order until it has 1,000 eligible projects
+with a history of stable, non-yanked Windows ARM64 wheels. Previously tracked
+projects stay on the watchlist when they fall out of the ranking.
 
 The monitor reads the PyPI file index, including older releases, so an existing
 regression can be found on the first scan. It compares stable releases by version
-and looks for a non-yanked wheel tagged `win_arm64`. Universal wheels and wheels
-for other platforms do not count. If the latest stable release is missing the
-wheel but a higher-version prerelease provides it, the monitor reports recovery
+and looks for a non-yanked wheel tagged `win_arm64`. If all non-yanked wheels
+on the latest stable release are platform-independent (`none-any`), the project
+doesn't take a ranking slot or count as monitored, and any open regression is
+closed as not planned. Its stable baseline is retained in case platform-specific
+wheels return. A source-only release or one that ships platform-specific wheels
+alongside a universal wheel remains eligible. If the latest stable release is
+missing the ARM64 wheel but a higher-version prerelease provides it, the monitor reports recovery
 in the prerelease and does not open an issue (or closes an existing one).
 Prereleases do not qualify projects for tracking or replace the stable
 baseline. A newer stable release without the wheel can reopen the same issue
