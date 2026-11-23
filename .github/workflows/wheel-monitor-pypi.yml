@@ -2,7 +2,7 @@ name: PyPI Windows Arm64 wheel monitor (weekly)
 
 on:
   schedule:
-    - cron: '43 15 * * 3'
+    - cron: '30 1 * * 1'
   workflow_dispatch:
     inputs:
       apply:
@@ -28,7 +28,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: '3.12'
+          python-version: '3.15'
       - run: python -m pip install -r monitoring/pypi-requirements.txt
       - name: Scan PyPI and reconcile package issues
         env:
