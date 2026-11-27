@@ -22,6 +22,7 @@ In this repo, you can find info about our projects &amp; [file issues](https://g
      * [Daily Windows Arm64 wheel monitoring and issue tracking](monitoring/README.md)
      * [Weekly PyPI Windows Arm64 wheel regression monitor](monitoring/README.md#weekly-pypi-wheel-regression-monitor)
      * [Master package tracker](https://github.com/CoreCollective-dev/windows-on-arm-wg/issues/7)
+     * [WoA Py Wheels Maintenance project tracker](https://github.com/orgs/CoreCollective-dev/projects/1)
 * LLVM
 * GNU Toolchain
      * [Experimental weekly builds for Windows Arm64 (MinGW/Cygwin) targets](https://github.com/arm/gnu-toolchain-for-windows-on-arm64)
